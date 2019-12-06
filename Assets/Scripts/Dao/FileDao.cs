@@ -9,7 +9,9 @@ namespace Dao {
 
         private const int ExpectedLinePartCount = 4;
         private const char Separator = '\t';
-        private readonly Dictionary<string, UserData> _users = new Dictionary<string, UserData>();
+        
+        private readonly object _fileLock = new object();
+        private readonly Dictionary<string, ClientData> _clients = new Dictionary<string, ClientData>();
 
         #region Public API
         
@@ -17,7 +19,7 @@ namespace Dao {
             FilePath = filePath ?? throw new ArgumentNullException(nameof(filePath));
 
             if (File.Exists(filePath)) {
-                LoadUsersDictionary(filePath);
+                LoadClientDictionary(filePath);
             }
             else {
                 File.Create(filePath).Close();
@@ -25,17 +27,20 @@ namespace Dao {
         }
 
         public bool Login(string username, string password) {
-            return IsRegistered(username) && _users[username].Password == password;
+            return IsRegistered(username) && _clients[username].Password == password;
         }
 
         public bool Register(string username, string password) {
             if (IsRegistered(username)) return false;
 
-            UserData userData = new UserData(username, password, 0, 0);
+            ClientData clientData = new ClientData(username, password, 0, 0);
 
             try {
-                File.AppendAllText(FilePath, userData + Environment.NewLine);
-                _users.Add(username, userData);
+                lock (_fileLock) {
+                    File.AppendAllText(FilePath, clientData + Environment.NewLine);
+                    _clients.Add(username, clientData);
+                }
+
                 return true;
             }
             catch {
@@ -44,47 +49,47 @@ namespace Dao {
         }
 
         public bool IsRegistered(string username) {
-            return _users.ContainsKey(username);
+            return _clients.ContainsKey(username);
         }
 
         public int GetChipCount(string username) {
-            return IsRegistered(username) ? _users[username].ChipCount : -1;
+            return IsRegistered(username) ? _clients[username].ChipCount : -1;
         }
 
         public int GetWinCount(string username) {
-            return IsRegistered(username) ? _users[username].WinCount : -1;
+            return IsRegistered(username) ? _clients[username].WinCount : -1;
         }
         
         public bool SetChipCount(string username, int chipCount) {
             if (!IsRegistered(username)) return false;
             
-            UserData data = _users[username].Clone();
+            ClientData data = _clients[username].Clone();
             data.ChipCount = chipCount;
-            return UpdateUserData(data);
+            return UpdateClientData(data);
         }
 
         public bool SetWinCount(string username, int winCount) {
             if (!IsRegistered(username)) return false;
 
-            UserData data = _users[username].Clone();
+            ClientData data = _clients[username].Clone();
             data.WinCount = winCount;
-            return UpdateUserData(data);
+            return UpdateClientData(data);
         }
         
         #endregion
 
         #region Private helper methods
         
-        private void LoadUsersDictionary(string filePath) {
+        private void LoadClientDictionary(string filePath) {
             foreach (string line in File.ReadAllLines(filePath)) {
-                UserData data = ParseLine(line);
+                ClientData data = ParseLine(line);
                 if(data == null) continue;
                     
-                _users.Add(data.Username, data);
+                _clients.Add(data.Username, data);
             }
         }
 
-        private UserData ParseLine(string line) {
+        private ClientData ParseLine(string line) {
             if (line == null) return null;
 
             string[] parts = line.Split(Separator);
@@ -95,41 +100,42 @@ namespace Dao {
             int chipCount = int.Parse(parts[2]);
             int winCount = int.Parse(parts[3]);
             
-            return new UserData(username, password, chipCount, winCount);
+            return new ClientData(username, password, chipCount, winCount);
         }
 
         /// <summary>
-        /// Updates user data, both in the internal cache and in the
+        /// Updates client data, both in the internal cache and in the
         /// persistent memory (file).
         /// </summary>
-        /// <param name="data">New user's data.</param>
+        /// <param name="data">New client's data.</param>
         /// <returns>True if updating was successful, false otherwise.</returns>
-        private bool UpdateUserData(UserData data) {
-            bool fileSuccessfullyUpdated = UpdateUserDataFile(data);
+        private bool UpdateClientData(ClientData data) {
+            bool fileSuccessfullyUpdated = UpdateClientDataFile(data);
 
             if (!fileSuccessfullyUpdated) return false;
             
-            _users[data.Username] = data;
+            _clients[data.Username] = data;
             return true;
         }
         
         /// <summary>
-        /// Updates the specified user's data in the persistent memory (file).
+        /// Updates the specified client's data in the persistent memory (file).
         /// </summary>
-        /// <param name="data">New user's data.</param>
+        /// <param name="data">New client's data.</param>
         /// <returns>True if updating was successful, false otherwise.</returns>
-        private bool UpdateUserDataFile(UserData data) {
+        private bool UpdateClientDataFile(ClientData data) {
             if (!IsRegistered(data.Username)) return false;
 
             try {
-                string[] lines = File.ReadAllLines(FilePath);
-                for (int i = 0; i < lines.Length; i++) {
-                    if (lines[i].StartsWith(data.Username)) {
+                lock (_fileLock) {
+                    string[] lines = File.ReadAllLines(FilePath);
+                    for (int i = 0; i < lines.Length; i++) {
+                        if (!lines[i].StartsWith(data.Username)) continue;
                         lines[i] = data.ToString();
                         break;
                     }
+                    File.WriteAllLines(FilePath, lines);
                 }
-                File.WriteAllLines(FilePath, lines);
                 return true;
             }
             catch {
@@ -139,21 +145,21 @@ namespace Dao {
 
         #endregion
 
-        private class UserData {
-            public string Username { get; set; }
-            public string Password { get; set; }
+        private class ClientData {
+            public string Username { get; }
+            public string Password { get; }
             public int ChipCount { get; set; }
             public int WinCount { get; set; }
 
-            public UserData(string username, string password, int chipCount, int winCount) {
+            public ClientData(string username, string password, int chipCount, int winCount) {
                 Username = username;
                 Password = password;
                 ChipCount = chipCount;
                 WinCount = winCount;
             }
             
-            public UserData Clone() {
-                return new UserData(Username, Password, ChipCount, WinCount);
+            public ClientData Clone() {
+                return new ClientData(Username, Password, ChipCount, WinCount);
             }
 
             public override string ToString() {

@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
+using Poker;
 
 public class Server {
     public IPAddress Address { get; }
@@ -11,7 +12,7 @@ public class Server {
 
     private TcpListener _listener;
     private Thread _listenerThread;
-    private readonly List<ServerWorker> _workers = new List<ServerWorker>();
+    private readonly List<PlayerThread> _players = new List<PlayerThread>();
     
     public Server(IPAddress address, int port) {
         Address = address;
@@ -20,6 +21,10 @@ public class Server {
 
     public void Start() {
         if (IsRunning) return;
+
+        Casino.AddTable("Las Vegas!", new Table(200, 5));
+        Casino.AddTable("Holly!!", new Table(1000, 9));
+        Casino.AddTable("Zagreb", new Table(25000, 2));
         
         _listenerThread = new Thread(Listen) {IsBackground = true, Name = "Client Accepting"};
         _listenerThread.Start();
@@ -37,7 +42,7 @@ public class Server {
         try {
             while (IsRunning) {
                 TcpClient client = _listener.AcceptTcpClient();
-                _workers.Add(new ServerWorker(client));
+                _players.Add(new PlayerThread(client));
             }
         }
         catch (SocketException e) {
@@ -63,10 +68,10 @@ public class Server {
     }
 
     private void AbortServerWorkers() {
-        foreach (ServerWorker serverWorker in _workers) {
-            serverWorker.Abort();
+        foreach (PlayerThread player in _players) {
+            player.Abort();
         }
         
-        _workers.Clear();
+        _players.Clear();
     }
 }

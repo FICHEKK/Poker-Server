@@ -8,7 +8,7 @@ namespace Dao {
         public string FilePath { get; }
 
         private const int ExpectedLinePartCount = 4;
-        private const char Separator = '\t';
+        private const char Separator = ',';
         
         private readonly object _fileLock = new object();
         private readonly Dictionary<string, ClientData> _clients = new Dictionary<string, ClientData>();

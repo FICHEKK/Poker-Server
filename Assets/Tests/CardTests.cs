@@ -1,4 +1,5 @@
 ﻿using NUnit.Framework;
+using Poker.Cards;
 
 namespace Tests
 {

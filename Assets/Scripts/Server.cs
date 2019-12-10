@@ -3,7 +3,6 @@ using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
-using Poker;
 
 public class Server {
     public IPAddress Address { get; }

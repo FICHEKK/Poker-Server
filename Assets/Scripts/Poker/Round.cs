@@ -1,6 +1,4 @@
-﻿using System.Collections;
-
-namespace Poker {
+﻿namespace Poker {
     
     /// <summary>
     /// Models a single poker round.

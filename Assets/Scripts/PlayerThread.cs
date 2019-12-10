@@ -19,8 +19,6 @@ public class PlayerThread {
     /// </summary>
     /// <param name="client">The connection to the player.</param>
     public PlayerThread(TcpClient client) {
-        Trace.WriteLine("New client connected!");
-        
         _client = client;
         _thread = new Thread(ProcessPlayerRequests) {IsBackground = true};
         _thread.Start();
@@ -34,19 +32,19 @@ public class PlayerThread {
             
             while (requestCode != -1) {
                 ClientRequest request = (ClientRequest) requestCode;
-                Trace.WriteLine("Received code: " + request);
 
                 if (request == ClientRequest.Login) {
-                    Trace.WriteLine("Login!");
                     ProcessLogin(reader, writer);
                 } 
                 else if (request == ClientRequest.TableList) {
-                    Trace.WriteLine("Tables!");
-                    SendTableList(writer);
+                    ProcessTableList(writer);
                 }
                 else if (request == ClientRequest.Register) {
                     ProcessRegister(reader, writer);
                     break;
+                }
+                else if (request == ClientRequest.CreateTable) {
+                    ProcessCreateTable(reader, writer);
                 }
                 else {
                     break;
@@ -59,7 +57,21 @@ public class PlayerThread {
         Trace.WriteLine("Client processing has finished!");
     }
 
-    private void SendTableList(StreamWriter writer) {
+    private void ProcessCreateTable(StreamReader reader, StreamWriter writer) {
+        string tableTitle = reader.ReadLine();
+        int smallBlind = int.Parse(reader.ReadLine());
+        int maxPlayers = int.Parse(reader.ReadLine());
+
+        if (Casino.HasTableWithTitle(tableTitle)) {
+            writer.BaseStream.WriteByte((byte) ServerResponse.TableCreationFailedTitleAlreadyTaken);
+        }
+        else {
+            Casino.AddTable(tableTitle, new Table(smallBlind, maxPlayers));
+            writer.BaseStream.WriteByte((byte) ServerResponse.TableCreationSucceeded);
+        }
+    }
+
+    private void ProcessTableList(StreamWriter writer) {
         Trace.WriteLine("Writing tables..");
         writer.WriteLine(Casino.TableCount);
         

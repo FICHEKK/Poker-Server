@@ -22,10 +22,6 @@ public class Server {
     public void Start() {
         if (IsRunning) return;
 
-        Casino.AddTable("Las Vegas!", new Table(200, 5));
-        Casino.AddTable("Holly!!", new Table(1000, 9));
-        Casino.AddTable("Zagreb", new Table(25000, 2));
-        
         _listenerThread = new Thread(Listen) {IsBackground = true, Name = "Client Accepting"};
         _listenerThread.Start();
     }

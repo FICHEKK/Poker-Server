@@ -28,29 +28,29 @@ namespace Poker {
         /// </summary>
         private static ConcurrentDictionary<string, Table> _tables = new ConcurrentDictionary<string, Table>();
         
-        /// <param name="tableName">Table's name.</param>
+        /// <param name="tableTitle">Table's name.</param>
         /// <returns>The table with the specified name.</returns>
-        public static Table GetTable(string tableName) {
-            return _tables[tableName];
+        public static Table GetTable(string tableTitle) {
+            return _tables[tableTitle];
         }
 
         /// <summary>
         /// Adds a new table to this casino.
         /// </summary>
-        /// <param name="tableName">New table's name.</param>
+        /// <param name="tableTitle">New table's name.</param>
         /// <param name="table">New table.</param>
         /// <returns>True if added successfully, false otherwise.</returns>
-        public static bool AddTable(string tableName, Table table) {
-            return _tables.TryAdd(tableName, table);
+        public static bool AddTable(string tableTitle, Table table) {
+            return _tables.TryAdd(tableTitle, table);
         }
 
         /// <summary>
         /// Removes the specified table from this casino.
         /// </summary>
-        /// <param name="tableName">Table's name.</param>
+        /// <param name="tableTitle">Table's name.</param>
         /// <returns>True if removed successfully, false otherwise.</returns>
-        public static  bool RemoveTable(string tableName) {
-            return _tables.TryRemove(tableName, out _);
+        public static  bool RemoveTable(string tableTitle) {
+            return _tables.TryRemove(tableTitle, out _);
         }
 
         /// <summary>
@@ -58,6 +58,15 @@ namespace Poker {
         /// </summary>
         public static void RemoveAllTables() {
             _tables.Clear();
+        }
+
+        /// <summary>
+        /// Checks if the given table with the given title exists.
+        /// </summary>
+        /// <param name="tableTitle">The title to be checked.</param>
+        /// <returns>True if table with the given title exists, false otherwise.</returns>
+        public static bool HasTableWithTitle(string tableTitle) {
+            return _tables.ContainsKey(tableTitle);
         }
     }
 }

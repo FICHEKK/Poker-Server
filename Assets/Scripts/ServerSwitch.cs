@@ -8,8 +8,8 @@ public class ServerSwitch : MonoBehaviour {
     [SerializeField] private TMP_InputField addressInputField;
     [SerializeField] private TMP_InputField portInputField;
     [SerializeField] private Image buttonImage;
-    [SerializeField] private Text buttonText;
-    [SerializeField] private Text consoleText;
+    [SerializeField] private TMP_Text buttonText;
+    [SerializeField] private TMP_Text consoleText;
     
     private static readonly Color StartButtonGreen = new Color(0f, 0.5f, 0f);
     private static readonly Color StopButtonRed = Color.red;

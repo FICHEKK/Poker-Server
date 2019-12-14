@@ -2,6 +2,7 @@
 using System.Text;
 
 namespace Poker.Cards {
+    
     /// <summary>
     /// A simple card model that encapsulates card's rank and suit.
     /// </summary>

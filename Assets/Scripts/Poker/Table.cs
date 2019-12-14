@@ -1,4 +1,5 @@
 ﻿using System;
+using Poker.EventArguments;
 
 namespace Poker {
     
@@ -6,6 +7,15 @@ namespace Poker {
     /// Encapsulates data of a single poker table.
     /// </summary>
     public class Table {
+
+        /// <summary>Event that gets raised every time a player is added to this table.</summary>
+        public event EventHandler<PlayerAddedEventArgs> PlayerAdded;
+
+        /// <summary>Event that gets raised every time a player is removed from this table.</summary>
+        public event EventHandler<PlayerRemovedEventArgs> PlayerRemoved;
+
+        /// <summary>This table's current phase.</summary>
+        public TablePhase Phase { get; set; } = TablePhase.Waiting;
         
         /// <summary>This table's small blind.</summary>
         public int SmallBlind { get; }
@@ -74,31 +84,45 @@ namespace Poker {
             ValidatePositionRange(position);
             return _players[position] == null;
         }
+
+        /// <summary>
+        /// Finds and returns the index of the first free seat, if there is one.
+        /// </summary>
+        /// <returns>Index of the first free seat if found, -1 if there are no free seats.</returns>
+        public int GetFirstFreeSeat() {
+            for (int i = 0; i < MaxPlayers; i++) {
+                if (_players[i] == null) return i;
+            }
+
+            return -1;
+        }
         
-        public Player GetPlayerAt(int position) {
-            ValidatePositionRange(position);
-            return _players[position];
+        public Player GetPlayerAt(int index) {
+            ValidatePositionRange(index);
+            return _players[index];
         }
 
-        public void AddPlayer(Player player, int position) {
-            ValidatePositionRange(position);
+        public void AddPlayer(Player player, int index) {
+            ValidatePositionRange(index);
             
-            if (_players[position] != null)
+            if (_players[index] != null)
                 throw new ArgumentException("Seat at the given position is already taken by another player.");
 
-            _players[position] = player ?? throw new ArgumentNullException(nameof(player));
+            _players[index] = player ?? throw new ArgumentNullException(nameof(player));
             _playerCount++;
+            
+            OnPlayerAdded(new PlayerAddedEventArgs(index, player.Username, player.ChipCount));
         }
 
         public void RemovePlayer(Player player) {
             for (int i = 0; i < MaxPlayers; i++) {
-                if(_players[i] == null) continue;
+                if(_players[i] == null || !_players[i].Equals(player)) continue;
 
-                if (_players[i].Equals(player)) {
-                    _players[i] = null;
-                    _playerCount--;
-                    break;
-                }
+                _players[i] = null;
+                _playerCount--;
+                
+                OnPlayerRemoved(new PlayerRemovedEventArgs(i));
+                break;
             }
         }
 
@@ -106,6 +130,13 @@ namespace Poker {
             if (position < 0 || position >= MaxPlayers)
                 throw new ArgumentOutOfRangeException(nameof(position));
         }
+
+        #region Events
+
+        protected virtual void OnPlayerAdded(PlayerAddedEventArgs args) => PlayerAdded?.Invoke(this, args);
+        protected virtual void OnPlayerRemoved(PlayerRemovedEventArgs args) => PlayerRemoved?.Invoke(this, args);
+        
+        #endregion
 
         #region Signal and broadcast
 
@@ -118,7 +149,7 @@ namespace Poker {
             foreach (Player player in _players) {
                 if (player == null || player.Username != username) continue;
             
-                player.TcpClient.GetStream().WriteByte((byte) response);
+                player.Writer.BaseStream.WriteByte((byte) response);
                 break;
             }
         }
@@ -144,7 +175,7 @@ namespace Poker {
         /// <param name="response">The response to be sent.</param>
         public void Signal(int position, ServerResponse response) {
             ValidatePositionRange(position);
-            _players[position]?.TcpClient.GetStream().WriteByte((byte) response);
+            _players[position]?.Writer.BaseStream.WriteByte((byte) response);
         }
     
         /// <summary>
@@ -163,7 +194,7 @@ namespace Poker {
         /// <param name="response">The response to be sent.</param>
         public void Broadcast(ServerResponse response) {
             foreach (Player player in _players) {
-                player?.TcpClient.GetStream().WriteByte((byte) response);
+                player?.Writer.BaseStream.WriteByte((byte) response);
             }
         }
 

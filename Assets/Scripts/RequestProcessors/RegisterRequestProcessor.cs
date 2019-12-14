@@ -1,4 +1,4 @@
-﻿using System.IO;
+using System.IO;
 using Dao;
 
 namespace RequestProcessors {
@@ -8,18 +8,16 @@ namespace RequestProcessors {
             string password = reader.ReadLine();
 
             if (DaoProvider.Dao.IsRegistered(username)) {
-                writer.BaseStream.WriteByte((byte) ServerResponse.RegistrationFailedUsernameAlreadyTaken);
+                writer.BaseStream.WriteByte((byte) ServerRegistrationResponse.UsernameTaken);
                 return;
             }
 
-            bool wasNoError = DaoProvider.Dao.Register(username, password);
-
-            if (wasNoError) {
-                writer.BaseStream.WriteByte((byte) ServerResponse.RegistrationSucceeded);
+            if (!DaoProvider.Dao.Register(username, password)) {
+                writer.BaseStream.WriteByte((byte) ServerRegistrationResponse.DatabaseError);
+                return;
             }
-            else {
-                writer.BaseStream.WriteByte((byte) ServerResponse.RegistrationFailedIOError);
-            }
+            
+            writer.BaseStream.WriteByte((byte) ServerRegistrationResponse.Success);
         }
     }
 }

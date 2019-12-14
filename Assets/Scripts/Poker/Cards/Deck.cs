@@ -2,6 +2,7 @@
 using Random = System.Random;
 
 namespace Poker.Cards {
+    
     /// <summary>
     /// A simple 52 card deck implementation that offers basic
     /// deck operations such as shuffling and card retrieval.

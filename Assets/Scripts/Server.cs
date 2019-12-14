@@ -21,7 +21,7 @@ public class Server {
     public void Start() {
         if (IsRunning) return;
 
-        _listenerThread = new Thread(Listen) {IsBackground = true, Name = "Client Accepting"};
+        _listenerThread = new Thread(Listen) {IsBackground = true, Name = "Listener"};
         _listenerThread.Start();
     }
 

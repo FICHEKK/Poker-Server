@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Net.Sockets;
 using System.Threading;
+using Poker;
 using RequestProcessors;
 
 /// <summary>
@@ -10,8 +11,24 @@ using RequestProcessors;
 /// the requests from a single player.
 /// </summary>
 public class PlayerThread {
+    private static readonly Dictionary<ClientRequest, IRequestProcessor> Processors;
     private readonly TcpClient _client;
     private readonly Thread _thread;
+    
+    /// <summary>
+    /// Initializes request processors.
+    /// </summary>
+    static PlayerThread() {
+        Processors = new Dictionary<ClientRequest, IRequestProcessor> {
+            {ClientRequest.Login, new LoginRequestProcessor()},
+            {ClientRequest.Register, new RegisterRequestProcessor()},
+            {ClientRequest.JoinTable, new JoinTableRequestProcessor()},
+            {ClientRequest.CreateTable, new CreateTableRequestProcessor()},
+            {ClientRequest.TableList, new TableListRequestProcessor()},
+            {ClientRequest.ClientData, new ClientDataRequestProcessor()},
+            {ClientRequest.Logout, new LogoutRequestProcessor()}
+        };
+    }
 
     /// <summary>
     /// Constructs and starts a new thread that will handle
@@ -20,40 +37,27 @@ public class PlayerThread {
     /// <param name="client">The connection to the player.</param>
     public PlayerThread(TcpClient client) {
         _client = client;
-        _thread = new Thread(ProcessPlayerRequests) {IsBackground = true};
+        _thread = new Thread(ProcessRequests) {IsBackground = true};
         _thread.Start();
     }
 
-    private static Dictionary<ClientRequest, IRequestProcessor> _processors;
-    static PlayerThread() {
-        _processors = new Dictionary<ClientRequest, IRequestProcessor> {
-            {ClientRequest.Login, new LoginRequestProcessor()},
-            {ClientRequest.Register, new RegisterRequestProcessor()},
-            {ClientRequest.JoinTable, new JoinTableRequestProcessor()},
-            {ClientRequest.CreateTable, new CreateTableRequestProcessor()},
-            {ClientRequest.TableList, new TableListRequestProcessor()}
-        };
-    }
-
-    private void ProcessPlayerRequests() {
+    private void ProcessRequests() {
         using (_client)
         using (StreamReader reader = new StreamReader(_client.GetStream()))
-        using (StreamWriter writer = new StreamWriter(_client.GetStream())) {
+        using (StreamWriter writer = new StreamWriter(_client.GetStream()) {AutoFlush = true}) {
             int flag = reader.BaseStream.ReadByte();
             
             while (flag != -1) {
-                if (_processors.TryGetValue((ClientRequest) flag, out var processor)) {
+                if (Processors.TryGetValue((ClientRequest) flag, out var processor)) {
                     processor.ProcessRequest(reader, writer);
                 }
                 else {
                     break;
                 }
-
+                
                 flag = reader.BaseStream.ReadByte();
             }
         }
-        
-        Trace.WriteLine("Client processing has finished!");
     }
 
     public void Abort() {

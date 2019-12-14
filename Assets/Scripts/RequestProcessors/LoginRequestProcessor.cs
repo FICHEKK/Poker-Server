@@ -1,5 +1,6 @@
-﻿using System.IO;
+using System.IO;
 using Dao;
+using Poker;
 
 namespace RequestProcessors {
     public class LoginRequestProcessor : IRequestProcessor {
@@ -8,21 +9,22 @@ namespace RequestProcessors {
             string password = reader.ReadLine();
 
             if (!DaoProvider.Dao.IsRegistered(username)) {
-                writer.BaseStream.WriteByte((byte) ServerResponse.LoginFailedUsernameNotRegistered);
+                writer.BaseStream.WriteByte((byte) ServerLoginResponse.UsernameNotRegistered);
                 return;
             }
 
-            bool loginSucceeded = DaoProvider.Dao.Login(username, password);
+            if (Casino.HasPlayerWithUsername(username)) {
+                writer.BaseStream.WriteByte((byte) ServerLoginResponse.AlreadyLoggedIn);
+                return;
+            }
 
-            if (loginSucceeded) {
-                writer.BaseStream.WriteByte((byte) ServerResponse.LoginSucceeded);
-                writer.WriteLine(DaoProvider.Dao.GetChipCount(username).ToString());
-                writer.WriteLine(DaoProvider.Dao.GetWinCount(username).ToString());
-                writer.Flush();
+            if (!DaoProvider.Dao.Login(username, password)) {
+                writer.BaseStream.WriteByte((byte) ServerLoginResponse.WrongPassword);
+                return;
             }
-            else {
-                writer.BaseStream.WriteByte((byte) ServerResponse.LoginFailedWrongPassword);
-            }
+
+            Casino.AddPlayer(username);
+            writer.BaseStream.WriteByte((byte) ServerLoginResponse.Success);
         }
     }
 }

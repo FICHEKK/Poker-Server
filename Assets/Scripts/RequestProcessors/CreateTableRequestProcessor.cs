@@ -1,4 +1,4 @@
-﻿using System.IO;
+using System.IO;
 using Poker;
 
 namespace RequestProcessors {
@@ -9,12 +9,12 @@ namespace RequestProcessors {
             int maxPlayers = int.Parse(reader.ReadLine());
 
             if (Casino.HasTableWithTitle(tableTitle)) {
-                writer.BaseStream.WriteByte((byte) ServerResponse.TableCreationFailedTitleAlreadyTaken);
+                writer.BaseStream.WriteByte((byte) ServerCreateTableResponse.TitleTaken);
+                return;
             }
-            else {
-                Casino.AddTable(tableTitle, new Table(smallBlind, maxPlayers));
-                writer.BaseStream.WriteByte((byte) ServerResponse.TableCreationSucceeded);
-            }
+            
+            Casino.AddTable(tableTitle, new Table(smallBlind, maxPlayers));
+            writer.BaseStream.WriteByte((byte) ServerCreateTableResponse.Success);
         }
     }
 }

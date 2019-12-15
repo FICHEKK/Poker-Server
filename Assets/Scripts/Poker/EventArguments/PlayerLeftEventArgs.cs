@@ -1,10 +1,10 @@
 ﻿using System;
 
 namespace Poker.EventArguments {
-    public class PlayerRemovedEventArgs : EventArgs {
+    public class PlayerLeftEventArgs : EventArgs {
         public int Index { get; }
 
-        public PlayerRemovedEventArgs(int index) {
+        public PlayerLeftEventArgs(int index) {
             Index = index;
         }
     }

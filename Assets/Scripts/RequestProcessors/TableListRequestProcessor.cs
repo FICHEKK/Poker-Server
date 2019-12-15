@@ -14,8 +14,6 @@ namespace RequestProcessors {
                 writer.WriteLine(table.PlayerCount);
                 writer.WriteLine(table.MaxPlayers);
             }
-        
-            writer.Flush();
         }
     }
 }

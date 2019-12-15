@@ -1,6 +1,4 @@
-using System.Diagnostics;
 using System.IO;
-using System.Threading;
 using Poker;
 
 namespace RequestProcessors {
@@ -23,6 +21,8 @@ namespace RequestProcessors {
             }
 
             writer.BaseStream.WriteByte((byte) ServerJoinTableResponse.Success);
+            writer.WriteLine(table.GetFirstFreeSeatIndex());
+            writer.WriteLine(buyIn);
 
             if (table.IsEmpty) {
                 writer.BaseStream.WriteByte((byte) ServerJoinTableResponse.TableEmpty);
@@ -32,16 +32,15 @@ namespace RequestProcessors {
 
                 for (int i = 0; i < table.MaxPlayers; i++) {
                     if(table.IsSeatEmpty(i)) continue;
-                    Player player = table.GetPlayerAt(i);
-                    writer.WriteLine(player.Username);
-                    writer.WriteLine(player.ChipCount);
+
+                    Seat seat = table.GetSeatAt(i);
+                    writer.WriteLine(seat.Player.Username);
+                    writer.WriteLine(seat.ChipCount);
                     break;
                 }
-                
-                writer.Flush();
             }
             
-            table.AddPlayer(new Player(username, buyIn, reader, writer), table.GetFirstFreeSeat());
+            Casino.MovePlayerFromLobbyToTable(username, table, buyIn);
         }
     }
 }

@@ -1,5 +1,4 @@
-﻿using System;
-using Poker.Cards;
+﻿using Poker.Cards;
 using Poker.EventArguments;
 
 namespace Poker {
@@ -9,8 +8,8 @@ namespace Poker {
 
         public Dealer(Table table) {
             _table = table;
-            _table.PlayerAdded += PlayerAddedEventHandler;
-            _table.PlayerRemoved += PlayerRemovedEventHandler;
+            _table.PlayerJoined += PlayerJoinedEventHandler;
+            _table.PlayerLeft += PlayerLeftEventHandler;
         }
 
         public void StartRound() {
@@ -29,7 +28,7 @@ namespace Poker {
             _table.Phase = TablePhase.PreFlop;
         }
 
-        public void ShowFlop() {
+        public void RevealFlopCards() {
             _table.Broadcast(ServerResponse.Flop);
             _table.Broadcast(_deck.GetNextCard().ToString());
             _table.Broadcast(_deck.GetNextCard().ToString());
@@ -38,14 +37,14 @@ namespace Poker {
             _table.Phase = TablePhase.Flop;
         }
 
-        public void ShowTurn() {
+        public void RevealTurnCard() {
             _table.Broadcast(ServerResponse.Turn);
             _table.Broadcast(_deck.GetNextCard().ToString());
 
             _table.Phase = TablePhase.Turn;
         }
 
-        public void ShowRiver() {
+        public void RevealRiverCard() {
             _table.Broadcast(ServerResponse.River);
             _table.Broadcast(_deck.GetNextCard().ToString());
 
@@ -53,13 +52,13 @@ namespace Poker {
         }
 
         public void FinishRound() {
-            _table.IncrementButtonPosition();
+            _table.IncrementButtonIndex();
             _table.Broadcast(ServerResponse.RoundFinished);
         }
 
         #region Event handlers
 
-        private void PlayerAddedEventHandler(object sender, PlayerAddedEventArgs e) {
+        private void PlayerJoinedEventHandler(object sender, PlayerJoinedEventArgs e) {
             _table.Broadcast(ServerResponse.PlayerJoined);
             _table.Broadcast(e.Username);
             _table.Broadcast(e.ChipCount.ToString());
@@ -70,7 +69,7 @@ namespace Poker {
             }
         }
         
-        private void PlayerRemovedEventHandler(object sender, PlayerRemovedEventArgs e) {
+        private void PlayerLeftEventHandler(object sender, PlayerLeftEventArgs e) {
             _table.Broadcast(ServerResponse.PlayerLeft);
             _table.Broadcast(e.Index.ToString());
             

@@ -1,5 +1,6 @@
 ﻿using System;
 using Poker.EventArguments;
+using Poker.Players;
 
 namespace Poker {
     
@@ -8,11 +9,11 @@ namespace Poker {
     /// </summary>
     public class Table {
 
-        /// <summary>Event that gets raised every time a player is added to this table.</summary>
-        public event EventHandler<PlayerAddedEventArgs> PlayerAdded;
+        /// <summary>Event that gets raised every time a player joins this table.</summary>
+        public event EventHandler<PlayerJoinedEventArgs> PlayerJoined;
 
-        /// <summary>Event that gets raised every time a player is removed from this table.</summary>
-        public event EventHandler<PlayerRemovedEventArgs> PlayerRemoved;
+        /// <summary>Event that gets raised every time a player leaves this table.</summary>
+        public event EventHandler<PlayerLeftEventArgs> PlayerLeft;
 
         /// <summary>This table's current phase.</summary>
         public TablePhase Phase { get; set; } = TablePhase.Waiting;
@@ -26,8 +27,8 @@ namespace Poker {
         /// <summary>Minimum amount of chips needed to join this table.</summary>
         public int MinimumBuyIn => BigBlind * 10;
 
-        /// <summary>Current dealer button position.</summary>
-        public int ButtonPosition => _buttonPosition;
+        /// <summary>Current dealer button index.</summary>
+        public int ButtonIndex => _buttonIndex;
         
         /// <summary>Current number of players at the table.</summary>
         public int PlayerCount => _playerCount;
@@ -47,8 +48,8 @@ namespace Poker {
         /// <summary>This table's dealer.</summary>
         public Dealer Dealer { get; }
 
-        private readonly Player[] _players;
-        private int _buttonPosition;
+        private readonly Seat[] _seats;
+        private int _buttonIndex;
         private int _playerCount;
 
         /// <summary>
@@ -60,81 +61,101 @@ namespace Poker {
             SmallBlind = smallBlind;
             MaxPlayers = maxPlayers;
             Dealer = new Dealer(this);
-            _players = new Player[MaxPlayers];
+            _seats = new Seat[MaxPlayers];
+
+            for (int i = 0; i < MaxPlayers; i++) {
+                _seats[i] = new Seat(i);
+            }
         }
         
         /// <summary>
         /// Increments the button position, skipping all the empty seats on the way.
         /// </summary>
-        public void IncrementButtonPosition() {
+        public void IncrementButtonIndex() {
             for (int i = 1; i <= MaxPlayers; i++) {
-                _buttonPosition++;
-                _buttonPosition %= MaxPlayers;
+                _buttonIndex++;
+                _buttonIndex %= MaxPlayers;
 
-                if(_players[_buttonPosition] != null) break;
+                if(_seats[_buttonIndex].IsOccupied) break;
             }
         }
 
         /// <summary>
         /// Checks if the seat on the given position is empty.
         /// </summary>
-        /// <param name="position">The seat's position.</param>
+        /// <param name="index">The seat's index.</param>
         /// <returns>True if the seat at the given position is empty, false otherwise.</returns>
-        public bool IsSeatEmpty(int position) {
-            ValidatePositionRange(position);
-            return _players[position] == null;
+        public bool IsSeatEmpty(int index) {
+            ValidateIndexRange(index);
+            return _seats[index].IsEmpty;
         }
 
         /// <summary>
         /// Finds and returns the index of the first free seat, if there is one.
         /// </summary>
         /// <returns>Index of the first free seat if found, -1 if there are no free seats.</returns>
-        public int GetFirstFreeSeat() {
+        public int GetFirstFreeSeatIndex() {
             for (int i = 0; i < MaxPlayers; i++) {
-                if (_players[i] == null) return i;
+                if (_seats[i].IsEmpty) return i;
             }
 
             return -1;
         }
-        
-        public Player GetPlayerAt(int index) {
-            ValidatePositionRange(index);
-            return _players[index];
+
+        public Seat GetSeatAt(int index) {
+            ValidateIndexRange(index);
+            return _seats[index];
         }
 
-        public void AddPlayer(Player player, int index) {
-            ValidatePositionRange(index);
-            
-            if (_players[index] != null)
-                throw new ArgumentException("Seat at the given position is already taken by another player.");
-
-            _players[index] = player ?? throw new ArgumentNullException(nameof(player));
-            _playerCount++;
-            
-            OnPlayerAdded(new PlayerAddedEventArgs(index, player.Username, player.ChipCount));
-        }
-
-        public void RemovePlayer(Player player) {
+        public int GetIndexOf(string username) {
             for (int i = 0; i < MaxPlayers; i++) {
-                if(_players[i] == null || !_players[i].Equals(player)) continue;
+                if(_seats[i].IsEmpty) continue;
+                if(_seats[i].Player.Username != username) continue;
 
-                _players[i] = null;
+                return i;
+            }
+
+            return -1;
+        }
+
+        /// <summary>
+        /// Adds the given player to the first empty seat, if there is any.
+        /// </summary>
+        /// <param name="player">Player to be added to the table.</param>
+        /// <param name="chipCount">The amount of chips the player is buying-in with.</param>
+        public bool AddPlayer(TablePlayer player, int chipCount) {
+            int index = GetFirstFreeSeatIndex();
+            if (index < 0) return false;
+
+            _seats[index].Player = player ?? throw new ArgumentNullException(nameof(player));
+            _seats[index].ChipCount = chipCount;
+            _playerCount++;
+
+            OnPlayerJoined(new PlayerJoinedEventArgs(index, player.Username, chipCount));
+            return true;
+        }
+
+        public void RemovePlayer(TablePlayer player) {
+            for (int i = 0; i < MaxPlayers; i++) {
+                if(_seats[i].IsEmpty || !_seats[i].Player.Equals(player)) continue;
+
+                _seats[i].Player = null;
                 _playerCount--;
-                
-                OnPlayerRemoved(new PlayerRemovedEventArgs(i));
+
+                OnPlayerLeft(new PlayerLeftEventArgs(i));
                 break;
             }
         }
 
-        private void ValidatePositionRange(int position) {
-            if (position < 0 || position >= MaxPlayers)
-                throw new ArgumentOutOfRangeException(nameof(position));
+        private void ValidateIndexRange(int index) {
+            if (index < 0 || index >= MaxPlayers)
+                throw new ArgumentOutOfRangeException(nameof(index));
         }
 
         #region Events
 
-        protected virtual void OnPlayerAdded(PlayerAddedEventArgs args) => PlayerAdded?.Invoke(this, args);
-        protected virtual void OnPlayerRemoved(PlayerRemovedEventArgs args) => PlayerRemoved?.Invoke(this, args);
+        protected virtual void OnPlayerJoined(PlayerJoinedEventArgs args) => PlayerJoined?.Invoke(this, args);
+        protected virtual void OnPlayerLeft(PlayerLeftEventArgs args) => PlayerLeft?.Invoke(this, args);
         
         #endregion
 
@@ -146,10 +167,10 @@ namespace Poker {
         /// <param name="username">Username of the client that is the receiver.</param>
         /// <param name="response">The response to be sent.</param>
         public void Signal(string username, ServerResponse response) {
-            foreach (Player player in _players) {
-                if (player == null || player.Username != username) continue;
-            
-                player.Writer.BaseStream.WriteByte((byte) response);
+            foreach (Seat seat in _seats) {
+                if(seat.IsEmpty || seat.Player.Username != username) continue;
+
+                seat.Player.Writer.BaseStream.WriteByte((byte) response);
                 break;
             }
         }
@@ -160,10 +181,10 @@ namespace Poker {
         /// <param name="username">Username of the client that is the receiver.</param>
         /// <param name="data">The data to be sent.</param>
         public void Signal(string username, string data) {
-            foreach (Player player in _players) {
-                if (player == null || player.Username != username) continue;
-            
-                player.Writer.WriteLine(data);
+            foreach (Seat seat in _seats) {
+                if(seat.IsEmpty || seat.Player.Username != username) continue;
+
+                seat.Player.Writer.WriteLine(data);
                 break;
             }
         }
@@ -171,40 +192,40 @@ namespace Poker {
         /// <summary>
         /// Sends a server response to the single specified position.
         /// </summary>
-        /// <param name="position">The position of the client to send a response to.</param>
+        /// <param name="index">The index of the player to send a response to.</param>
         /// <param name="response">The response to be sent.</param>
-        public void Signal(int position, ServerResponse response) {
-            ValidatePositionRange(position);
-            _players[position]?.Writer.BaseStream.WriteByte((byte) response);
+        public void Signal(int index, ServerResponse response) {
+            ValidateIndexRange(index);
+            _seats[index].Player?.Writer.BaseStream.WriteByte((byte) response);
         }
     
         /// <summary>
         /// Sends given data to the single specified position.
         /// </summary>
-        /// <param name="position">The position of the client to send a response to.</param>
+        /// <param name="index">The index of the client to send a response to.</param>
         /// <param name="data">The data to be sent.</param>
-        public void Signal(int position, string data) {
-            ValidatePositionRange(position);
-            _players[position]?.Writer.WriteLine(data);
+        public void Signal(int index, string data) {
+            ValidateIndexRange(index);
+            _seats[index].Player?.Writer.WriteLine(data);
         }
     
         /// <summary>
-        /// Sends a server response to every client on the table.
+        /// Sends a server response to every player on the table.
         /// </summary>
         /// <param name="response">The response to be sent.</param>
         public void Broadcast(ServerResponse response) {
-            foreach (Player player in _players) {
-                player?.Writer.BaseStream.WriteByte((byte) response);
+            foreach (Seat seat in _seats) {
+                seat.Player?.Writer.BaseStream.WriteByte((byte) response);
             }
         }
 
         /// <summary>
-        /// Sends given data to every client on the table.
+        /// Sends given data to every player on the table.
         /// </summary>
         /// <param name="data">The data to be sent.</param>
         public void Broadcast(string data) {
-            foreach (Player player in _players) {
-                player?.Writer.WriteLine(data);
+            foreach (Seat seat in _seats) {
+                seat.Player?.Writer.WriteLine(data);
             }
         }
         

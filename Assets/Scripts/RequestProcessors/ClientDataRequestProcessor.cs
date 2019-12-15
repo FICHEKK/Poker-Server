@@ -8,7 +8,6 @@ namespace RequestProcessors {
 
             writer.WriteLine(DaoProvider.Dao.GetChipCount(username).ToString());
             writer.WriteLine(DaoProvider.Dao.GetWinCount(username).ToString());
-            writer.Flush();
         }
     }
 }

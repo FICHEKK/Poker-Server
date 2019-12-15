@@ -1,6 +1,7 @@
 using System.IO;
 using Dao;
 using Poker;
+using Poker.Players;
 
 namespace RequestProcessors {
     public class LoginRequestProcessor : IRequestProcessor {
@@ -23,7 +24,9 @@ namespace RequestProcessors {
                 return;
             }
 
-            Casino.AddPlayer(username);
+            int chipCount = DaoProvider.Dao.GetChipCount(username);
+            Casino.AddLobbyPlayer(new LobbyPlayer(username, chipCount, reader, writer));
+            
             writer.BaseStream.WriteByte((byte) ServerLoginResponse.Success);
         }
     }

@@ -1,4 +1,5 @@
 ﻿namespace Poker.Cards {
+    
     /// <summary>
     /// Represents a rank from the standard 52 card deck.
     /// </summary>

@@ -22,6 +22,7 @@ namespace RequestProcessors {
 
             writer.BaseStream.WriteByte((byte) ServerJoinTableResponse.Success);
             writer.WriteLine(table.GetFirstFreeSeatIndex());
+            writer.WriteLine(table.SmallBlind);
             writer.WriteLine(buyIn);
 
             if (table.IsEmpty) {
@@ -31,11 +32,11 @@ namespace RequestProcessors {
                 writer.BaseStream.WriteByte((byte) ServerJoinTableResponse.TableNotEmpty);
 
                 for (int i = 0; i < table.MaxPlayers; i++) {
-                    if(table.IsSeatEmpty(i)) continue;
+                    if(!table.GetSeatAt(i).IsOccupied) continue;
 
                     Seat seat = table.GetSeatAt(i);
                     writer.WriteLine(seat.Player.Username);
-                    writer.WriteLine(seat.ChipCount);
+                    writer.WriteLine(seat.Player.Stack);
                     break;
                 }
             }

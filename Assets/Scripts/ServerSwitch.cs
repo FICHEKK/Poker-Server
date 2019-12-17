@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Net;
+using Poker;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -33,7 +34,7 @@ public class ServerSwitch : MonoBehaviour {
         _server = new Server(address, port);
         _server.Start();
         _isRunning = true;
-        
+
         buttonText.text = "Stop";
         buttonImage.color = StopButtonRed;
         consoleText.text += "Server started on " + address + ":" + port + "." + Environment.NewLine;

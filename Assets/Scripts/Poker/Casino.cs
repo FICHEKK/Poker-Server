@@ -186,8 +186,9 @@ namespace Poker {
         public static void MovePlayerFromLobbyToTable(string username, Table table, int buyIn) {
             LobbyPlayer lobbyPlayer = GetLobbyPlayer(username);
             RemoveLobbyPlayer(lobbyPlayer);
-            
-            TablePlayer tablePlayer = new TablePlayer(username, lobbyPlayer.ChipCount, table, buyIn, lobbyPlayer.Reader, lobbyPlayer.Writer);
+
+            Seat seat = table.GetSeatAt(table.GetFirstFreeSeatIndex());
+            TablePlayer tablePlayer = new TablePlayer(username, lobbyPlayer.ChipCount, seat, buyIn, lobbyPlayer.Reader, lobbyPlayer.Writer);
             AddTablePlayer(tablePlayer);
 
             table.AddPlayer(tablePlayer, buyIn);
@@ -200,7 +201,7 @@ namespace Poker {
             LobbyPlayer lobbyPlayer = new LobbyPlayer(username, tablePlayer.ChipCount, tablePlayer.Reader, tablePlayer.Writer);
             AddLobbyPlayer(lobbyPlayer);
             
-            tablePlayer.Table.RemovePlayer(tablePlayer);
+            tablePlayer.Seat.Table.RemovePlayer(tablePlayer);
         }
 
         #endregion

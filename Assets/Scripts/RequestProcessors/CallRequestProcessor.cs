@@ -5,12 +5,14 @@ namespace RequestProcessors {
     public class CallRequestProcessor : IRequestProcessor {
         public void ProcessRequest(StreamReader reader, StreamWriter writer) {
             string username = reader.ReadLine();
-            int callAmount = 139; //TODO call amount should be read from round data
+            string callAmount = reader.ReadLine();
 
-            Table table = Casino.GetTablePlayer(username).Table;
-            table.Broadcast(ServerResponse.PlayerCalled);
-            table.Broadcast(table.GetIndexOf(username).ToString());
-            table.Broadcast(callAmount.ToString());
+            Dealer dealer = Casino.GetTablePlayer(username).Seat.Table.Dealer;
+            dealer.Broadcast(ServerResponse.PlayerCalled);
+            dealer.Broadcast(dealer.Table.GetPlayerIndex(username).ToString());
+            dealer.Broadcast(callAmount);
+            
+            dealer.Round.SeatCalled(int.Parse(callAmount));
         }
     }
 }

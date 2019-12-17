@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Net.Sockets;
@@ -74,7 +75,8 @@ public class ClientThread {
                 }
             }
         }
-        catch {
+        catch (Exception e) {
+            Trace.WriteLine(e);
             Trace.WriteLine("Disconnecting the client...");
         }
     }

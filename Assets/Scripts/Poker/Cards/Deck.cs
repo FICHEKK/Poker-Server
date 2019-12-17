@@ -12,7 +12,7 @@ namespace Poker.Cards {
         /// <summary>
         /// The random number generator used for deck shuffling.
         /// </summary>
-        private static readonly Random Rng = new Random();
+        private static readonly Random RandomNumberGenerator = new Random();
     
         /// <summary>
         /// Index of the current top-card in the deck.
@@ -47,7 +47,7 @@ namespace Poker.Cards {
             int n = _cards.Length;
         
             while (n > 1)  {
-                int k = Rng.Next(n--);
+                int k = RandomNumberGenerator.Next(n--);
             
                 Card temp = _cards[n];
                 _cards[n] = _cards[k];

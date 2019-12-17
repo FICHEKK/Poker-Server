@@ -46,6 +46,53 @@ namespace Poker.Cards {
         
             return -1;
         }
+
+        public static Card Parse(string s) {
+            if(s == null) throw new FormatException("Cannot parse null string");
+            
+            char[] chars = s.ToCharArray();
+
+            Rank rank;
+            if (s.Length == 2) {
+                switch (chars[0]) {
+                    case '2': rank = Rank.Two; break;
+                    case '3': rank = Rank.Three; break;
+                    case '4': rank = Rank.Four; break;
+                    case '5': rank = Rank.Five; break;
+                    case '6': rank = Rank.Six; break;
+                    case '7': rank = Rank.Seven; break;
+                    case '8': rank = Rank.Eight; break;
+                    case '9': rank = Rank.Nine; break;
+                    case 'J': rank = Rank.Jack; break;
+                    case 'Q': rank = Rank.Queen; break;
+                    case 'K': rank = Rank.King; break;
+                    case 'A': rank = Rank.Ace; break;
+                    default: throw new FormatException("Invalid first character: rank expected.");
+                }
+            }
+            else if (s.Length == 3) {
+                if (chars[0] == '1' && chars[1] == '0') {
+                    rank = Rank.Ten;
+                }
+                else {
+                    throw new FormatException("Card represented by 3 symbols can only start with '10'.");
+                }
+            }
+            else {
+                throw new FormatException("A card is represented by 2 or 3 symbols.");
+            }
+
+            Suit suit;
+            switch (chars[s.Length - 1]) {
+                case 'H': suit = Suit.Heart; break;
+                case 'D': suit = Suit.Diamond; break;
+                case 'S': suit = Suit.Spade; break;
+                case 'C': suit = Suit.Club; break;
+                default: throw new FormatException("Invalid suit: 'H', 'D', 'S' or 'C' expected.");
+            }
+            
+            return new Card(rank, suit);
+        }
     
         /// <summary>
         /// Returns the string representation of this card.

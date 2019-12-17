@@ -116,7 +116,7 @@ namespace Poker.Cards {
             if (rank == rankOther) return 0;
             return -1;
         }
-
+        
         private int CompareMultiple(Hand other, int cardinality) {
             // If cardinality = 2, finds all the pairs and compares the pairs by ranks.
             List<int> ranks = FindAllIndexesOfRank(this, cardinality);
@@ -133,6 +133,9 @@ namespace Poker.Cards {
             return 0;
         }
 
+        /// <summary>
+        /// Returns the string representation of this hand.
+        /// </summary>
         public override string ToString() {
             StringBuilder sb = new StringBuilder();
 

@@ -7,12 +7,12 @@ namespace RequestProcessors {
             string username = reader.ReadLine();
             string allInAmount = reader.ReadLine();
 
-            Dealer dealer = Casino.GetTablePlayer(username).Seat.Table.Dealer;
+            Dealer dealer = Casino.GetTablePlayer(username).Table.Dealer;
             dealer.Broadcast(ServerResponse.PlayerAllIn);
             dealer.Broadcast(dealer.Table.GetPlayerIndex(username).ToString());
             dealer.Broadcast(allInAmount);
             
-            dealer.Round.SeatAllIn(int.Parse(allInAmount));
+            dealer.Round.PlayerAllIn(int.Parse(allInAmount));
         }
     }
 }

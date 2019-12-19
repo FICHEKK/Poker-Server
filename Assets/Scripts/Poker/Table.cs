@@ -43,7 +43,7 @@ namespace Poker {
         /// <summary>This table's dealer.</summary>
         public Dealer Dealer { get; }
 
-        private readonly Seat[] _seats;
+        private readonly TablePlayer[] _players;
         private int _buttonIndex;
         private int _playerCount;
 
@@ -55,13 +55,8 @@ namespace Poker {
         public Table(int smallBlind, int maxPlayers) {
             SmallBlind = smallBlind;
             MaxPlayers = maxPlayers;
-            _seats = new Seat[MaxPlayers];
-
-            for (int i = 0; i < MaxPlayers; i++) {
-                _seats[i] = new Seat(this, i);
-            }
-            
             Dealer = new Dealer(this);
+            _players = new TablePlayer[MaxPlayers];
         }
 
         #region Button
@@ -89,7 +84,7 @@ namespace Poker {
                 index++;
                 index %= MaxPlayers;
 
-                if (_seats[index].IsOccupied) return index;
+                if (IsSeatOccupied(index)) return index;
             }
 
             return -1;
@@ -108,8 +103,8 @@ namespace Poker {
             int index = GetFirstFreeSeatIndex();
             if (index < 0) return false;
 
-            _seats[index].Player = player ?? throw new ArgumentNullException(nameof(player));
-            _seats[index].Player.Stack = stack;
+            _players[index] = player ?? throw new ArgumentNullException(nameof(player));
+            _players[index].Stack = stack;
             _playerCount++;
 
             OnPlayerJoined(new PlayerJoinedEventArgs(index, player.Username, stack));
@@ -124,13 +119,14 @@ namespace Poker {
         /// <returns>Index of the player with the given username.</returns>
         public int GetPlayerIndex(string username) {
             for (int i = 0; i < MaxPlayers; i++) {
-                if(!_seats[i].IsOccupied) continue;
-                if(_seats[i].Player.Username != username) continue;
-
-                return i;
+                if(IsSeatOccupied(i) && _players[i].Username == username) return i;
             }
 
             return -1;
+        }
+
+        public TablePlayer GetPlayerAt(int index) {
+            return _players[index];
         }
         
         /// <summary>
@@ -140,8 +136,8 @@ namespace Poker {
         /// <returns>True if the player was removed, false otherwise</returns>
         public bool RemovePlayer(TablePlayer player) {
             for (int i = 0; i < MaxPlayers; i++) {
-                if (_seats[i].IsOccupied && _seats[i].Player.Equals(player)) {
-                    _seats[i].Player = null;
+                if (IsSeatOccupied(i) && _players[i].Equals(player)) {
+                    _players[i] = null;
                     _playerCount--;
 
                     OnPlayerLeft(new PlayerLeftEventArgs(i));
@@ -152,9 +148,16 @@ namespace Poker {
             return false;
         }
         
-        #endregion
+        /// <summary>
+        /// Returns the copy of the internal table array.
+        /// </summary>
+        public TablePlayer[] GetPlayerArray() {
+            TablePlayer[] players = new TablePlayer[_players.Length];
+            Array.Copy(_players, players, _players.Length);
+            return players;
+        }
         
-        #region Seat
+        #endregion
 
         /// <summary>
         /// Finds and returns the index of the first free seat, if there is one.
@@ -162,31 +165,16 @@ namespace Poker {
         /// <returns>Index of the first free seat if found, -1 if there are no free seats.</returns>
         public int GetFirstFreeSeatIndex() {
             for (int i = 0; i < MaxPlayers; i++) {
-                if (!_seats[i].IsOccupied) return i;
+                if (!IsSeatOccupied(i)) return i;
             }
 
             return -1;
         }
 
-        /// <summary>
-        /// Returns the position at the given index.
-        /// </summary>
-        /// <param name="index">The index of the seat.</param>
-        public Seat GetSeatAt(int index) {
-            return _seats[index];
+        public bool IsSeatOccupied(int index) {
+            return _players[index] != null;
         }
-        
-        /// <summary>
-        /// Returns the copy of the internal table array.
-        /// </summary>
-        public Seat[] GetSeatsArray() {
-            Seat[] seats = new Seat[_seats.Length];
-            Array.Copy(_seats, seats, _seats.Length);
-            return seats;
-        }
-        
-        #endregion
-        
+
         #region Events
 
         protected virtual void OnPlayerJoined(PlayerJoinedEventArgs args) => PlayerJoined?.Invoke(this, args);

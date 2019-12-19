@@ -1,6 +1,8 @@
-﻿using System.Threading;
+﻿using System;
+using System.Threading;
 using Poker.Cards;
 using Poker.EventArguments;
+using Poker.Players;
 
 namespace Poker {
     
@@ -23,7 +25,7 @@ namespace Poker {
         /// </summary>
         /// <param name="table">The table to be dealt on.</param>
         public Dealer(Table table) {
-            Table = table;
+            Table = table ?? throw new ArgumentNullException(nameof(table));
             Table.PlayerJoined += PlayerJoinedEventHandler;
             Table.PlayerLeft += PlayerLeftEventHandler;
         }
@@ -36,7 +38,7 @@ namespace Poker {
             Broadcast(smallBlindIndex.ToString());
             Broadcast(bigBlindIndex.ToString());
 
-            Round = new Round(Table.SmallBlind, Table.GetSeatsArray(), bigBlindIndex);
+            Round = new Round(Table.SmallBlind, Table.GetPlayerArray(), bigBlindIndex);
             Round.RoundPhaseChanged += RoundPhaseChangedEventHandler;
             Round.CurrentPlayerChanged += CurrentPlayerChangedEventHandler;
             Round.Start();
@@ -94,7 +96,7 @@ namespace Poker {
 
         private void DealHandCards() {
             for (int i = 0; i < Table.MaxPlayers; i++) {
-                if(!Table.GetSeatAt(i).IsOccupied) continue;
+                if(!Table.IsSeatOccupied(i)) continue;
                 
                 Signal(i, ServerResponse.Hand);
                 Signal(i, Deck.GetNextCard().ToString());
@@ -128,10 +130,10 @@ namespace Poker {
         /// <param name="response">The response to be sent.</param>
         public void Signal(string username, ServerResponse response) {
             for (int i = 0; i < Table.MaxPlayers; i++) {
-                Seat seat = Table.GetSeatAt(i);
+                TablePlayer player = Table.GetPlayerAt(i);
 
-                if (seat.IsOccupied && seat.Player.Username == username) {
-                    seat.Player.Writer.BaseStream.WriteByte((byte) response);
+                if (player != null && player.Username == username) {
+                    player.Writer.BaseStream.WriteByte((byte) response);
                     break;
                 }
             }
@@ -144,10 +146,10 @@ namespace Poker {
         /// <param name="data">The data to be sent.</param>
         public void Signal(string username, string data) {
             for (int i = 0; i < Table.MaxPlayers; i++) {
-                Seat seat = Table.GetSeatAt(i);
+                TablePlayer player = Table.GetPlayerAt(i);
 
-                if (seat.IsOccupied && seat.Player.Username == username) {
-                    seat.Player.Writer.WriteLine(data);
+                if (player != null && player.Username == username) {
+                    player.Writer.WriteLine(data);
                     break;
                 }
             }
@@ -159,11 +161,7 @@ namespace Poker {
         /// <param name="index">The index of the player to send a response to.</param>
         /// <param name="response">The response to be sent.</param>
         public void Signal(int index, ServerResponse response) {
-            Seat seat = Table.GetSeatAt(index);
-            
-            if (seat.IsOccupied) {
-                seat.Player.Writer.BaseStream.WriteByte((byte) response);
-            }
+            Table.GetPlayerAt(index)?.Writer.BaseStream.WriteByte((byte) response);
         }
     
         /// <summary>
@@ -172,11 +170,7 @@ namespace Poker {
         /// <param name="index">The index of the client to send a response to.</param>
         /// <param name="data">The data to be sent.</param>
         public void Signal(int index, string data) {
-            Seat seat = Table.GetSeatAt(index);
-            
-            if (seat.IsOccupied) {
-                seat.Player.Writer.WriteLine(data);
-            }
+            Table.GetPlayerAt(index)?.Writer.WriteLine(data);
         }
     
         /// <summary>
@@ -185,11 +179,7 @@ namespace Poker {
         /// <param name="response">The response to be sent.</param>
         public void Broadcast(ServerResponse response) {
             for (int i = 0; i < Table.MaxPlayers; i++) {
-                Seat seat = Table.GetSeatAt(i);
-
-                if (seat.IsOccupied) {
-                    seat.Player.Writer.BaseStream.WriteByte((byte) response);
-                }
+                Table.GetPlayerAt(i)?.Writer.BaseStream.WriteByte((byte) response);
             }
         }
 
@@ -199,11 +189,7 @@ namespace Poker {
         /// <param name="data">The data to be sent.</param>
         public void Broadcast(string data) {
             for (int i = 0; i < Table.MaxPlayers; i++) {
-                Seat seat = Table.GetSeatAt(i);
-
-                if (seat.IsOccupied) {
-                    seat.Player.Writer.WriteLine(data);
-                }
+                Table.GetPlayerAt(i)?.Writer.WriteLine(data);
             }
         }
         

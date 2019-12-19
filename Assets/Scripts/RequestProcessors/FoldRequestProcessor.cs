@@ -6,11 +6,11 @@ namespace RequestProcessors {
         public void ProcessRequest(StreamReader reader, StreamWriter writer) {
             string username = reader.ReadLine();
 
-            Dealer dealer = Casino.GetTablePlayer(username).Seat.Table.Dealer;
+            Dealer dealer = Casino.GetTablePlayer(username).Table.Dealer;
             dealer.Broadcast(ServerResponse.PlayerFolded);
             dealer.Broadcast(dealer.Table.GetPlayerIndex(username).ToString());
             
-            dealer.Round.SeatFolded();
+            dealer.Round.PlayerFolded();
         }
     }
 }

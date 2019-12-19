@@ -9,29 +9,25 @@ namespace Poker.Players {
     /// </summary>
     public class TablePlayer : Player {
         
-        /// <summary>
-        /// The seat that this player is currently on.
-        /// </summary>
-        public Seat Seat { get; set; }
+        /// <summary>Table position index of this player.</summary>
+        public int Index { get; }
         
-        /// <summary>
-        /// The amount of chips that this player currently has currently bet this round phase.
-        /// </summary>
+        /// <summary>The seat that this player is currently on.</summary>
+        public Table Table { get; set; }
+        
+        /// <summary>The amount of chips that this player currently has currently bet this round phase.</summary>
         public int CurrentBet { get; set; }
         
-        /// <summary>
-        /// The amount of chips that this player currently has at the table.
-        /// </summary>
+        /// <summary>The amount of chips that this player currently has at the table.</summary>
         public int Stack { get; set; }
         
-        /// <summary>
-        /// Cards that this player is currently holding.
-        /// </summary>
+        /// <summary>Cards that this player is currently holding.</summary>
         private readonly Card[] _handCards = new Card[2];
 
-        public TablePlayer(string username, int chipCount, Seat seat, int buyIn, StreamReader reader, StreamWriter writer)
+        public TablePlayer(string username, int chipCount, Table table, int buyIn, int index, StreamReader reader, StreamWriter writer)
             : base(username, chipCount, reader, writer) {
-            Seat = seat;
+            Table = table;
+            Index = index;
             Stack = buyIn;
         }
 

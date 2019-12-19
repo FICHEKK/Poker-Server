@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using Poker.Cards;
 using Poker.EventArguments;
+using Poker.Players;
 
 namespace Poker {
     
@@ -19,7 +20,7 @@ namespace Poker {
         public Phase CurrentPhase { get; private set; }
 
         private readonly int _smallBlind;
-        private readonly Seat[] _seats;
+        private readonly TablePlayer[] _players;
         private readonly List<Card> _communityCards = new List<Card>();
 
         /// <summary>The index of the seat whose turn it is at the moment.</summary>
@@ -30,15 +31,15 @@ namespace Poker {
         private int _counter;
 
         /// <summary>Constructs a new poker round.</summary>
-        public Round(int smallBlind, Seat[] seats, int currentPlayerIndex) {
-            _seats = seats ?? throw new ArgumentNullException(nameof(seats));
+        public Round(int smallBlind, TablePlayer[] players, int currentPlayerIndex) {
+            _players = players ?? throw new ArgumentNullException(nameof(players));
 
             _smallBlind = smallBlind;
             CurrentHighestBet = _smallBlind * 2;
             _currentPlayerIndex = currentPlayerIndex;
 
-            for (int i = 0; i < _seats.Length; i++) {
-                if (_seats[i] != null) {
+            for (int i = 0; i < _players.Length; i++) {
+                if (_players[i] != null) {
                     _currentPlayerCount++;
                 }
             }
@@ -63,42 +64,42 @@ namespace Poker {
             CurrentPot += amount;
         }
 
-        public void SeatChecked() {
+        public void PlayerChecked() {
             _counter++;
             CheckForPhaseChange();
             UpdateCurrentPlayerIndex();
         }
 
-        public void SeatCalled(int callAmount) {
+        public void PlayerCalled(int callAmount) {
             _counter++;
-            _seats[_currentPlayerIndex].Player.CurrentBet = callAmount;
+            _players[_currentPlayerIndex].CurrentBet = callAmount;
             CheckForPhaseChange();
             UpdateCurrentPlayerIndex();
         }
         
-        public void SeatFolded() {
-            _seats[_currentPlayerIndex] = null;
+        public void PlayerFolded() {
+            _players[_currentPlayerIndex] = null;
             _currentPlayerCount--;
             CheckForPhaseChange();
             UpdateCurrentPlayerIndex();
         }
 
-        public void SeatRaised(int raiseAmount) {
+        public void PlayerRaised(int raiseAmount) {
             _counter = 1;
-            _seats[_currentPlayerIndex].Player.CurrentBet = raiseAmount;
+            _players[_currentPlayerIndex].CurrentBet = raiseAmount;
             UpdateCurrentPlayerIndex();
         }
         
-        public void SeatAllIn(int allInAmount) {
-            SeatRaised(allInAmount);
+        public void PlayerAllIn(int allInAmount) {
+            PlayerRaised(allInAmount);
         }
 
         private void UpdateCurrentPlayerIndex() {
-            for (int i = 0; i < _seats.Length - 1; i++) {
+            for (int i = 0; i < _players.Length - 1; i++) {
                 _currentPlayerIndex++;
-                _currentPlayerIndex %= _seats.Length;
+                _currentPlayerIndex %= _players.Length;
 
-                if (_seats[_currentPlayerIndex] != null) break;
+                if (_players[_currentPlayerIndex] != null) break;
             }
             
             OnCurrentPlayerChanged(new CurrentPlayerChangedEventArgs(_currentPlayerIndex));

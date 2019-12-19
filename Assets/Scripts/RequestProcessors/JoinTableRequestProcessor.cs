@@ -1,5 +1,6 @@
 using System.IO;
 using Poker;
+using Poker.Players;
 
 namespace RequestProcessors {
     public class JoinTableRequestProcessor : IRequestProcessor {
@@ -32,11 +33,11 @@ namespace RequestProcessors {
                 writer.BaseStream.WriteByte((byte) ServerJoinTableResponse.TableNotEmpty);
 
                 for (int i = 0; i < table.MaxPlayers; i++) {
-                    if(!table.GetSeatAt(i).IsOccupied) continue;
+                    if(!table.IsSeatOccupied(i)) continue;
 
-                    Seat seat = table.GetSeatAt(i);
-                    writer.WriteLine(seat.Player.Username);
-                    writer.WriteLine(seat.Player.Stack);
+                    TablePlayer player = table.GetPlayerAt(i);
+                    writer.WriteLine(player.Username);
+                    writer.WriteLine(player.Stack);
                     break;
                 }
             }

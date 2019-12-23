@@ -1,10 +1,10 @@
-﻿namespace Dao {
-    
+﻿namespace Dao
+{
     /// <summary>
     /// A provider of the Data Access Object implementation.
     /// </summary>
-    public static class DaoProvider {
-        
+    public static class DaoProvider
+    {
         /// <summary>
         /// Path of the database that will store all of the users.
         /// </summary>

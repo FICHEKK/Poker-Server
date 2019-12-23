@@ -3,12 +3,10 @@ using System.Collections.Generic;
 using System.Text;
 
 namespace Poker.Cards {
-    public class Hand : IComparable<Hand> {
-
-        // An array of cards that this hand holds.
-        public Card[] Cards { get; } = new Card[5];
     
-        // Stores the data about this hand.
+    public class Hand : IComparable<Hand> {
+        
+        public Card[] Cards { get; } = new Card[5];
         public HandAnalyser HandAnalyser { get; }
 
         public Hand(Card c0, Card c1, Card c2, Card c3, Card c4) {
@@ -17,9 +15,9 @@ namespace Poker.Cards {
             Cards[2] = c2;
             Cards[3] = c3;
             Cards[4] = c4;
-        
+
             Array.Sort(Cards);
-        
+
             HandAnalyser = new HandAnalyser(this);
         }
 
@@ -42,44 +40,44 @@ namespace Poker.Cards {
 
             return 0;
         }
-    
+
         private int CompareHighCard(Hand other) {
             return CompareMultiple(other, 1);
         }
-    
+
         private int CompareOnePair(Hand other) {
             int result = CompareSingle(other, 2);
             return result != 0 ? result : CompareMultiple(other, 1);
         }
-    
+
         private int CompareTwoPair(Hand other) {
             int result = CompareMultiple(other, 2);
             return result != 0 ? result : CompareSingle(other, 1);
         }
-    
+
         private int CompareThrees(Hand other) {
             int result = CompareSingle(other, 3);
             return result != 0 ? result : CompareMultiple(other, 1);
         }
-    
+
         private int CompareStraight(Hand other) {
             return CompareHighCard(other);
         }
-    
+
         private int CompareFlush(Hand other) {
             return CompareHighCard(other);
         }
-    
+
         private int CompareFullHouse(Hand other) {
             int result = CompareSingle(other, 3);
             return result != 0 ? result : CompareSingle(other, 2);
         }
-    
+
         private int CompareFours(Hand other) {
             int result = CompareSingle(other, 4);
             return result != 0 ? result : CompareSingle(other, 1);
         }
-    
+
         private int CompareStraightFlush(Hand other) {
             return CompareHighCard(other);
         }
@@ -96,8 +94,8 @@ namespace Poker.Cards {
         }
 
         private static List<int> FindAllIndexesOfRank(Hand hand, int cardinality) {
-            List<int> indexes = new List<int>();
-        
+            var indexes = new List<int>();
+
             int[] rankCounters = hand.HandAnalyser.RankCounters;
             for (int i = 0; i < rankCounters.Length; i++) {
                 if (rankCounters[i] == cardinality) {
@@ -116,24 +114,24 @@ namespace Poker.Cards {
             if (rank == rankOther) return 0;
             return -1;
         }
-        
+
         private int CompareMultiple(Hand other, int cardinality) {
             List<int> ranks = FindAllIndexesOfRank(this, cardinality);
             List<int> ranksOther = FindAllIndexesOfRank(other, cardinality);
-        
+
             ranks.Sort();
             ranksOther.Sort();
-        
+
             for (int i = ranks.Count - 1; i >= 0; i--) {
-                if(ranks[i] > ranksOther[i]) return 1;
-                if(ranks[i] < ranksOther[i]) return -1;
+                if (ranks[i] > ranksOther[i]) return 1;
+                if (ranks[i] < ranksOther[i]) return -1;
             }
 
             return 0;
         }
-        
+
         public override string ToString() {
-            StringBuilder sb = new StringBuilder();
+            var sb = new StringBuilder();
 
             for (int i = 0; i < 5; i++) {
                 sb.Append(Cards[i]).Append(" ");

@@ -1,12 +1,9 @@
 ﻿using System;
-using System.Net;
-using Poker;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
 public class ServerSwitch : MonoBehaviour {
-    [SerializeField] private TMP_InputField addressInputField;
     [SerializeField] private TMP_InputField portInputField;
     [SerializeField] private Image buttonImage;
     [SerializeField] private TMP_Text buttonText;
@@ -28,16 +25,15 @@ public class ServerSwitch : MonoBehaviour {
     }
     
     private void StartServer() {
-        IPAddress address = IPAddress.Parse(addressInputField.text);
         int port = int.Parse(portInputField.text);
 
-        _server = new Server(address, port);
+        _server = new Server(port);
         _server.Start();
         _isRunning = true;
 
         buttonText.text = "Stop";
         buttonImage.color = StopButtonRed;
-        consoleText.text += "Server started on " + address + ":" + port + "." + Environment.NewLine;
+        //consoleText.text += "Server started on " + address + ":" + port + "." + Environment.NewLine;
     }
 
     private void StopServer() {

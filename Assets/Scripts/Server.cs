@@ -10,12 +10,7 @@ using System.Threading;
 /// client.
 /// </summary>
 public class Server {
-    
-    /// <summary>
-    /// This server's IP address.
-    /// </summary>
-    public IPAddress Address { get; }
-    
+
     /// <summary>
     /// This server's port.
     /// </summary>
@@ -37,12 +32,10 @@ public class Server {
     private readonly List<ClientThread> _clientThreads = new List<ClientThread>();
     
     /// <summary>
-    /// Constructs a new server that will run on the given IP address and port.
+    /// Constructs a new server that will run on the given port.
     /// </summary>
-    /// <param name="address">IP address of the server.</param>
     /// <param name="port">Port of the server.</param>
-    public Server(IPAddress address, int port) {
-        Address = address;
+    public Server(int port) {
         Port = port;
     }
 
@@ -61,7 +54,7 @@ public class Server {
     /// a new handler thread is created.
     /// </summary>
     private void Listen() {
-        _listener = new TcpListener(Address, Port);
+        _listener = new TcpListener(IPAddress.Any, Port);
         _listener.Start();
         IsRunning = true;
 

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using Poker.Cards;
 using Poker.EventArguments;
 using Poker.Players;
@@ -18,14 +19,12 @@ namespace Poker {
         public int CurrentPot { get; private set; }
         public int CurrentHighestBet { get; set; }
         public Phase CurrentPhase { get; private set; }
-
-        private readonly int _smallBlind;
-        private readonly TablePlayer[] _players;
-        private readonly List<Card> _communityCards = new List<Card>();
-
+        public List<Card> CommunityCards { get; } = new List<Card>();
+        
         /// <summary>The index of the seat whose turn it is at the moment.</summary>
         private int _currentPlayerIndex;
         private int _currentPlayerCount;
+        private readonly TablePlayer[] _players;
 
         /// <summary>Used to determine if all of the active players have performed the same bet.</summary>
         private int _counter;
@@ -33,13 +32,13 @@ namespace Poker {
         /// <summary>Constructs a new poker round.</summary>
         public Round(int smallBlind, TablePlayer[] players, int currentPlayerIndex) {
             _players = players ?? throw new ArgumentNullException(nameof(players));
-
-            _smallBlind = smallBlind;
-            CurrentHighestBet = _smallBlind * 2;
+            
+            CurrentHighestBet = smallBlind * 2;
+            CurrentPot = smallBlind * 3;
             _currentPlayerIndex = currentPlayerIndex;
 
-            for (int i = 0; i < _players.Length; i++) {
-                if (_players[i] != null) {
+            foreach (var player in _players) {
+                if (player != null) {
                     _currentPlayerCount++;
                 }
             }
@@ -52,11 +51,15 @@ namespace Poker {
 
         /// <summary>Adds a new community card to this round.</summary>
         public void AddCommunityCard(Card card) {
-            if (_communityCards.Count == MaxCommunityCardCount) {
+            if (CommunityCards.Count == MaxCommunityCardCount) {
                 throw new IndexOutOfRangeException("Maximum number of community cards has already been reached.");
             }
             
-            _communityCards.Add(card);
+            CommunityCards.Add(card);
+        }
+
+        public List<TablePlayer> GetActivePlayers() {
+            return _players.Where(player => player != null).ToList();
         }
 
         /// <summary>Adds the specified amount of chips to the current pot.</summary>
@@ -80,8 +83,14 @@ namespace Poker {
         public void PlayerFolded() {
             _players[_currentPlayerIndex] = null;
             _currentPlayerCount--;
-            CheckForPhaseChange();
-            UpdateCurrentPlayerIndex();
+
+            if (_currentPlayerCount == 1) {
+                OnRoundPhaseChanged(new RoundPhaseChangedEventArgs(Phase.OnePlayerLeft));
+            }
+            else {
+                CheckForPhaseChange();
+                UpdateCurrentPlayerIndex();
+            }
         }
 
         public void PlayerRaised(int raiseAmount) {
@@ -135,7 +144,10 @@ namespace Poker {
             River,
             
             /// <summary>Final phase where players show their cards.</summary>
-            Showdown
+            Showdown,
+            
+            /// <summary>Phase in which the round ends because there is only a single player left.</summary>
+            OnePlayerLeft
         }
     }
 }

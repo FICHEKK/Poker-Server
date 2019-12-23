@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using Poker.EventArguments;
 using Poker.Players;
 
@@ -47,11 +46,9 @@ namespace Poker {
         private int _buttonIndex;
         private int _playerCount;
 
-        /// <summary>
-        /// Constructs a new table with the given small blind and maximum number of players.
-        /// </summary>
-        /// <param name="smallBlind">The small blind.</param>
-        /// <param name="maxPlayers">Maximum number of players.</param>
+        /// <summary> Constructs a new table with the given small blind and maximum number of players. </summary>
+        /// <param name="smallBlind"> The small blind. </param>
+        /// <param name="maxPlayers"> Maximum number of players. </param>
         public Table(int smallBlind, int maxPlayers) {
             SmallBlind = smallBlind;
             MaxPlayers = maxPlayers;
@@ -61,9 +58,7 @@ namespace Poker {
 
         #region Button
 
-        /// <summary>
-        /// Increments the button position, skipping all the empty seats on the way.
-        /// </summary>
+        /// <summary> Increments the button position, skipping all the empty seats on the way. </summary>
         public void IncrementButtonIndex() {
             _buttonIndex = GetNextOccupiedSeatIndex(_buttonIndex);
 
@@ -72,11 +67,9 @@ namespace Poker {
             }
         }
 
-        /// <summary>
-        /// Finds and returns the next occupied seat index.
-        /// </summary>
-        /// <param name="start">Starts searching from this index (start is not included).</param>
-        /// <returns>Index of the next occupied seat if found, -1 otherwise.</returns>
+        /// <summary> Finds and returns the next occupied seat index. </summary>
+        /// <param name="start"> Starts searching from this index (start is not included). </param>
+        /// <returns> Index of the next occupied seat if found, -1 otherwise. </returns>
         public int GetNextOccupiedSeatIndex(int start) {
             int index = start;
             
@@ -93,12 +86,10 @@ namespace Poker {
         #endregion
 
         #region Player
-        
-        /// <summary>
-        /// Adds the given player to the first empty seat, if there is any.
-        /// </summary>
-        /// <param name="player">Player to be added to the table.</param>
-        /// <param name="stack">The amount of chips the player is buying-in with.</param>
+
+        /// <summary> Adds the given player to the first empty seat, if there is any. </summary>
+        /// <param name="player"> Player to be added to the table. </param>
+        /// <param name="stack"> The amount of chips the player is buying-in with. </param>
         public bool AddPlayer(TablePlayer player, int stack) {
             int index = GetFirstFreeSeatIndex();
             if (index < 0) return false;
@@ -110,13 +101,10 @@ namespace Poker {
             OnPlayerJoined(new PlayerJoinedEventArgs(index, player.Username, stack));
             return true;
         }
-        
-        /// <summary>
-        /// Finds the player with the given username and returns the index of that player's
-        /// position on the table.
-        /// </summary>
-        /// <param name="username">Username to be processed.</param>
-        /// <returns>Index of the player with the given username.</returns>
+
+        /// <summary> Finds the player with the given username and returns the index of that player's position on the table. </summary>
+        /// <param name="username"> Username to be processed. </param>
+        /// <returns> Index of the player with the given username. </returns>
         public int GetPlayerIndex(string username) {
             for (int i = 0; i < MaxPlayers; i++) {
                 if(IsSeatOccupied(i) && _players[i].Username == username) return i;
@@ -128,12 +116,10 @@ namespace Poker {
         public TablePlayer GetPlayerAt(int index) {
             return _players[index];
         }
-        
-        /// <summary>
-        /// Removes the specified player from the table.
-        /// </summary>
-        /// <param name="player">Player to be removed.</param>
-        /// <returns>True if the player was removed, false otherwise</returns>
+
+        /// <summary> Removes the specified player from the table. </summary>
+        /// <param name="player"> Player to be removed. </param>
+        /// <returns> True if the player was removed, false otherwise </returns>
         public bool RemovePlayer(TablePlayer player) {
             for (int i = 0; i < MaxPlayers; i++) {
                 if (IsSeatOccupied(i) && _players[i].Equals(player)) {
@@ -147,10 +133,8 @@ namespace Poker {
 
             return false;
         }
-        
-        /// <summary>
-        /// Returns the copy of the internal table array.
-        /// </summary>
+
+        /// <summary> Returns the copy of the internal table array. </summary>
         public TablePlayer[] GetPlayerArray() {
             TablePlayer[] players = new TablePlayer[_players.Length];
             Array.Copy(_players, players, _players.Length);
@@ -159,10 +143,8 @@ namespace Poker {
         
         #endregion
 
-        /// <summary>
-        /// Finds and returns the index of the first free seat, if there is one.
-        /// </summary>
-        /// <returns>Index of the first free seat if found, -1 if there are no free seats.</returns>
+        /// <summary> Finds and returns the index of the first free seat, if there is one. </summary>
+        /// <returns> Index of the first free seat if found, -1 if there are no free seats. </returns>
         public int GetFirstFreeSeatIndex() {
             for (int i = 0; i < MaxPlayers; i++) {
                 if (!IsSeatOccupied(i)) return i;

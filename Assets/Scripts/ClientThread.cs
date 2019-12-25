@@ -12,20 +12,16 @@ using RequestProcessors;
 /// </summary>
 public class ClientThread {
     
-    /// <summary>
-    /// A dictionary that maps client request flags to processors that process
-    /// corresponding request.
-    /// </summary>
+    /// <summary> A dictionary that maps client request flags to processors that process corresponding request. </summary>
     private static readonly Dictionary<ClientRequest, IRequestProcessor> Processors;
-
-    /// <summary>
-    /// The connection to the client.
-    /// </summary>
-    private readonly TcpClient _client;
     
-    /// <summary>
-    /// Initializes request processors.
-    /// </summary>
+    /// <summary> Username of the client. </summary>
+    private string _username;
+
+    /// <summary> The connection to the client. </summary>
+    private readonly TcpClient _client;
+
+    /// <summary> Initializes request processors. </summary>
     static ClientThread() {
         Processors = new Dictionary<ClientRequest, IRequestProcessor> {
             {ClientRequest.Login, new LoginRequestProcessor()},
@@ -39,33 +35,30 @@ public class ClientThread {
             {ClientRequest.Call, new CallRequestProcessor()},
             {ClientRequest.Fold, new FoldRequestProcessor()},
             {ClientRequest.Raise, new RaiseRequestProcessor()},
-            {ClientRequest.AllIn, new AllInRequestProcessor()}
+            {ClientRequest.AllIn, new AllInRequestProcessor()},
+            {ClientRequest.Disconnect, new DisconnectRequestProcessor()}
         };
     }
 
-    /// <summary>
-    /// Constructs and starts a new thread that will handle
-    /// single client's requests.
-    /// </summary>
-    /// <param name="client">The connection to the client.</param>
+    /// <summary> Constructs and starts a new thread that will handle single client's requests. </summary>
+    /// <param name="client"> Connection to the client. </param>
     public ClientThread(TcpClient client) {
         _client = client;
         new Thread(ProcessRequests).Start();
     }
 
-    /// <summary>
-    /// Processes incoming client requests.
-    /// </summary>
+    /// <summary> Processes incoming client requests. </summary>
     private void ProcessRequests() {
         try {
             using (_client)
             using (StreamReader reader = new StreamReader(_client.GetStream()))
             using (StreamWriter writer = new StreamWriter(_client.GetStream()) {AutoFlush = true}) {
                 int flag = reader.BaseStream.ReadByte();
+                _username = reader.ReadLine();
 
                 while (flag != -1) {
                     if (Processors.TryGetValue((ClientRequest) flag, out var processor)) {
-                        processor.ProcessRequest(reader, writer);
+                        processor.ProcessRequest(_username, reader, writer);
                     }
                     else {
                         break;
@@ -79,11 +72,11 @@ public class ClientThread {
             Trace.WriteLine(e);
             Trace.WriteLine("Disconnecting the client...");
         }
+        
+        Processors[ClientRequest.Disconnect].ProcessRequest(_username, null, null);
     }
 
-    /// <summary>
-    /// Disconnects the client from the server.
-    /// </summary>
+    /// <summary> Disconnects the client from the server. </summary>
     public void Disconnect() {
         _client.Close();
     }

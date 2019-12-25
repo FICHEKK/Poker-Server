@@ -3,8 +3,7 @@ using Dao;
 
 namespace RequestProcessors {
     public class RegisterRequestProcessor : IRequestProcessor {
-        public void ProcessRequest(StreamReader reader, StreamWriter writer) {
-            string username = reader.ReadLine();
+        public void ProcessRequest(string username, StreamReader reader, StreamWriter writer) {
             string password = reader.ReadLine();
 
             if (DaoProvider.Dao.IsRegistered(username)) {

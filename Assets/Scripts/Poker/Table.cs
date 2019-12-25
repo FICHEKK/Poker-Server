@@ -15,6 +15,9 @@ namespace Poker {
         /// <summary>Event that gets raised every time a player leaves this table.</summary>
         public event EventHandler<PlayerLeftEventArgs> PlayerLeft;
 
+        /// <summary>This table's title (name).</summary>
+        public string Title { get; }
+        
         /// <summary>This table's small blind.</summary>
         public int SmallBlind { get; }
         
@@ -47,9 +50,11 @@ namespace Poker {
         private int _playerCount;
 
         /// <summary> Constructs a new table with the given small blind and maximum number of players. </summary>
+        /// <param name="title"> This table's title (name). </param>
         /// <param name="smallBlind"> The small blind. </param>
         /// <param name="maxPlayers"> Maximum number of players. </param>
-        public Table(int smallBlind, int maxPlayers) {
+        public Table(string title, int smallBlind, int maxPlayers) {
+            Title = title;
             SmallBlind = smallBlind;
             MaxPlayers = maxPlayers;
             Dealer = new Dealer(this);

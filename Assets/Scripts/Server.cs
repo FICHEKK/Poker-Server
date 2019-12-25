@@ -1,67 +1,53 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
 
 /// <summary>
-/// Implementation of a multi-threaded server. Each client connection
-/// will be given its own thread that will process requests from that
-/// client.
+/// Implementation of a multi-threaded server. Each client connection will be
+/// given its own thread that will process requests from that client.
 /// </summary>
-public class Server {
+public static class Server {
 
-    /// <summary>
-    /// This server's port.
-    /// </summary>
-    public int Port { get; }
+    /// <summary> Raised each time the server is started. </summary>
+    public static event EventHandler ServerStarted;
     
-    /// <summary>
-    /// Flag indicating if this server is currently running (accepting connections).
-    /// </summary>
-    public bool IsRunning { get; private set; }
+    /// <summary> Raised each time the server is stopped. </summary>
+    public static event EventHandler ServerStopped;
 
-    /// <summary>
-    /// Listener used to accept incoming connections.
-    /// </summary>
-    private TcpListener _listener;
-    
-    /// <summary>
-    /// Collection of all the client connection threads.
-    /// </summary>
-    private readonly List<ClientThread> _clientThreads = new List<ClientThread>();
-    
-    /// <summary>
-    /// Constructs a new server that will run on the given port.
-    /// </summary>
-    /// <param name="port">Port of the server.</param>
-    public Server(int port) {
-        Port = port;
-    }
+    /// <summary> Flag indicating if this server is currently running (accepting connections). </summary>
+    public static bool IsRunning { get; private set; }
 
-    /// <summary>
-    /// Starts the server, allowing clients to connect. Calling this method
-    /// will have no effect if the server is already running.
-    /// </summary>
-    public void Start() {
+    /// <summary> Listener used to accept incoming connections. </summary>
+    private static TcpListener _listener;
+
+    /// <summary> Collection of all the client connection threads. </summary>
+    private static readonly List<ClientThread> ClientThreads = new List<ClientThread>();
+
+    /// <summary> Starts the server on the specified port, allowing clients to connect. </summary>
+    public static void Start(int port) {
         if (IsRunning) return;
-
-        new Thread(Listen) {Name = "Listener"}.Start();
+        
+        new Thread(() => Listen(port)) {Name = "Listener"}.Start();
+        
+        ServerStarted?.Invoke(null, EventArgs.Empty);
     }
 
     /// <summary>
-    /// Listens for the upcoming client connections. For each new client connection,
-    /// a new handler thread is created.
+    /// Listens for the upcoming client connections.
+    /// For each new client connection, a new handler thread is created.
     /// </summary>
-    private void Listen() {
-        _listener = new TcpListener(IPAddress.Any, Port);
+    private static void Listen(int port) {
+        _listener = new TcpListener(IPAddress.Any, port);
         _listener.Start();
         IsRunning = true;
 
         try {
             while (IsRunning) {
                 TcpClient client = _listener.AcceptTcpClient();
-                _clientThreads.Add(new ClientThread(client));
+                ClientThreads.Add(new ClientThread(client));
             }
         }
         catch {
@@ -70,36 +56,33 @@ public class Server {
         finally {
             _listener.Stop();
         }
+        
+        ServerStopped?.Invoke(null, EventArgs.Empty);
     }
 
     /// <summary>
-    /// Stops this server, closing the connection and disconnecting all of the
-    /// currently connected clients. Calling this method will have no effect
-    /// if the server is not running.
+    /// Stops this server, closing the connection and disconnecting all of the currently connected
+    /// clients. Calling this method will have no effect if the server is not running.
     /// </summary>
-    public void Stop() {
+    public static void Stop() {
         if (!IsRunning) return;
         
         StopListening();
         DisconnectPlayers();
     }
 
-    /// <summary>
-    /// Stops listening for incoming client connections.
-    /// </summary>
-    private void StopListening() {
+    /// <summary> Stops listening for incoming client connections. </summary>
+    private static void StopListening() {
         IsRunning = false;
         _listener.Stop();
     }
 
-    /// <summary>
-    /// Disconnects all of the clients from this server.
-    /// </summary>
-    private void DisconnectPlayers() {
-        foreach (ClientThread client in _clientThreads) {
+    /// <summary> Disconnects all of the clients from this server. </summary>
+    private static void DisconnectPlayers() {
+        foreach (ClientThread client in ClientThreads) {
             client.Disconnect();
         }
         
-        _clientThreads.Clear();
+        ClientThreads.Clear();
     }
 }

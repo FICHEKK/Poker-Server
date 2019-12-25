@@ -10,8 +10,9 @@ namespace RequestProcessors {
         /// <summary>
         /// Processes the request.
         /// </summary>
+        /// <param name="username">Username to apply the request for.</param>
         /// <param name="reader">Stream reader used to read incoming data.</param>
         /// <param name="writer">Stream writer used to write output data.</param>
-        void ProcessRequest(StreamReader reader, StreamWriter writer);
+        void ProcessRequest(string username, StreamReader reader, StreamWriter writer);
     }
 }

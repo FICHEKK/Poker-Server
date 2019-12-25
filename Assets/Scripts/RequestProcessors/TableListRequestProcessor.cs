@@ -3,7 +3,7 @@ using Poker;
 
 namespace RequestProcessors {
     public class TableListRequestProcessor : IRequestProcessor{
-        public void ProcessRequest(StreamReader reader, StreamWriter writer) {
+        public void ProcessRequest(string username, StreamReader reader, StreamWriter writer) {
             writer.WriteLine(Casino.TableCount);
         
             foreach (string tableName in Casino.TableNames) {

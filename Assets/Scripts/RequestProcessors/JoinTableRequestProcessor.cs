@@ -4,9 +4,8 @@ using Poker.Players;
 
 namespace RequestProcessors {
     public class JoinTableRequestProcessor : IRequestProcessor {
-        public void ProcessRequest(StreamReader reader, StreamWriter writer) {
+        public void ProcessRequest(string username, StreamReader reader, StreamWriter writer) {
             string tableTitle = reader.ReadLine();
-            string username = reader.ReadLine();
             int buyIn = int.Parse(reader.ReadLine());
 
             if (!Casino.HasTableWithTitle(tableTitle)) {

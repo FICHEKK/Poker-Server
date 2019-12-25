@@ -3,8 +3,7 @@ using Poker;
 
 namespace RequestProcessors {
     public class AllInRequestProcessor : IRequestProcessor {
-        public void ProcessRequest(StreamReader reader, StreamWriter writer) {
-            string username = reader.ReadLine();
+        public void ProcessRequest(string username, StreamReader reader, StreamWriter writer) {
             string allInAmount = reader.ReadLine();
 
             Dealer dealer = Casino.GetTablePlayer(username).Table.Dealer;

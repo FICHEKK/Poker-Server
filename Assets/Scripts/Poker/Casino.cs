@@ -1,6 +1,8 @@
-﻿using System.Collections.Concurrent;
+﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using Poker.EventArguments.Casino;
 using Poker.Players;
 
 namespace Poker {
@@ -8,6 +10,24 @@ namespace Poker {
     /// <summary>Models a casino, that is, the collection of multiple poker tables.</summary>
     public static class Casino {
         
+        /// <summary> Raised each time a player joins the lobby. </summary>
+        public static event EventHandler<LobbyPlayerAddedEventArgs> LobbyPlayerAdded;
+
+        /// <summary> Raised each time a player leaves the lobby. </summary>
+        public static event EventHandler<LobbyPlayerRemovedEventArgs> LobbyPlayerRemoved;
+
+        /// <summary> Raised each time a player joins a table. </summary>
+        public static event EventHandler<TablePlayerAddedEventArgs> TablePlayerAdded;
+
+        /// <summary> Raised each time a player leaves a table. </summary>
+        public static event EventHandler<TablePlayerRemovedEventArgs> TablePlayerRemoved;
+
+        /// <summary> Raised each time a new table is created. </summary>
+        public static event EventHandler<TableAddedEventArgs> TableAdded;
+
+        /// <summary> Raised each time a table is removed. </summary>
+        public static event EventHandler<TableRemovedEventArgs> TableRemoved;
+
         /// <summary>The number of active tables in this casino.</summary>
         public static int TableCount => TableByTitle.Count;
 
@@ -40,25 +60,15 @@ namespace Poker {
 
         /// <summary>A set of all the players currently on the table.</summary>
         private static readonly HashSet<TablePlayer> TablePlayers = new HashSet<TablePlayer>();
-
-        #region Table
-
-        public static bool AddTable(string title, Table table) => TableByTitle.TryAdd(title, table);
-
-        public static Table GetTable(string title) => TableByTitle[title];
-
-        public static bool HasTableWithTitle(string title) => TableByTitle.ContainsKey(title);
-
-        public static bool RemoveTable(string tableTitle) => TableByTitle.TryRemove(tableTitle, out _);
-
-        #endregion
-
+        
         #region Player in-lobby
 
-        public static bool AddLobbyPlayer(LobbyPlayer player) {
+        public static void AddLobbyPlayer(LobbyPlayer player) {
             lock (LobbyPlayersPadlock) {
-                return LobbyPlayers.Add(player);
+                LobbyPlayers.Add(player);
             }
+            
+            LobbyPlayerAdded?.Invoke(null, new LobbyPlayerAddedEventArgs(player.Username, player.ChipCount));
         }
 
         public static LobbyPlayer GetLobbyPlayer(string username) {
@@ -67,20 +77,24 @@ namespace Poker {
             }
         }
 
-        public static bool RemoveLobbyPlayer(LobbyPlayer player) {
+        public static void RemoveLobbyPlayer(LobbyPlayer player) {
             lock (LobbyPlayersPadlock) {
-                return LobbyPlayers.Remove(player);
+                LobbyPlayers.Remove(player);
             }
+            
+            LobbyPlayerRemoved?.Invoke(null, new LobbyPlayerRemovedEventArgs(player.Username));
         }
 
         #endregion
 
         #region Player on-table
 
-        public static bool AddTablePlayer(TablePlayer player) {
+        public static void AddTablePlayer(TablePlayer player) {
             lock (TablePlayersPadlock) {
-                return TablePlayers.Add(player);
+                TablePlayers.Add(player);
             }
+            
+            TablePlayerAdded?.Invoke(null, new TablePlayerAddedEventArgs(player.Table, player.Username));
         }
 
         public static TablePlayer GetTablePlayer(string username) {
@@ -89,10 +103,34 @@ namespace Poker {
             }
         }
 
-        public static bool RemoveTablePlayer(TablePlayer player) {
+        public static void RemoveTablePlayer(TablePlayer player) {
             lock (TablePlayersPadlock) {
-                return TablePlayers.Remove(player);
+                TablePlayers.Remove(player);
             }
+            
+            TablePlayerRemoved?.Invoke(null, new TablePlayerRemovedEventArgs(player.Table, player.Username));
+        }
+
+        #endregion
+        
+        #region Table
+
+        public static void AddTable(string title, Table table) {
+            TableByTitle.TryAdd(title, table);
+            TableAdded?.Invoke(null, new TableAddedEventArgs(table));
+        }
+
+        public static Table GetTable(string title) {
+            return TableByTitle[title];
+        }
+
+        public static bool HasTableWithTitle(string title) {
+            return TableByTitle.ContainsKey(title);
+        }
+
+        public static void RemoveTable(string title) {
+            TableByTitle.TryRemove(title, out _);
+            TableRemoved?.Invoke(null, new TableRemovedEventArgs(title));
         }
 
         #endregion
@@ -118,8 +156,7 @@ namespace Poker {
             TablePlayer tablePlayer = GetTablePlayer(username);
             RemoveTablePlayer(tablePlayer);
 
-            LobbyPlayer lobbyPlayer =
-                new LobbyPlayer(username, tablePlayer.ChipCount, tablePlayer.Reader, tablePlayer.Writer);
+            LobbyPlayer lobbyPlayer = new LobbyPlayer(username, tablePlayer.ChipCount, tablePlayer.Reader, tablePlayer.Writer);
             AddLobbyPlayer(lobbyPlayer);
 
             tablePlayer.Table.RemovePlayer(tablePlayer);

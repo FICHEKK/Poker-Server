@@ -3,7 +3,7 @@ using Poker;
 
 namespace RequestProcessors {
     public class CreateTableRequestProcessor : IRequestProcessor {
-        public void ProcessRequest(StreamReader reader, StreamWriter writer) {
+        public void ProcessRequest(string username, StreamReader reader, StreamWriter writer) {
             string tableTitle = reader.ReadLine();
             int smallBlind = int.Parse(reader.ReadLine());
             int maxPlayers = int.Parse(reader.ReadLine());
@@ -13,7 +13,7 @@ namespace RequestProcessors {
                 return;
             }
             
-            Casino.AddTable(tableTitle, new Table(smallBlind, maxPlayers));
+            Casino.AddTable(tableTitle, new Table(tableTitle, smallBlind, maxPlayers));
             writer.BaseStream.WriteByte((byte) ServerCreateTableResponse.Success);
         }
     }

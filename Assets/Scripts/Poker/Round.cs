@@ -11,42 +11,42 @@ namespace Poker {
     public class Round {
         
         private const int MaxCommunityCardCount = 5;
-        private const int MinSeatCountAtStart = 2;
 
         public event EventHandler<RoundPhaseChangedEventArgs> RoundPhaseChanged;
         public event EventHandler<CurrentPlayerChangedEventArgs> CurrentPlayerChanged;
         
         public int CurrentPot { get; private set; }
-        public int CurrentHighestBet { get; set; }
+        public int CurrentHighestBet => _playerData.Select(player => player.CurrentPhaseBet).Max();
+
         public Phase CurrentPhase { get; private set; }
         public List<Card> CommunityCards { get; } = new List<Card>();
-        
+
         /// <summary>The index of the seat whose turn it is at the moment.</summary>
         private int _currentPlayerIndex;
         private int _currentPlayerCount;
-        private readonly TablePlayer[] _players;
+        private readonly PlayerData[] _playerData;
 
         /// <summary>Used to determine if all of the active players have performed the same bet.</summary>
         private int _counter;
 
         /// <summary>Constructs a new poker round.</summary>
-        public Round(int smallBlind, TablePlayer[] players, int currentPlayerIndex) {
-            _players = players ?? throw new ArgumentNullException(nameof(players));
+        public Round(TablePlayer[] players, int currentPlayerIndex) {
+            if(players == null) throw new ArgumentNullException(nameof(players));
             
-            CurrentHighestBet = smallBlind * 2;
-            CurrentPot = smallBlind * 3;
             _currentPlayerIndex = currentPlayerIndex;
-
-            foreach (var player in _players) {
-                if (player != null) {
+            _playerData = new PlayerData[players.Length];
+            
+            for (var i = 0; i < players.Length; i++) {
+                if (players[i] != null) {
                     _currentPlayerCount++;
+                    _playerData[i] = new PlayerData(players[i]);
                 }
             }
         }
 
         public void Start() {
-            OnRoundPhaseChanged(new RoundPhaseChangedEventArgs(Phase.PreFlop));
             UpdateCurrentPlayerIndex();
+            OnRoundPhaseChanged(new RoundPhaseChangedEventArgs(Phase.PreFlop));
         }
 
         /// <summary>Adds a new community card to this round.</summary>
@@ -58,57 +58,70 @@ namespace Poker {
             CommunityCards.Add(card);
         }
 
+        /// <summary> Returns all of the players that are currently still playing this round. </summary>
         public List<TablePlayer> GetActivePlayers() {
-            return _players.Where(player => player != null).ToList();
+            return _playerData.Where(data => data != null && !data.Folded).Select(data => data.Player).ToList();
         }
 
-        /// <summary>Adds the specified amount of chips to the current pot.</summary>
-        public void AddToPot(int amount) {
-            CurrentPot += amount;
+        /// <summary> Returns all of the players that were or still are playing this round. </summary>
+        public List<TablePlayer> GetParticipatingPlayers() {
+            return _playerData.Where(data => data != null).Select(data => data.Player).ToList();
         }
+
+        //----------------------------------------------------------------
+        //                      Player actions
+        //----------------------------------------------------------------
 
         public void PlayerChecked() {
             _counter++;
-            CheckForPhaseChange();
             UpdateCurrentPlayerIndex();
+            CheckForPhaseChange();
         }
 
         public void PlayerCalled(int callAmount) {
             _counter++;
-            _players[_currentPlayerIndex].CurrentBet = callAmount;
-            CheckForPhaseChange();
+            ChipsPlaced(_currentPlayerIndex, callAmount);
             UpdateCurrentPlayerIndex();
+            CheckForPhaseChange();
         }
         
         public void PlayerFolded() {
-            _players[_currentPlayerIndex] = null;
+            _playerData[_currentPlayerIndex].Folded = true;
             _currentPlayerCount--;
 
             if (_currentPlayerCount == 1) {
                 OnRoundPhaseChanged(new RoundPhaseChangedEventArgs(Phase.OnePlayerLeft));
             }
             else {
-                CheckForPhaseChange();
                 UpdateCurrentPlayerIndex();
+                CheckForPhaseChange();
             }
         }
 
         public void PlayerRaised(int raiseAmount) {
             _counter = 1;
-            _players[_currentPlayerIndex].CurrentBet = raiseAmount;
+            ChipsPlaced(_currentPlayerIndex, raiseAmount);
             UpdateCurrentPlayerIndex();
         }
         
         public void PlayerAllIn(int allInAmount) {
             PlayerRaised(allInAmount);
         }
+        
+        public void ChipsPlaced(int index, int amount) {
+            _playerData[index].Player.Stack -= amount;
+            _playerData[index].Player.ChipCount -= amount;
+            _playerData[index].CurrentPhaseBet += amount;
+            _playerData[index].CurrentBet += amount;
+            CurrentPot += amount;
+        }
 
         private void UpdateCurrentPlayerIndex() {
-            for (int i = 0; i < _players.Length - 1; i++) {
+            for (int i = 0; i < _playerData.Length - 1; i++) {
                 _currentPlayerIndex++;
-                _currentPlayerIndex %= _players.Length;
+                _currentPlayerIndex %= _playerData.Length;
 
-                if (_players[_currentPlayerIndex] != null) break;
+                if (_playerData[_currentPlayerIndex] != null) break;
             }
             
             OnCurrentPlayerChanged(new CurrentPlayerChangedEventArgs(_currentPlayerIndex));
@@ -125,7 +138,16 @@ namespace Poker {
             }
         }
 
-        private void OnRoundPhaseChanged(RoundPhaseChangedEventArgs args) => RoundPhaseChanged?.Invoke(this, args);
+        private void OnRoundPhaseChanged(RoundPhaseChangedEventArgs args) {
+            if (args.CurrentPhase != Phase.PreFlop) {
+                foreach (PlayerData data in _playerData) {
+                    data.CurrentPhaseBet = 0;
+                }
+            }
+            
+            RoundPhaseChanged?.Invoke(this, args);
+        }
+
         private void OnCurrentPlayerChanged(CurrentPlayerChangedEventArgs args) => CurrentPlayerChanged?.Invoke(this, args);
         
         /// <summary>Models table round phases.</summary>
@@ -148,6 +170,17 @@ namespace Poker {
             
             /// <summary>Phase in which the round ends because there is only a single player left.</summary>
             OnePlayerLeft
+        }
+
+        private class PlayerData {
+            public TablePlayer Player { get; }
+            public int CurrentBet { get; set; }
+            public int CurrentPhaseBet { get; set; }
+            public bool Folded { get; set; }
+
+            public PlayerData(TablePlayer player) {
+                Player = player;
+            }
         }
     }
 }

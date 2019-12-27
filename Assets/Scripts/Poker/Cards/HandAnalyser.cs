@@ -96,12 +96,11 @@ namespace Poker.Cards {
                     streak = 0;
                 }
             }
-
+            
             return false;
         }
-
+        
         private bool IsFlush() => _cards.All(card => card.Suit == _cards[0].Suit);
-
         private bool ContainsRank(Rank rank) => _cards.Any(card => card.Rank == rank);
     }
 }

@@ -13,9 +13,6 @@ namespace Poker.Players {
         /// <summary> The seat that this player is currently on. </summary>
         public Table Table { get; set; }
 
-        /// <summary> The amount of chips that this player currently has currently bet this round phase. </summary>
-        public int CurrentBet { get; set; }
-
         /// <summary> The amount of chips that this player currently has at the table. </summary>
         public int Stack { get; set; }
 

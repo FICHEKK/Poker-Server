@@ -20,14 +20,14 @@ namespace Poker.Cards {
 
             HandAnalyser = new HandAnalyser(this);
         }
-
+        
         public int CompareTo(Hand other) {
             HandValue handValue = HandAnalyser.HandValue;
             HandValue handValueOther = other.HandAnalyser.HandValue;
 
             if ((int) handValue > (int) handValueOther) return 1;
             if ((int) handValue < (int) handValueOther) return -1;
-
+            
             if (handValue == HandValue.HighCard) return CompareHighCard(other);
             if (handValue == HandValue.OnePair) return CompareOnePair(other);
             if (handValue == HandValue.TwoPair) return CompareTwoPair(other);
@@ -40,7 +40,7 @@ namespace Poker.Cards {
 
             return 0;
         }
-
+        
         private int CompareHighCard(Hand other) {
             return CompareMultiple(other, 1);
         }
@@ -105,7 +105,7 @@ namespace Poker.Cards {
 
             return indexes;
         }
-
+        
         private int CompareSingle(Hand other, int cardinality) {
             int rank = FindIndexOfRank(this, cardinality);
             int rankOther = FindIndexOfRank(other, cardinality);
@@ -114,7 +114,7 @@ namespace Poker.Cards {
             if (rank == rankOther) return 0;
             return -1;
         }
-
+        
         private int CompareMultiple(Hand other, int cardinality) {
             List<int> ranks = FindAllIndexesOfRank(this, cardinality);
             List<int> ranksOther = FindAllIndexesOfRank(other, cardinality);

@@ -4,8 +4,10 @@ using System.IO;
 
 namespace Dao
 {
-    public class FileDao : IDao
-    {
+    public class FileDao : IDao {
+        private const int DefaultChipCount = 1000;
+        private const int DefaultWinCount = 0;
+        
         private const int ExpectedLinePartCount = 4;
         private const char Separator = ',';
 
@@ -38,7 +40,7 @@ namespace Dao
         {
             if (IsRegistered(username)) return false;
 
-            ClientData clientData = new ClientData(username, password, 0, 0);
+            ClientData clientData = new ClientData(username, password, DefaultChipCount, DefaultWinCount);
 
             try
             {

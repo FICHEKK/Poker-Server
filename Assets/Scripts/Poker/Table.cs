@@ -94,17 +94,14 @@ namespace Poker {
 
         /// <summary> Adds the given player to the first empty seat, if there is any. </summary>
         /// <param name="player"> Player to be added to the table. </param>
-        /// <param name="stack"> The amount of chips the player is buying-in with. </param>
-        public bool AddPlayer(TablePlayer player, int stack) {
+        public void AddPlayer(TablePlayer player) {
             int index = GetFirstFreeSeatIndex();
-            if (index < 0) return false;
+            if (index < 0) return;
 
             _players[index] = player ?? throw new ArgumentNullException(nameof(player));
-            _players[index].Stack = stack;
             _playerCount++;
 
-            OnPlayerJoined(new PlayerJoinedEventArgs(index, player.Username, stack));
-            return true;
+            OnPlayerJoined(new PlayerJoinedEventArgs(player));
         }
 
         /// <summary> Finds the player with the given username and returns the index of that player's position on the table. </summary>
@@ -125,18 +122,15 @@ namespace Poker {
         /// <summary> Removes the specified player from the table. </summary>
         /// <param name="player"> Player to be removed. </param>
         /// <returns> True if the player was removed, false otherwise </returns>
-        public bool RemovePlayer(TablePlayer player) {
+        public void RemovePlayer(TablePlayer player) {
             for (int i = 0; i < MaxPlayers; i++) {
                 if (IsSeatOccupied(i) && _players[i].Equals(player)) {
                     _players[i] = null;
                     _playerCount--;
 
                     OnPlayerLeft(new PlayerLeftEventArgs(i));
-                    return true;
                 }
             }
-
-            return false;
         }
 
         /// <summary> Returns the copy of the internal table array. </summary>

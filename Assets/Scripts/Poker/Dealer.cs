@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
+using Dao;
 using Poker.Cards;
 using Poker.EventArguments;
 using Poker.Players;
@@ -36,7 +38,9 @@ namespace Poker {
             Broadcast(smallBlindIndex.ToString());
             Broadcast(bigBlindIndex.ToString());
 
-            Round = new Round(Table.SmallBlind, Table.GetPlayerArray(), bigBlindIndex);
+            Round = new Round(Table.GetPlayerArray(), bigBlindIndex);
+            Round.ChipsPlaced(smallBlindIndex, Table.SmallBlind);
+            Round.ChipsPlaced(bigBlindIndex, Table.BigBlind);
             Round.RoundPhaseChanged += RoundPhaseChangedEventHandler;
             Round.CurrentPlayerChanged += CurrentPlayerChangedEventHandler;
             Round.Start();
@@ -46,8 +50,8 @@ namespace Poker {
 
         private void PlayerJoinedEventHandler(object sender, PlayerJoinedEventArgs e) {
             Broadcast(ServerResponse.PlayerJoined);
-            Broadcast(e.Username);
-            Broadcast(e.Stack.ToString());
+            Broadcast(e.Player.Username);
+            Broadcast(e.Player.Stack.ToString());
 
             if (Table.PlayerCount == 2) {
                 StartNewRound();
@@ -62,74 +66,101 @@ namespace Poker {
         }
 
         private void RoundPhaseChangedEventHandler(object sender, RoundPhaseChangedEventArgs e) {
-            switch (e.CurrentPhase) {
-                case Round.Phase.PreFlop:
-                    Broadcast(ServerResponse.Hand);
-                    DealHandCards();
-                    break;
-                
-                case Round.Phase.Flop:
-                    Broadcast(ServerResponse.Flop);
-                    RevealCommunityCards(3);
-                    break;
-                
-                case Round.Phase.Turn:
-                    Broadcast(ServerResponse.Turn);
-                    RevealCommunityCards(1);
-                    break;
-                
-                case Round.Phase.River:
-                    Broadcast(ServerResponse.River);
-                    RevealCommunityCards(1);
-                    break;
-                
-                case Round.Phase.Showdown:
-                    List<int> winnerIndexes = DetermineWinnerIndexes();
-                    
-                    Broadcast(ServerResponse.Showdown);
-                    Broadcast(winnerIndexes.Count.ToString());
-                    
-                    foreach (int index in winnerIndexes) {
-                        Broadcast(index.ToString());
-                    }
-                    
-                    Thread.Sleep(3000);
-                    Broadcast(ServerResponse.RoundFinished);
-                    StartNewRound();
-                    break;
-                
-                case Round.Phase.OnePlayerLeft:
-                    Broadcast(ServerResponse.Showdown);
-                    Broadcast(1.ToString());
-                    Broadcast(Round.GetActivePlayers()[0].Index.ToString());
-                    
-                    Thread.Sleep(3000);
-                    Broadcast(ServerResponse.RoundFinished);
-                    StartNewRound();
-                    break;
+            if (e.CurrentPhase == Round.Phase.PreFlop) {
+                ProcessPreFlop();
+            }
+            else if (e.CurrentPhase == Round.Phase.Flop) {
+                ProcessFlop();
+            }
+            else if (e.CurrentPhase == Round.Phase.Turn) {
+                ProcessTurn();
+            }
+            else if (e.CurrentPhase == Round.Phase.River) {
+                ProcessRiver();
+            }
+            else if (e.CurrentPhase == Round.Phase.Showdown) {
+                ProcessShowdown();
+            }
+            else if (e.CurrentPhase == Round.Phase.OnePlayerLeft) {
+                ProcessOnePlayerLeft();
             }
         }
 
-        private void DealHandCards() {
+        private void ProcessPreFlop() {
+            Broadcast(ServerResponse.Hand);
+            
             for (int i = 0; i < Table.MaxPlayers; i++) {
                 if (!Table.IsSeatOccupied(i)) continue;
+
+                Card handCard1 = Deck.GetNextCard();
+                Card handCard2 = Deck.GetNextCard();
                 
-                Signal(i, Deck.GetNextCard().ToString());
-                Signal(i, Deck.GetNextCard().ToString());
+                Table.GetPlayerAt(i).SetHand(handCard1, handCard2);
+                
+                Signal(i, handCard1.ToString());
+                Signal(i, handCard2.ToString());
             }
         }
 
-        private void RevealCommunityCards(int count) {
-            for (int i = 0; i < count; i++) {
-                Card card = Deck.GetNextCard();
-                Broadcast(card.ToString());
-                Round.AddCommunityCard(card);
-            }
+        private void ProcessFlop() {
+            Broadcast(ServerResponse.Flop);
+            RevealCommunityCard();
+            RevealCommunityCard();
+            RevealCommunityCard();
         }
 
-        private List<int> DetermineWinnerIndexes() {
+        private void ProcessTurn() {
+            Broadcast(ServerResponse.Turn);
+            RevealCommunityCard();
+        }
+
+        private void ProcessRiver() {
+            Broadcast(ServerResponse.River);
+            RevealCommunityCard();
+        }
+        
+        private void RevealCommunityCard() {
+            Card card = Deck.GetNextCard();
+            Broadcast(card.ToString());
+            Round.AddCommunityCard(card);
+        }
+
+        private void ProcessShowdown() {
+            FinishThisRound(DetermineWinners());
+        }
+
+        private void ProcessOnePlayerLeft() {
+            FinishThisRound(new List<TablePlayer> { Round.GetActivePlayers()[0] });
+        }
+
+        private void FinishThisRound(List<TablePlayer> winners) {
+            int winAmount = Round.CurrentPot / winners.Count;
+            
+            foreach (TablePlayer winner in winners) {
+                DaoProvider.Dao.SetWinCount(winner.Username, DaoProvider.Dao.GetWinCount(winner.Username) + 1);
+                winner.Stack += winAmount;
+                winner.ChipCount += winAmount;
+            }
+            
+            foreach (TablePlayer participant in Round.GetParticipatingPlayers()) {
+                DaoProvider.Dao.SetChipCount(participant.Username, participant.ChipCount);
+            }
+
+            Broadcast(ServerResponse.Showdown);
+            Broadcast(winners.Count.ToString());
+
+            foreach (TablePlayer winner in winners) {
+                Broadcast(winner.Index.ToString());
+            }
+
+            Thread.Sleep(2000);
+            Broadcast(ServerResponse.RoundFinished);
+            StartNewRound();
+        }
+
+        private List<TablePlayer> DetermineWinners() {
             List<Card> cards = Round.CommunityCards;
-            List<int> winnerIndexes = new List<int>();
+            List<TablePlayer> winners = new List<TablePlayer>();
 
             Hand bestHand = null;
 
@@ -142,23 +173,23 @@ namespace Poker {
                 
                 if (bestHand == null) {
                     bestHand = evaluator.BestHand;
-                    winnerIndexes.Add(player.Index);
+                    winners.Add(player);
                     continue;
                 }
 
                 int result = bestHand.CompareTo(evaluator.BestHand);
 
                 if (result < 0) {
-                    winnerIndexes.Clear();
-                    winnerIndexes.Add(player.Index);
+                    winners.Clear();
+                    winners.Add(player);
                     bestHand = evaluator.BestHand;
                 }
                 else if (result == 0) {
-                    winnerIndexes.Add(player.Index);
+                    winners.Add(player);
                 }
             }
 
-            return winnerIndexes;
+            return winners;
         }
 
         private void CurrentPlayerChangedEventHandler(object sender, CurrentPlayerChangedEventArgs e) {

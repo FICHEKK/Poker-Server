@@ -29,7 +29,7 @@
                 BestHand = hand;
                 return;
             }
-
+            
             if (BestHand.CompareTo(hand) < 0) {
                 BestHand = hand;
             }

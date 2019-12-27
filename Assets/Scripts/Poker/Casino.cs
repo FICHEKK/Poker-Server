@@ -61,7 +61,9 @@ namespace Poker {
         /// <summary>A set of all the players currently on the table.</summary>
         private static readonly HashSet<TablePlayer> TablePlayers = new HashSet<TablePlayer>();
         
-        #region Player in-lobby
+        //----------------------------------------------------------------
+        //                      Player in-lobby
+        //----------------------------------------------------------------
 
         public static void AddLobbyPlayer(LobbyPlayer player) {
             lock (LobbyPlayersPadlock) {
@@ -85,13 +87,14 @@ namespace Poker {
             LobbyPlayerRemoved?.Invoke(null, new LobbyPlayerRemovedEventArgs(player.Username));
         }
 
-        #endregion
-
-        #region Player on-table
+        //----------------------------------------------------------------
+        //                      Player on-table
+        //----------------------------------------------------------------
 
         public static void AddTablePlayer(TablePlayer player) {
             lock (TablePlayersPadlock) {
                 TablePlayers.Add(player);
+                player.Table.AddPlayer(player);
             }
             
             TablePlayerAdded?.Invoke(null, new TablePlayerAddedEventArgs(player.Table, player.Username));
@@ -106,14 +109,15 @@ namespace Poker {
         public static void RemoveTablePlayer(TablePlayer player) {
             lock (TablePlayersPadlock) {
                 TablePlayers.Remove(player);
+                player.Table.RemovePlayer(player);
             }
             
             TablePlayerRemoved?.Invoke(null, new TablePlayerRemovedEventArgs(player.Table, player.Username));
         }
 
-        #endregion
-        
-        #region Table
+        //----------------------------------------------------------------
+        //                      Table methods
+        //----------------------------------------------------------------
 
         public static void AddTable(string title, Table table) {
             TableByTitle.TryAdd(title, table);
@@ -133,9 +137,9 @@ namespace Poker {
             TableRemoved?.Invoke(null, new TableRemovedEventArgs(title));
         }
 
-        #endregion
-
-        #region Player methods
+        //----------------------------------------------------------------
+        //                      Player methods
+        //----------------------------------------------------------------
 
         public static bool HasPlayerWithUsername(string username) {
             return GetLobbyPlayer(username) != null || GetTablePlayer(username) != null;
@@ -148,8 +152,6 @@ namespace Poker {
             int index = table.GetFirstFreeSeatIndex();
             TablePlayer tablePlayer = new TablePlayer(username, lobbyPlayer.ChipCount, table, buyIn, index, lobbyPlayer.Reader, lobbyPlayer.Writer);
             AddTablePlayer(tablePlayer);
-
-            table.AddPlayer(tablePlayer, buyIn);
         }
 
         public static void MovePlayerFromTableToLobby(string username) {
@@ -158,10 +160,6 @@ namespace Poker {
 
             LobbyPlayer lobbyPlayer = new LobbyPlayer(username, tablePlayer.ChipCount, tablePlayer.Reader, tablePlayer.Writer);
             AddLobbyPlayer(lobbyPlayer);
-
-            tablePlayer.Table.RemovePlayer(tablePlayer);
         }
-
-        #endregion
     }
 }

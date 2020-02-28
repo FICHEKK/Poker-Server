@@ -8,7 +8,7 @@
         /// <summary>
         /// Path of the database that will store all of the users.
         /// </summary>
-        private const string DatabasePath = "Assets/Databases/clients.dat";
+        private const string DatabasePath = "Assets/Databases/clients.csv";
 
         /// <summary>
         /// The concrete Data Access Object implementation.

@@ -4,11 +4,12 @@ using System.IO;
 
 namespace Dao
 {
-    public class FileDao : IDao {
+    public class FileDao : IDao
+    {
         private const int DefaultChipCount = 1000;
         private const int DefaultWinCount = 0;
         
-        private const int ExpectedLinePartCount = 4;
+        private const int ExpectedLinePartCount = 5;
         private const char Separator = ',';
 
         private readonly object _fileLock = new object();
@@ -40,7 +41,7 @@ namespace Dao
         {
             if (IsRegistered(username)) return false;
 
-            ClientData clientData = new ClientData(username, password, DefaultChipCount, DefaultWinCount);
+            ClientData clientData = new ClientData(username, password, DefaultChipCount, DefaultWinCount, false);
 
             try
             {
@@ -61,6 +62,11 @@ namespace Dao
         public bool IsRegistered(string username)
         {
             return _clients.ContainsKey(username);
+        }
+
+        public bool IsBanned(string username)
+        {
+            return IsRegistered(username) && _clients[username].IsBanned;
         }
 
         public int GetChipCount(string username)
@@ -88,6 +94,15 @@ namespace Dao
 
             ClientData data = _clients[username].Clone();
             data.WinCount = winCount;
+            return UpdateClientData(data);
+        }
+
+        public bool SetIsBanned(string username, bool isBanned)
+        {
+            if (!IsRegistered(username)) return false;
+
+            ClientData data = _clients[username].Clone();
+            data.IsBanned = isBanned;
             return UpdateClientData(data);
         }
 
@@ -119,8 +134,9 @@ namespace Dao
                 string password = parts[1];
                 int chipCount = int.Parse(parts[2]);
                 int winCount = int.Parse(parts[3]);
+                bool isBanned = bool.Parse(parts[4]);
                 
-                return new ClientData(username, password, chipCount, winCount);
+                return new ClientData(username, password, chipCount, winCount, isBanned);
             }
             catch
             {
@@ -184,18 +200,20 @@ namespace Dao
             public string Password { get; }
             public int ChipCount { get; set; }
             public int WinCount { get; set; }
+            public bool IsBanned { get; set; }
 
-            public ClientData(string username, string password, int chipCount, int winCount)
+            public ClientData(string username, string password, int chipCount, int winCount, bool isBanned)
             {
                 Username = username;
                 Password = password;
                 ChipCount = chipCount;
                 WinCount = winCount;
+                IsBanned = isBanned;
             }
 
             public ClientData Clone()
             {
-                return new ClientData(Username, Password, ChipCount, WinCount);
+                return new ClientData(Username, Password, ChipCount, WinCount, IsBanned);
             }
 
             public override string ToString()
@@ -203,7 +221,8 @@ namespace Dao
                 return Username + Separator +
                        Password + Separator +
                        ChipCount + Separator +
-                       WinCount;
+                       WinCount + Separator +
+                       IsBanned;
             }
         }
     }

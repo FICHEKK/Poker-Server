@@ -36,7 +36,9 @@ public class ClientThread {
             {ClientRequest.Fold, new FoldRequestProcessor()},
             {ClientRequest.Raise, new RaiseRequestProcessor()},
             {ClientRequest.AllIn, new AllInRequestProcessor()},
-            {ClientRequest.Disconnect, new DisconnectRequestProcessor()}
+            {ClientRequest.Disconnect, new DisconnectRequestProcessor()},
+            {ClientRequest.LoginReward, new LoginRewardRequestProcessor()},
+            {ClientRequest.LeaveTable, new LeaveTableRequestProcessor()}
         };
     }
 

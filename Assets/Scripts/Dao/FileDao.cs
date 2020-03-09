@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 
 namespace Dao
@@ -8,9 +9,12 @@ namespace Dao
     {
         private const int DefaultChipCount = 1000;
         private const int DefaultWinCount = 0;
-        
-        private const int ExpectedLinePartCount = 5;
+        private const bool DefaultBanStatus = false;
+        private const int RewardIntervalInHours = 4;
+
+        private const int ExpectedLinePartCount = 6;
         private const char Separator = ',';
+        private static readonly CultureInfo RewardTimestampCulture = new CultureInfo("en-GB");
 
         private readonly object _fileLock = new object();
         private readonly Dictionary<string, ClientData> _clients = new Dictionary<string, ClientData>();
@@ -41,7 +45,14 @@ namespace Dao
         {
             if (IsRegistered(username)) return false;
 
-            ClientData clientData = new ClientData(username, password, DefaultChipCount, DefaultWinCount, false);
+            var clientData = new ClientData(
+                username: username,
+                password: password,
+                chipCount: DefaultChipCount,
+                winCount: DefaultWinCount, 
+                isBanned: DefaultBanStatus,
+                rewardTimestamp: DateTime.Now.AddHours(RewardIntervalInHours)
+            );
 
             try
             {
@@ -79,6 +90,11 @@ namespace Dao
             return IsRegistered(username) ? _clients[username].WinCount : -1;
         }
 
+        public DateTime? GetRewardTimestamp(string username)
+        {
+            return IsRegistered(username) ? _clients[username].RewardTimestamp : (DateTime?) null;
+        }
+
         public bool SetChipCount(string username, int chipCount)
         {
             if (!IsRegistered(username)) return false;
@@ -103,6 +119,15 @@ namespace Dao
 
             ClientData data = _clients[username].Clone();
             data.IsBanned = isBanned;
+            return UpdateClientData(data);
+        }
+
+        public bool UpdateRewardTimestamp(string username)
+        {
+            if (!IsRegistered(username)) return false;
+
+            ClientData data = _clients[username].Clone();
+            data.RewardTimestamp = DateTime.Now.AddHours(RewardIntervalInHours);
             return UpdateClientData(data);
         }
 
@@ -135,8 +160,9 @@ namespace Dao
                 int chipCount = int.Parse(parts[2]);
                 int winCount = int.Parse(parts[3]);
                 bool isBanned = bool.Parse(parts[4]);
+                DateTime rewardTimestamp = DateTime.Parse(parts[5]);
                 
-                return new ClientData(username, password, chipCount, winCount, isBanned);
+                return new ClientData(username, password, chipCount, winCount, isBanned, rewardTimestamp);
             }
             catch
             {
@@ -201,19 +227,21 @@ namespace Dao
             public int ChipCount { get; set; }
             public int WinCount { get; set; }
             public bool IsBanned { get; set; }
+            public DateTime RewardTimestamp { get; set; }
 
-            public ClientData(string username, string password, int chipCount, int winCount, bool isBanned)
+            public ClientData(string username, string password, int chipCount, int winCount, bool isBanned, DateTime rewardTimestamp)
             {
                 Username = username;
                 Password = password;
                 ChipCount = chipCount;
                 WinCount = winCount;
                 IsBanned = isBanned;
+                RewardTimestamp = rewardTimestamp;
             }
 
             public ClientData Clone()
             {
-                return new ClientData(Username, Password, ChipCount, WinCount, IsBanned);
+                return new ClientData(Username, Password, ChipCount, WinCount, IsBanned, RewardTimestamp);
             }
 
             public override string ToString()
@@ -222,7 +250,8 @@ namespace Dao
                        Password + Separator +
                        ChipCount + Separator +
                        WinCount + Separator +
-                       IsBanned;
+                       IsBanned + Separator +
+                       RewardTimestamp.ToString(RewardTimestampCulture);
             }
         }
     }

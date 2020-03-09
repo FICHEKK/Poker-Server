@@ -1,4 +1,6 @@
-﻿namespace Dao
+﻿using System;
+
+namespace Dao
 {
     /// <summary>
     /// Interface of the Data Access Object that specifies all of
@@ -37,6 +39,11 @@
         /// <param name="username">The client's username.</param>
         /// <returns>Client's win count or -1 if the provided username is invalid.</returns>
         int GetWinCount(string username);
+        
+        /// <summary>Fetches and returns the next chip reward timestamp of the client with the provided username.</summary>
+        /// <param name="username">The client's username.</param>
+        /// <returns>Client's win count or -1 if the provided username is invalid.</returns>
+        DateTime? GetRewardTimestamp(string username);
 
         /// <summary>Sets the chip count of the client with the provided username.</summary>
         /// <param name="username">The client's username.</param>
@@ -55,5 +62,10 @@
         /// <param name="isBanned">The client's new ban status.</param>
         /// <returns>True if setting was successful, false otherwise.</returns>
         bool SetIsBanned(string username, bool isBanned);
+
+        /// <summary>Updates the next chip reward timestamp of the client with the provided username.</summary>
+        /// <param name="username">The client's username.</param>
+        /// <returns>True if setting was successful, false otherwise.</returns>
+        bool UpdateRewardTimestamp(string username);
     }
 }

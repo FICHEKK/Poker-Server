@@ -60,6 +60,18 @@ namespace Poker {
 
         /// <summary>A set of all the players currently on the table.</summary>
         private static readonly HashSet<TablePlayer> TablePlayers = new HashSet<TablePlayer>();
+
+        static Casino()
+        {
+            AddTable(new Table("Poor Player Penthouse", 1, 10));
+            AddTable(new Table("Casual Playa Secret Room", 5, 10));
+            AddTable(new Table("On The Rise", 20, 10));
+            AddTable(new Table("A Middle Class Table", 50, 10));
+            AddTable(new Table("Local Tourney", 100, 10));
+            AddTable(new Table("A Radical Table", 500, 10));
+            AddTable(new Table("Las Vegas Baller", 2000, 10));
+            AddTable(new Table("WSOP High Rollers", 10000, 10));
+        }
         
         //----------------------------------------------------------------
         //                      Player in-lobby
@@ -119,8 +131,8 @@ namespace Poker {
         //                      Table methods
         //----------------------------------------------------------------
 
-        public static void AddTable(string title, Table table) {
-            TableByTitle.TryAdd(title, table);
+        public static void AddTable(Table table) {
+            TableByTitle.TryAdd(table.Title, table);
             TableAdded?.Invoke(null, new TableAddedEventArgs(table));
         }
 

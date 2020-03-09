@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using Dao;
 using Poker.Cards;
@@ -48,41 +47,36 @@ namespace Poker {
 
         #region Event handlers
 
-        private void PlayerJoinedEventHandler(object sender, PlayerJoinedEventArgs e) {
+        private void PlayerJoinedEventHandler(object sender, PlayerJoinedEventArgs e)
+        {
             Broadcast(ServerResponse.PlayerJoined);
+            Broadcast(e.Player.Index.ToString());
             Broadcast(e.Player.Username);
             Broadcast(e.Player.Stack.ToString());
 
-            if (Table.PlayerCount == 2) {
-                StartNewRound();
+            if (Table.PlayerCount == 2)
+            {
+                //StartNewRound();
             }
         }
 
         private void PlayerLeftEventHandler(object sender, PlayerLeftEventArgs e) {
-            Broadcast(ServerResponse.PlayerLeft);
-            Broadcast(e.Index.ToString());
+            BroadcastToEveryoneExcept(e.Index, ServerResponse.PlayerLeft);
+            BroadcastToEveryoneExcept(e.Index, e.Index.ToString());
 
             // TODO remove player from round and if there is only 1 player left, he wins the round
         }
 
-        private void RoundPhaseChangedEventHandler(object sender, RoundPhaseChangedEventArgs e) {
-            if (e.CurrentPhase == Round.Phase.PreFlop) {
-                ProcessPreFlop();
-            }
-            else if (e.CurrentPhase == Round.Phase.Flop) {
-                ProcessFlop();
-            }
-            else if (e.CurrentPhase == Round.Phase.Turn) {
-                ProcessTurn();
-            }
-            else if (e.CurrentPhase == Round.Phase.River) {
-                ProcessRiver();
-            }
-            else if (e.CurrentPhase == Round.Phase.Showdown) {
-                ProcessShowdown();
-            }
-            else if (e.CurrentPhase == Round.Phase.OnePlayerLeft) {
-                ProcessOnePlayerLeft();
+        private void RoundPhaseChangedEventHandler(object sender, RoundPhaseChangedEventArgs e)
+        {
+            switch (e.CurrentPhase)
+            {
+                case Round.Phase.PreFlop: ProcessPreFlop(); break;
+                case Round.Phase.Flop: ProcessFlop(); break;
+                case Round.Phase.Turn: ProcessTurn(); break;
+                case Round.Phase.River: ProcessRiver(); break;
+                case Round.Phase.Showdown: ProcessShowdown(); break;
+                case Round.Phase.OnePlayerLeft: ProcessOnePlayerLeft(); break;
             }
         }
 
@@ -204,61 +198,57 @@ namespace Poker {
 
         #region Signal and broadcast
 
-        /// <summary> Sends a server response to the single specified client. </summary>
-        /// <param name="username"> Username of the client that is the receiver. </param>
-        /// <param name="response"> The response to be sent. </param>
-        public void Signal(string username, ServerResponse response) {
-            for (int i = 0; i < Table.MaxPlayers; i++) {
-                TablePlayer player = Table.GetPlayerAt(i);
-
-                if (player != null && player.Username == username) {
-                    player.Writer.BaseStream.WriteByte((byte) response);
-                    break;
-                }
-            }
-        }
-
-        /// <summary> Sends given data to the single specified client. </summary>
-        /// <param name="username"> Username of the client that is the receiver. </param>
-        /// <param name="data"> The data to be sent. </param>
-        public void Signal(string username, string data) {
-            for (var i = 0; i < Table.MaxPlayers; i++) {
-                var player = Table.GetPlayerAt(i);
-
-                if (player != null && player.Username == username) {
-                    player.Writer.WriteLine(data);
-                    break;
-                }
-            }
-        }
-
         /// <summary> Sends a server response to the single specified position. </summary>
         /// <param name="index"> The index of the player to send a response to. </param>
         /// <param name="response"> The response to be sent. </param>
-        public void Signal(int index, ServerResponse response) {
+        public void Signal(int index, ServerResponse response)
+        {
             Table.GetPlayerAt(index)?.Writer.BaseStream.WriteByte((byte) response);
         }
 
         /// <summary> Sends given data to the single specified position. </summary>
         /// <param name="index"> The index of the client to send a response to. </param>
         /// <param name="data"> The data to be sent. </param>
-        public void Signal(int index, string data) {
+        public void Signal(int index, string data)
+        {
             Table.GetPlayerAt(index)?.Writer.WriteLine(data);
         }
 
         /// <summary> Sends a server response to every player on the table. </summary>
         /// <param name="response"> The response to be sent. </param>
-        public void Broadcast(ServerResponse response) {
-            for (int i = 0; i < Table.MaxPlayers; i++) {
-                Table.GetPlayerAt(i)?.Writer.BaseStream.WriteByte((byte) response);
+        public void Broadcast(ServerResponse response)
+        {
+            for (int i = 0; i < Table.MaxPlayers; i++)
+            {
+                Signal(i, response);
             }
         }
 
         /// <summary> Sends given data to every player on the table. </summary>
         /// <param name="data"> The data to be sent. </param>
-        public void Broadcast(string data) {
-            for (int i = 0; i < Table.MaxPlayers; i++) {
-                Table.GetPlayerAt(i)?.Writer.WriteLine(data);
+        public void Broadcast(string data)
+        {
+            for (int i = 0; i < Table.MaxPlayers; i++)
+            {
+                Signal(i, data);
+            }
+        }
+
+        public void BroadcastToEveryoneExcept(int index, ServerResponse response)
+        {
+            for (int i = 0; i < Table.MaxPlayers; i++)
+            {
+                if(i == index) continue;
+                Signal(i, response);
+            }
+        }
+        
+        public void BroadcastToEveryoneExcept(int index, string data)
+        {
+            for (int i = 0; i < Table.MaxPlayers; i++)
+            {
+                if(i == index) continue;
+                Signal(i, data);
             }
         }
 

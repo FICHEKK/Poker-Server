@@ -1,19 +1,23 @@
 using System.IO;
 using Poker;
 
-namespace RequestProcessors {
-    public class CreateTableRequestProcessor : IRequestProcessor {
-        public void ProcessRequest(string username, StreamReader reader, StreamWriter writer) {
+namespace RequestProcessors
+{
+    public class CreateTableRequestProcessor : IRequestProcessor
+    {
+        public void ProcessRequest(string username, StreamReader reader, StreamWriter writer)
+        {
             string tableTitle = reader.ReadLine();
             int smallBlind = int.Parse(reader.ReadLine());
             int maxPlayers = int.Parse(reader.ReadLine());
 
-            if (Casino.HasTableWithTitle(tableTitle)) {
+            if (Casino.HasTableWithTitle(tableTitle))
+            {
                 writer.BaseStream.WriteByte((byte) ServerCreateTableResponse.TitleTaken);
                 return;
             }
-            
-            Casino.AddTable(tableTitle, new Table(tableTitle, smallBlind, maxPlayers));
+
+            Casino.AddTable(new Table(tableTitle, smallBlind, maxPlayers));
             writer.BaseStream.WriteByte((byte) ServerCreateTableResponse.Success);
         }
     }

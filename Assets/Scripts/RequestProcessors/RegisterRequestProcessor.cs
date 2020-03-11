@@ -1,22 +1,25 @@
 using System.IO;
 using Dao;
 
-namespace RequestProcessors {
-    public class RegisterRequestProcessor : IRequestProcessor {
-        public void ProcessRequest(string username, StreamReader reader, StreamWriter writer) {
+namespace RequestProcessors
+{
+    public class RegisterRequestProcessor : IRequestProcessor
+    {
+        public void ProcessRequest(string username, StreamReader reader, StreamWriter writer)
+        {
             string password = reader.ReadLine();
+            writer.BaseStream.WriteByte((byte) EvaluateProperResponse(username, password));
+        }
 
-            if (DaoProvider.Dao.IsRegistered(username)) {
-                writer.BaseStream.WriteByte((byte) ServerRegistrationResponse.UsernameTaken);
-                return;
-            }
-
-            if (!DaoProvider.Dao.Register(username, password)) {
-                writer.BaseStream.WriteByte((byte) ServerRegistrationResponse.DatabaseError);
-                return;
-            }
+        private static ServerRegistrationResponse EvaluateProperResponse(string username, string password)
+        {
+            if (DaoProvider.Dao.IsRegistered(username))
+                return ServerRegistrationResponse.UsernameTaken;
             
-            writer.BaseStream.WriteByte((byte) ServerRegistrationResponse.Success);
+            if (!DaoProvider.Dao.Register(username, password))
+                return ServerRegistrationResponse.DatabaseError;
+            
+            return ServerRegistrationResponse.Success;
         }
     }
 }

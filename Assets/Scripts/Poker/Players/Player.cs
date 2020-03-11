@@ -1,10 +1,10 @@
 ﻿using System.IO;
 
-namespace Poker.Players {
-    
+namespace Poker.Players
+{
     /// <summary> Abstract implementation of a player. </summary>
-    public abstract class Player {
-        
+    public abstract class Player
+    {
         /// <summary> The username of this player. </summary>
         public string Username { get; }
 
@@ -18,7 +18,8 @@ namespace Poker.Players {
         public StreamWriter Writer { get; }
 
         /// <summary> Constructs a new player. </summary>
-        protected Player(string username, int chipCount, StreamReader reader, StreamWriter writer) {
+        protected Player(string username, int chipCount, StreamReader reader, StreamWriter writer)
+        {
             Username = username;
             ChipCount = chipCount;
             Reader = reader;
@@ -28,16 +29,19 @@ namespace Poker.Players {
         /// <summary> Players are equal if they have the same username. </summary>
         /// <param name="obj"> Object to compare this player with. </param>
         /// <returns> True if the given object is equal to this player. </returns>
-        public override bool Equals(object obj) {
+        public override bool Equals(object obj)
+        {
             if (!(obj is Player player)) return false;
             return Username == player.Username;
         }
 
-        protected bool Equals(Player other) {
+        protected bool Equals(Player other)
+        {
             return Username == other.Username;
         }
 
-        public override int GetHashCode() {
+        public override int GetHashCode()
+        {
             return Username != null ? Username.GetHashCode() : 0;
         }
     }

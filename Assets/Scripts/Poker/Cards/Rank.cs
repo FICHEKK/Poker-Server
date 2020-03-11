@@ -1,8 +1,8 @@
-﻿namespace Poker.Cards {
-    
+﻿namespace Poker.Cards
+{
     /// <summary> Represents a rank from the standard 52 card deck. </summary>
-    public enum Rank {
-        
+    public enum Rank
+    {
         /// <summary> The value of 2. </summary>
         Two = 1,
 

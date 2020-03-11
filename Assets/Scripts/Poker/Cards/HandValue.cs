@@ -1,8 +1,8 @@
-﻿namespace Poker.Cards {
-    
+﻿namespace Poker.Cards
+{
     /// <summary> An enumeration of all the possible hand values. </summary>
-    public enum HandValue {
-        
+    public enum HandValue
+    {
         /// <summary> #10: No combination. Lowest value hand. </summary>
         HighCard = 0,
 

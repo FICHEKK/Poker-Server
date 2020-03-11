@@ -6,11 +6,11 @@ using Poker.Cards;
 using Poker.EventArguments;
 using Poker.Players;
 
-namespace Poker {
-    
+namespace Poker
+{
     /// <summary>Models a poker table dealer.</summary>
-    public class Dealer {
-
+    public class Dealer
+    {
         /// <summary>The table that this dealer is dealing on.</summary>
         public Table Table { get; }
 
@@ -20,16 +20,18 @@ namespace Poker {
         /// <summary>The deck used by this dealer to deal cards.</summary>
         public Deck Deck { get; } = new Deck();
 
-        public Dealer(Table table) {
+        public Dealer(Table table)
+        {
             Table = table ?? throw new ArgumentNullException(nameof(table));
             Table.PlayerJoined += PlayerJoinedEventHandler;
             Table.PlayerLeft += PlayerLeftEventHandler;
         }
 
-        private void StartNewRound() {
+        private void StartNewRound()
+        {
             Deck.Shuffle();
             Table.IncrementButtonIndex();
-            
+
             int smallBlindIndex = Table.GetNextOccupiedSeatIndex(Table.ButtonIndex);
             int bigBlindIndex = Table.GetNextOccupiedSeatIndex(smallBlindIndex);
 
@@ -60,7 +62,8 @@ namespace Poker {
             }
         }
 
-        private void PlayerLeftEventHandler(object sender, PlayerLeftEventArgs e) {
+        private void PlayerLeftEventHandler(object sender, PlayerLeftEventArgs e)
+        {
             BroadcastToEveryoneExcept(e.Index, ServerResponse.PlayerLeft);
             BroadcastToEveryoneExcept(e.Index, e.Index.ToString());
 
@@ -80,70 +83,82 @@ namespace Poker {
             }
         }
 
-        private void ProcessPreFlop() {
+        private void ProcessPreFlop()
+        {
             Broadcast(ServerResponse.Hand);
-            
-            for (int i = 0; i < Table.MaxPlayers; i++) {
+
+            for (int i = 0; i < Table.MaxPlayers; i++)
+            {
                 if (!Table.IsSeatOccupied(i)) continue;
 
                 Card handCard1 = Deck.GetNextCard();
                 Card handCard2 = Deck.GetNextCard();
-                
+
                 Table.GetPlayerAt(i).SetHand(handCard1, handCard2);
-                
+
                 Signal(i, handCard1.ToString());
                 Signal(i, handCard2.ToString());
             }
         }
 
-        private void ProcessFlop() {
+        private void ProcessFlop()
+        {
             Broadcast(ServerResponse.Flop);
             RevealCommunityCard();
             RevealCommunityCard();
             RevealCommunityCard();
         }
 
-        private void ProcessTurn() {
+        private void ProcessTurn()
+        {
             Broadcast(ServerResponse.Turn);
             RevealCommunityCard();
         }
 
-        private void ProcessRiver() {
+        private void ProcessRiver()
+        {
             Broadcast(ServerResponse.River);
             RevealCommunityCard();
         }
-        
-        private void RevealCommunityCard() {
+
+        private void RevealCommunityCard()
+        {
             Card card = Deck.GetNextCard();
             Broadcast(card.ToString());
             Round.AddCommunityCard(card);
         }
 
-        private void ProcessShowdown() {
+        private void ProcessShowdown()
+        {
             FinishThisRound(DetermineWinners());
         }
 
-        private void ProcessOnePlayerLeft() {
-            FinishThisRound(new List<TablePlayer> { Round.GetActivePlayers()[0] });
+        private void ProcessOnePlayerLeft()
+        {
+            FinishThisRound(new List<TablePlayer> {Round.GetActivePlayers()[0]});
         }
 
-        private void FinishThisRound(List<TablePlayer> winners) {
+        private void FinishThisRound(List<TablePlayer> winners)
+        {
             int winAmount = Round.CurrentPot / winners.Count;
-            
-            foreach (TablePlayer winner in winners) {
+
+            foreach (TablePlayer winner in winners)
+            {
                 DaoProvider.Dao.SetWinCount(winner.Username, DaoProvider.Dao.GetWinCount(winner.Username) + 1);
                 winner.Stack += winAmount;
                 winner.ChipCount += winAmount;
             }
-            
-            foreach (TablePlayer participant in Round.GetParticipatingPlayers()) {
+
+            foreach (TablePlayer participant in Round.GetParticipatingPlayers())
+            {
                 DaoProvider.Dao.SetChipCount(participant.Username, participant.ChipCount);
             }
 
             Broadcast(ServerResponse.Showdown);
             Broadcast(winners.Count.ToString());
 
-            foreach (TablePlayer winner in winners) {
+            foreach (TablePlayer winner in winners)
+            {
                 Broadcast(winner.Index.ToString());
             }
 
@@ -152,20 +167,23 @@ namespace Poker {
             StartNewRound();
         }
 
-        private List<TablePlayer> DetermineWinners() {
+        private List<TablePlayer> DetermineWinners()
+        {
             List<Card> cards = Round.CommunityCards;
             List<TablePlayer> winners = new List<TablePlayer>();
 
             Hand bestHand = null;
 
-            foreach (TablePlayer player in Round.GetActivePlayers()) {
+            foreach (TablePlayer player in Round.GetActivePlayers())
+            {
                 Card handCard1 = player.GetFirstHandCard();
                 Card handCard2 = player.GetSecondHandCard();
-                
+
                 SevenCardEvaluator evaluator = new SevenCardEvaluator(handCard1, handCard2,
                     cards[0], cards[1], cards[2], cards[3], cards[4]);
-                
-                if (bestHand == null) {
+
+                if (bestHand == null)
+                {
                     bestHand = evaluator.BestHand;
                     winners.Add(player);
                     continue;
@@ -173,12 +191,14 @@ namespace Poker {
 
                 int result = bestHand.CompareTo(evaluator.BestHand);
 
-                if (result < 0) {
+                if (result < 0)
+                {
                     winners.Clear();
                     winners.Add(player);
                     bestHand = evaluator.BestHand;
                 }
-                else if (result == 0) {
+                else if (result == 0)
+                {
                     winners.Add(player);
                 }
             }
@@ -186,7 +206,8 @@ namespace Poker {
             return winners;
         }
 
-        private void CurrentPlayerChangedEventHandler(object sender, CurrentPlayerChangedEventArgs e) {
+        private void CurrentPlayerChangedEventHandler(object sender, CurrentPlayerChangedEventArgs e)
+        {
             Broadcast(ServerResponse.PlayerIndex);
             Broadcast(e.CurrentPlayerIndex.ToString());
 
@@ -238,16 +259,16 @@ namespace Poker {
         {
             for (int i = 0; i < Table.MaxPlayers; i++)
             {
-                if(i == index) continue;
+                if (i == index) continue;
                 Signal(i, response);
             }
         }
-        
+
         public void BroadcastToEveryoneExcept(int index, string data)
         {
             for (int i = 0; i < Table.MaxPlayers; i++)
             {
-                if(i == index) continue;
+                if (i == index) continue;
                 Signal(i, data);
             }
         }

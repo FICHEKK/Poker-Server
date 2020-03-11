@@ -1,10 +1,10 @@
 ﻿using System.IO;
 
-namespace Poker.Players {
-    
+namespace Poker.Players
+{
     /// <summary> Models a player that is currently in lobby. </summary>
-    public class LobbyPlayer : Player {
-        
+    public class LobbyPlayer : Player
+    {
         /// <summary> Constructs a new lobby player. </summary>
         /// <param name="username"> The player's username. </param>
         /// <param name="chipCount"> The player's chip count. </param>

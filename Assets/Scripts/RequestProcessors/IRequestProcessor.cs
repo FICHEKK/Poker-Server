@@ -1,12 +1,12 @@
 using System.IO;
 
-namespace RequestProcessors {
-    
+namespace RequestProcessors
+{
     /// <summary>
     /// Models classes whose objects process a single specific client request.
     /// </summary>
-    public interface IRequestProcessor {
-        
+    public interface IRequestProcessor
+    {
         /// <summary>
         /// Processes the request.
         /// </summary>

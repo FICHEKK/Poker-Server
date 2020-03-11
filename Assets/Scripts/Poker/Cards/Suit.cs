@@ -1,8 +1,8 @@
-﻿namespace Poker.Cards {
-    
+﻿namespace Poker.Cards
+{
     /// <summary> Represents a suit from the standard 52 card deck. </summary>
-    public enum Suit {
-        
+    public enum Suit
+    {
         /// <summary> The heart. One of two red suits. </summary>
         Heart,
 

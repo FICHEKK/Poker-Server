@@ -1,14 +1,18 @@
 using System.IO;
 using Poker;
 
-namespace RequestProcessors {
-    public class TableListRequestProcessor : IRequestProcessor{
-        public void ProcessRequest(string username, StreamReader reader, StreamWriter writer) {
+namespace RequestProcessors
+{
+    public class TableListRequestProcessor : IRequestProcessor
+    {
+        public void ProcessRequest(string username, StreamReader reader, StreamWriter writer)
+        {
             writer.WriteLine(Casino.TableCount);
-        
-            foreach (string tableName in Casino.TableNames) {
+
+            foreach (string tableName in Casino.TableNames)
+            {
                 Table table = Casino.GetTable(tableName);
-            
+
                 writer.WriteLine(tableName);
                 writer.WriteLine(table.SmallBlind);
                 writer.WriteLine(table.PlayerCount);

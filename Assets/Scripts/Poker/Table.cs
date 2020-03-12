@@ -172,11 +172,7 @@ namespace Poker
             return _players[index] != null;
         }
 
-        #region Events
-
         protected virtual void OnPlayerJoined(PlayerJoinedEventArgs args) => PlayerJoined?.Invoke(this, args);
         protected virtual void OnPlayerLeft(PlayerLeftEventArgs args) => PlayerLeft?.Invoke(this, args);
-
-        #endregion
     }
 }

@@ -34,16 +34,19 @@ namespace Poker
 
             int smallBlindIndex = Table.GetNextOccupiedSeatIndex(Table.ButtonIndex);
             int bigBlindIndex = Table.GetNextOccupiedSeatIndex(smallBlindIndex);
+            int currentPlayerIndex = Table.GetNextOccupiedSeatIndex(bigBlindIndex);
 
             Broadcast(ServerResponse.Blinds);
             Broadcast(smallBlindIndex.ToString());
             Broadcast(bigBlindIndex.ToString());
 
-            Round = new Round(Table.GetPlayerArray(), bigBlindIndex);
-            Round.ChipsPlaced(smallBlindIndex, Table.SmallBlind);
-            Round.ChipsPlaced(bigBlindIndex, Table.BigBlind);
+            Round = new Round(Table.GetPlayerArray(), currentPlayerIndex);
+            Round.PlaceChips(smallBlindIndex, Table.SmallBlind);
+            Round.PlaceChips(bigBlindIndex, Table.BigBlind);
             Round.RoundPhaseChanged += RoundPhaseChangedEventHandler;
             Round.CurrentPlayerChanged += CurrentPlayerChangedEventHandler;
+            
+            ProcessPreFlop();
             Round.Start();
         }
 
@@ -58,7 +61,7 @@ namespace Poker
 
             if (Table.PlayerCount == 2)
             {
-                //StartNewRound();
+                StartNewRound();
             }
         }
 
@@ -74,7 +77,6 @@ namespace Poker
         {
             switch (e.CurrentPhase)
             {
-                case Round.Phase.PreFlop: ProcessPreFlop(); break;
                 case Round.Phase.Flop: ProcessFlop(); break;
                 case Round.Phase.Turn: ProcessTurn(); break;
                 case Round.Phase.River: ProcessRiver(); break;
@@ -210,9 +212,9 @@ namespace Poker
         {
             Broadcast(ServerResponse.PlayerIndex);
             Broadcast(e.CurrentPlayerIndex.ToString());
-
+            
             Signal(e.CurrentPlayerIndex, ServerResponse.RequiredBet);
-            Signal(e.CurrentPlayerIndex, Round.CurrentHighestBet.ToString());
+            Signal(e.CurrentPlayerIndex, e.RequiredCallAmount.ToString());
         }
 
         #endregion

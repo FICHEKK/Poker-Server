@@ -28,7 +28,7 @@ namespace Poker
         public int MinimumBuyIn => BigBlind * 10;
 
         /// <summary>Current dealer button index.</summary>
-        public int ButtonIndex => _buttonIndex;
+        public int DealerButtonIndex => _dealerButtonIndex;
 
         /// <summary>Current number of players at the table.</summary>
         public int PlayerCount => _playerCount;
@@ -46,7 +46,7 @@ namespace Poker
         public Dealer Dealer { get; }
 
         private readonly TablePlayer[] _players;
-        private int _buttonIndex;
+        private int _dealerButtonIndex;
         private int _playerCount;
 
         /// <summary> Constructs a new table with the given small blind and maximum number of players. </summary>
@@ -67,11 +67,11 @@ namespace Poker
         /// <summary> Increments the button position, skipping all the empty seats on the way. </summary>
         public void IncrementButtonIndex()
         {
-            _buttonIndex = GetNextOccupiedSeatIndex(_buttonIndex);
+            _dealerButtonIndex = GetNextOccupiedSeatIndex(_dealerButtonIndex);
 
-            if (_buttonIndex == -1)
+            if (_dealerButtonIndex == -1)
             {
-                _buttonIndex = 0;
+                _dealerButtonIndex = 0;
             }
         }
 

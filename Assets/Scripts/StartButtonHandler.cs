@@ -6,6 +6,11 @@ public class StartButtonHandler : MonoBehaviour
     [SerializeField] private TMP_InputField portInputField;
     [SerializeField] private TMP_InputField capacityInputField;
 
+    private void Start()
+    {
+        StartServer();
+    }
+
     public void StartServer()
     {
         portInputField.interactable = false;

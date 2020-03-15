@@ -5,12 +5,16 @@ namespace Poker.EventArguments
     public class CurrentPlayerChangedEventArgs : EventArgs
     {
         public int CurrentPlayerIndex { get; }
-        public int RequiredCallAmount { get; }
+        public int RequiredCall { get; }
+        public int MinRaise { get; }
+        public int MaxRaise { get; }
 
-        public CurrentPlayerChangedEventArgs(int currentPlayerIndex, int requiredCallAmount)
+        public CurrentPlayerChangedEventArgs(int currentPlayerIndex, int requiredCall, int minRaise, int maxRaise)
         {
             CurrentPlayerIndex = currentPlayerIndex;
-            RequiredCallAmount = requiredCallAmount;
+            RequiredCall = requiredCall;
+            MinRaise = minRaise;
+            MaxRaise = maxRaise;
         }
     }
 }

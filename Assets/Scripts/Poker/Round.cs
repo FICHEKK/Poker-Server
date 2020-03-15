@@ -10,48 +10,73 @@ namespace Poker
     /// <summary>Holds data of a single poker round.</summary>
     public class Round
     {
+        /// <summary>Maximum number of community cards that can be in the round.</summary>
         private const int MaxCommunityCardCount = 5;
+
+        /// <summary> Value of the pot. </summary>
+        public int Pot { get; private set; }
+
+        /// <summary> Index of the currently focused player. </summary>
+        public int PlayerIndex { get; private set; }
+        
+        /// <summary> List of all the current community cards.</summary>
+        public List<Card> CommunityCards { get; } = new List<Card>();
+        
+        /// <summary> List of players that are still playing this round. </summary>
+        public List<TablePlayer> ActivePlayers => _players.Where(player => player != null && !player.Folded).ToList();
+        
+        /// <summary> List of players that were or still are playing this round. </summary>
+        public List<TablePlayer> ParticipatingPlayers => _players.Where(player => player != null).ToList();
+        
+        /// <summary> Highest bet value of the current round phase. </summary>
+        private int HighestBet => _players.Where(player => player != null).Select(player => player.Bet).Max();
+
+        private readonly int _smallBlind;
+        private int _playerCount;
+        private Phase _phase;
+        private readonly TablePlayer[] _players;
+        private int _betCounter;
+        private readonly int _smallBlindIndex;
+        private readonly int _bigBlindIndex;
+        
+        /// <summary> Value indicating the current minimum raise that must be made by the raising player. </summary>
+        private int _raiseIncrement;
 
         public event EventHandler<RoundPhaseChangedEventArgs> RoundPhaseChanged;
         public event EventHandler<CurrentPlayerChangedEventArgs> CurrentPlayerChanged;
 
-        public int CurrentPot { get; private set; }
-        public int CurrentHighestBet => _playerData.Where(data => data != null).Select(data => data.CurrentPhaseBet).Max();
-
-        public Phase CurrentPhase { get; private set; }
-        public List<Card> CommunityCards { get; } = new List<Card>();
-
-        /// <summary>The index of the seat whose turn it is at the moment.</summary>
-        private int _currentPlayerIndex;
-
-        private int _currentPlayerCount;
-        private readonly PlayerData[] _playerData;
-
-        /// <summary>Used to determine if all of the active players have performed the same bet.</summary>
-        private int _betCounter;
-
         /// <summary>Constructs a new poker round.</summary>
-        public Round(TablePlayer[] players, int currentPlayerIndex)
+        public Round(TablePlayer[] players, int smallBlindIndex, int bigBlindIndex, int playerIndex, int smallBlind)
         {
-            if (players == null) throw new ArgumentNullException(nameof(players));
+            _players = players ?? throw new ArgumentNullException(nameof(players));
+            _smallBlind = smallBlind;
+            _raiseIncrement = smallBlind * 2;
+            
+            _smallBlindIndex = smallBlindIndex;
+            _bigBlindIndex = bigBlindIndex;
+            PlayerIndex = playerIndex;
 
-            _currentPlayerIndex = currentPlayerIndex;
-            _playerData = new PlayerData[players.Length];
-
-            for (var i = 0; i < players.Length; i++)
+            foreach (var player in players)
             {
-                if (players[i] != null)
+                if (player != null)
                 {
-                    _currentPlayerCount++;
-                    _playerData[i] = new PlayerData(players[i]);
+                    player.Bet = 0;
+                    player.TotalBet = 0;
+                    player.Folded = false;
+                    _playerCount++;
                 }
             }
         }
 
         public void Start()
         {
-            int requiredCallAmount = CurrentHighestBet - _playerData[_currentPlayerIndex].CurrentPhaseBet;
-            OnCurrentPlayerChanged(new CurrentPlayerChangedEventArgs(_currentPlayerIndex, requiredCallAmount));
+            PlaceChips(_smallBlindIndex, _smallBlind);
+            PlaceChips(_bigBlindIndex, _smallBlind * 2);
+            
+            int requiredCall = HighestBet - _players[PlayerIndex].Bet;
+            int minRaise = _players[PlayerIndex].Bet + requiredCall + _raiseIncrement;
+            int maxRaise = _players[PlayerIndex].Stack + _players[PlayerIndex].Bet;
+            OnCurrentPlayerChanged(new CurrentPlayerChangedEventArgs(PlayerIndex, requiredCall, minRaise, maxRaise));
         }
 
         /// <summary>Adds a new community card to this round.</summary>
@@ -61,18 +86,6 @@ namespace Poker
                 throw new IndexOutOfRangeException("Maximum number of community cards has already been reached.");
 
             CommunityCards.Add(card);
-        }
-
-        /// <summary> Returns all of the players that are currently still playing this round. </summary>
-        public List<TablePlayer> GetActivePlayers()
-        {
-            return _playerData.Where(data => data != null && !data.Folded).Select(data => data.Player).ToList();
-        }
-
-        /// <summary> Returns all of the players that were or still are playing this round. </summary>
-        public List<TablePlayer> GetParticipatingPlayers()
-        {
-            return _playerData.Where(data => data != null).Select(data => data.Player).ToList();
         }
 
         //----------------------------------------------------------------
@@ -88,16 +101,16 @@ namespace Poker
         public void PlayerCalled(int callAmount)
         {
             _betCounter++;
-            PlaceChips(_currentPlayerIndex, callAmount);
+            PlaceChips(PlayerIndex, callAmount);
             UpdateCurrentPlayerIndex();
         }
 
         public void PlayerFolded()
         {
-            _playerData[_currentPlayerIndex].Folded = true;
-            _currentPlayerCount--;
+            _players[PlayerIndex].Folded = true;
+            _playerCount--;
 
-            if (_currentPlayerCount == 1)
+            if (_playerCount == 1)
             {
                 OnRoundPhaseChanged(new RoundPhaseChangedEventArgs(Phase.OnePlayerLeft));
             }
@@ -107,10 +120,11 @@ namespace Poker
             }
         }
 
-        public void PlayerRaised(int raiseAmount)
+        public void PlayerRaised(int raisedToAmount)
         {
             _betCounter = 1;
-            PlaceChips(_currentPlayerIndex, raiseAmount);
+            _raiseIncrement = raisedToAmount - HighestBet;
+            PlaceChips(PlayerIndex, raisedToAmount - _players[PlayerIndex].Bet);
             UpdateCurrentPlayerIndex();
         }
 
@@ -119,35 +133,49 @@ namespace Poker
             PlayerRaised(allInAmount);
         }
 
-        public void PlaceChips(int index, int amount)
+        private void PlaceChips(int index, int amount)
         {
-            _playerData[index].Player.Stack -= amount;
-            _playerData[index].Player.ChipCount -= amount;
-            _playerData[index].CurrentPhaseBet += amount;
-            _playerData[index].CurrentBet += amount;
-            CurrentPot += amount;
+            if (_players[index] == null)
+                throw new NullReferenceException("Cannot place chips for an empty seat.");
+            
+            _players[index].Stack -= amount;
+            _players[index].ChipCount -= amount;
+            _players[index].Bet += amount;
+            _players[index].TotalBet += amount;
         }
 
         private void UpdateCurrentPlayerIndex()
         {
-            for (int i = 0; i < _playerData.Length - 1; i++)
-            {
-                _currentPlayerIndex++;
-                _currentPlayerIndex %= _playerData.Length;
+            bool isPhaseOver = _betCounter == _playerCount;
+            PlayerIndex = isPhaseOver ? _smallBlindIndex : PlayerIndex + 1;
 
-                if (_playerData[_currentPlayerIndex] != null && !_playerData[_currentPlayerIndex].Folded) break;
+            for (int i = 0; i < _players.Length - 1; i++)
+            {
+                PlayerIndex %= _players.Length;
+                if (_players[PlayerIndex] != null && !_players[PlayerIndex].Folded) break;
+                PlayerIndex++;
             }
             
-            if (_betCounter == _currentPlayerCount)
+            if (isPhaseOver)
             {
                 _betCounter = 0;
-                OnRoundPhaseChanged(new RoundPhaseChangedEventArgs(++CurrentPhase));
-                OnCurrentPlayerChanged(new CurrentPlayerChangedEventArgs(_currentPlayerIndex, 0));
+                _raiseIncrement = _smallBlind * 2;
+                OnRoundPhaseChanged(new RoundPhaseChangedEventArgs(++_phase));
+
+                if (_phase != Phase.Showdown)
+                {
+                    int requiredCall = 0;
+                    int minRaise = _raiseIncrement;
+                    int maxRaise = _players[PlayerIndex].Stack;
+                    OnCurrentPlayerChanged(new CurrentPlayerChangedEventArgs(PlayerIndex, requiredCall, minRaise, maxRaise));
+                }
             }
             else
             {
-                int requiredCallAmount = CurrentHighestBet - _playerData[_currentPlayerIndex].CurrentPhaseBet;
-                OnCurrentPlayerChanged(new CurrentPlayerChangedEventArgs(_currentPlayerIndex, requiredCallAmount));
+                int requiredCall = HighestBet - _players[PlayerIndex].Bet;
+                int minRaise = HighestBet + _raiseIncrement;
+                int maxRaise = _players[PlayerIndex].Stack + _players[PlayerIndex].Bet;
+                OnCurrentPlayerChanged(new CurrentPlayerChangedEventArgs(PlayerIndex, requiredCall, minRaise, maxRaise));
             }
         }
 
@@ -157,11 +185,12 @@ namespace Poker
 
         private void OnRoundPhaseChanged(RoundPhaseChangedEventArgs args)
         {
-            foreach (PlayerData data in _playerData)
+            foreach (var player in _players)
             {
-                if (data != null)
+                if (player != null)
                 {
-                    data.CurrentPhaseBet = 0;
+                    Pot += player.Bet;
+                    player.Bet = 0;
                 }
             }
 
@@ -174,39 +203,22 @@ namespace Poker
         }
 
         //----------------------------------------------------------------
-        //                    Player data structure
-        //----------------------------------------------------------------
-
-        private class PlayerData
-        {
-            public TablePlayer Player { get; }
-            public int CurrentBet { get; set; }
-            public int CurrentPhaseBet { get; set; }
-            public bool Folded { get; set; }
-
-            public PlayerData(TablePlayer player)
-            {
-                Player = player;
-            }
-        }
-        
-        //----------------------------------------------------------------
         //                        Round phases
         //----------------------------------------------------------------
         
         /// <summary>Models table round phases.</summary>
         public enum Phase
         {
-            /// <summary>First betting round where the hand cards are dealt.</summary>
+            /// <summary>Betting round before the flop cards were revealed.</summary>
             PreFlop,
-
-            /// <summary>Second betting round after the flop cards were revealed.</summary>
+            
+            /// <summary>Betting round after the flop cards were revealed.</summary>
             Flop,
 
-            /// <summary>Third betting round after the turn card was revealed.</summary>
+            /// <summary>Betting round after the turn card was revealed.</summary>
             Turn,
 
-            /// <summary>Fourth betting round after the river card was revealed.</summary>
+            /// <summary>Betting round after the river card was revealed.</summary>
             River,
 
             /// <summary>Final phase where players show their cards.</summary>

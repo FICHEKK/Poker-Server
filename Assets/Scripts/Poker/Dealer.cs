@@ -20,6 +20,9 @@ namespace Poker
         /// <summary>The deck used by this dealer to deal cards.</summary>
         public Deck Deck { get; } = new Deck();
 
+        /// <summary> True if there are not enough players for the round to start. </summary>
+        public bool IsWaitingForPlayers => Round == null;
+
         public Dealer(Table table)
         {
             Table = table ?? throw new ArgumentNullException(nameof(table));
@@ -32,17 +35,16 @@ namespace Poker
             Deck.Shuffle();
             Table.IncrementButtonIndex();
 
-            int smallBlindIndex = Table.GetNextOccupiedSeatIndex(Table.ButtonIndex);
+            int smallBlindIndex = Table.GetNextOccupiedSeatIndex(Table.DealerButtonIndex);
             int bigBlindIndex = Table.GetNextOccupiedSeatIndex(smallBlindIndex);
-            int currentPlayerIndex = Table.GetNextOccupiedSeatIndex(bigBlindIndex);
+            int playerIndex = Table.GetNextOccupiedSeatIndex(bigBlindIndex);
 
             Broadcast(ServerResponse.Blinds);
+            Broadcast(Table.DealerButtonIndex.ToString());
             Broadcast(smallBlindIndex.ToString());
             Broadcast(bigBlindIndex.ToString());
 
-            Round = new Round(Table.GetPlayerArray(), currentPlayerIndex);
-            Round.PlaceChips(smallBlindIndex, Table.SmallBlind);
-            Round.PlaceChips(bigBlindIndex, Table.BigBlind);
+            Round = new Round(Table.GetPlayerArray(), smallBlindIndex, bigBlindIndex, playerIndex, Table.SmallBlind);
             Round.RoundPhaseChanged += RoundPhaseChangedEventHandler;
             Round.CurrentPlayerChanged += CurrentPlayerChangedEventHandler;
             
@@ -137,12 +139,12 @@ namespace Poker
 
         private void ProcessOnePlayerLeft()
         {
-            FinishThisRound(new List<TablePlayer> {Round.GetActivePlayers()[0]});
+            FinishThisRound(new List<TablePlayer> {Round.ActivePlayers[0]});
         }
 
         private void FinishThisRound(List<TablePlayer> winners)
         {
-            int winAmount = Round.CurrentPot / winners.Count;
+            int winAmount = Round.Pot / winners.Count;
 
             foreach (TablePlayer winner in winners)
             {
@@ -151,7 +153,7 @@ namespace Poker
                 winner.ChipCount += winAmount;
             }
 
-            foreach (TablePlayer participant in Round.GetParticipatingPlayers())
+            foreach (TablePlayer participant in Round.ParticipatingPlayers)
             {
                 DaoProvider.Dao.SetChipCount(participant.Username, participant.ChipCount);
             }
@@ -164,7 +166,7 @@ namespace Poker
                 Broadcast(winner.Index.ToString());
             }
 
-            Thread.Sleep(2000);
+            Thread.Sleep(4000);
             Broadcast(ServerResponse.RoundFinished);
             StartNewRound();
         }
@@ -176,12 +178,9 @@ namespace Poker
 
             Hand bestHand = null;
 
-            foreach (TablePlayer player in Round.GetActivePlayers())
+            foreach (TablePlayer player in Round.ActivePlayers)
             {
-                Card handCard1 = player.GetFirstHandCard();
-                Card handCard2 = player.GetSecondHandCard();
-
-                SevenCardEvaluator evaluator = new SevenCardEvaluator(handCard1, handCard2,
+                SevenCardEvaluator evaluator = new SevenCardEvaluator(player.FirstHandCard, player.SecondHandCard,
                     cards[0], cards[1], cards[2], cards[3], cards[4]);
 
                 if (bestHand == null)
@@ -214,7 +213,9 @@ namespace Poker
             Broadcast(e.CurrentPlayerIndex.ToString());
             
             Signal(e.CurrentPlayerIndex, ServerResponse.RequiredBet);
-            Signal(e.CurrentPlayerIndex, e.RequiredCallAmount.ToString());
+            Signal(e.CurrentPlayerIndex, e.RequiredCall.ToString());
+            Signal(e.CurrentPlayerIndex, e.MinRaise.ToString());
+            Signal(e.CurrentPlayerIndex, e.MaxRaise.ToString());
         }
 
         #endregion

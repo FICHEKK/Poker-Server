@@ -44,28 +44,35 @@ namespace Dao
         /// <param name="username">The client's username.</param>
         /// <returns>Client's win count or -1 if the provided username is invalid.</returns>
         DateTime? GetRewardTimestamp(string username);
+        
+        /// <summary>Fetches and returns the ELO rating of the client with the provided username.</summary>
+        /// <param name="username">The client's username.</param>
+        /// <returns>Client's ELO rating or -1 if the provided username is invalid.</returns>
+        int GetEloRating(string username);
 
         /// <summary>Sets the chip count of the client with the provided username.</summary>
         /// <param name="username">The client's username.</param>
         /// <param name="chipCount">The client's new bankroll.</param>
-        /// <returns>True if setting was successful, false otherwise.</returns>
-        bool SetChipCount(string username, int chipCount);
+        void SetChipCount(string username, int chipCount);
 
         /// <summary>Sets the win count of the client with the provided username.</summary>
         /// <param name="username">The client's username.</param>
         /// <param name="winCount">The client's new win count.</param>
-        /// <returns>True if setting was successful, false otherwise.</returns>
-        bool SetWinCount(string username, int winCount);
+        void SetWinCount(string username, int winCount);
 
         /// <summary>Sets the ban status of the client with the provided username.</summary>
         /// <param name="username">The client's username.</param>
         /// <param name="isBanned">The client's new ban status.</param>
-        /// <returns>True if setting was successful, false otherwise.</returns>
-        bool SetIsBanned(string username, bool isBanned);
+        void SetIsBanned(string username, bool isBanned);
 
         /// <summary>Updates the next chip reward timestamp of the client with the provided username.</summary>
         /// <param name="username">The client's username.</param>
         /// <returns>True if setting was successful, false otherwise.</returns>
-        bool UpdateRewardTimestamp(string username);
+        void UpdateRewardTimestamp(string username);
+
+        /// <summary>Sets the ELO rating of the client with the provided username.</summary>
+        /// <param name="username">The client's username.</param>
+        /// <param name="eloRating">The client's new ELO rating</param>
+        void SetEloRating(string username, int eloRating);
     }
 }

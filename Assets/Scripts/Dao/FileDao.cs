@@ -11,8 +11,9 @@ namespace Dao
         private const int DefaultWinCount = 0;
         private const bool DefaultBanStatus = false;
         private const int RewardIntervalInHours = 4;
+        private const int DefaultEloRating = 1000;
 
-        private const int ExpectedLinePartCount = 6;
+        private const int ExpectedLinePartCount = 7;
         private const char Separator = ',';
         private static readonly CultureInfo RewardTimestampCulture = new CultureInfo("en-GB");
 
@@ -51,7 +52,8 @@ namespace Dao
                 chipCount: DefaultChipCount,
                 winCount: DefaultWinCount, 
                 isBanned: DefaultBanStatus,
-                rewardTimestamp: DateTime.Now.AddHours(RewardIntervalInHours)
+                rewardTimestamp: DateTime.Now.AddHours(RewardIntervalInHours),
+                eloRating: DefaultEloRating
             );
 
             try
@@ -95,40 +97,54 @@ namespace Dao
             return IsRegistered(username) ? _clients[username].RewardTimestamp : (DateTime?) null;
         }
 
-        public bool SetChipCount(string username, int chipCount)
+        public int GetEloRating(string username)
         {
-            if (!IsRegistered(username)) return false;
+            return IsRegistered(username) ? _clients[username].EloRating : -1;
+        }
+
+        public void SetChipCount(string username, int chipCount)
+        {
+            if (!IsRegistered(username)) return;
 
             ClientData data = _clients[username].Clone();
             data.ChipCount = chipCount;
-            return UpdateClientData(data);
+            UpdateClientData(data);
         }
 
-        public bool SetWinCount(string username, int winCount)
+        public void SetWinCount(string username, int winCount)
         {
-            if (!IsRegistered(username)) return false;
+            if (!IsRegistered(username)) return;
 
             ClientData data = _clients[username].Clone();
             data.WinCount = winCount;
-            return UpdateClientData(data);
+            UpdateClientData(data);
         }
 
-        public bool SetIsBanned(string username, bool isBanned)
+        public void SetIsBanned(string username, bool isBanned)
         {
-            if (!IsRegistered(username)) return false;
+            if (!IsRegistered(username)) return;
 
             ClientData data = _clients[username].Clone();
             data.IsBanned = isBanned;
-            return UpdateClientData(data);
+            UpdateClientData(data);
         }
 
-        public bool UpdateRewardTimestamp(string username)
+        public void UpdateRewardTimestamp(string username)
         {
-            if (!IsRegistered(username)) return false;
+            if (!IsRegistered(username)) return;
 
             ClientData data = _clients[username].Clone();
             data.RewardTimestamp = DateTime.Now.AddHours(RewardIntervalInHours);
-            return UpdateClientData(data);
+            UpdateClientData(data);
+        }
+
+        public void SetEloRating(string username, int eloRating)
+        {
+            if (!IsRegistered(username)) return;
+
+            ClientData data = _clients[username].Clone();
+            data.EloRating = eloRating;
+            UpdateClientData(data);
         }
 
         #endregion
@@ -146,7 +162,7 @@ namespace Dao
             }
         }
 
-        private ClientData ParseLine(string line)
+        private static ClientData ParseLine(string line)
         {
             if (line == null) return null;
 
@@ -161,8 +177,9 @@ namespace Dao
                 int winCount = int.Parse(parts[3]);
                 bool isBanned = bool.Parse(parts[4]);
                 DateTime rewardTimestamp = DateTime.Parse(parts[5]);
+                int eloRating = int.Parse(parts[6]);
                 
-                return new ClientData(username, password, chipCount, winCount, isBanned, rewardTimestamp);
+                return new ClientData(username, password, chipCount, winCount, isBanned, rewardTimestamp, eloRating);
             }
             catch
             {
@@ -175,47 +192,24 @@ namespace Dao
         /// persistent memory (file).
         /// </summary>
         /// <param name="data">New client's data.</param>
-        /// <returns>True if updating was successful, false otherwise.</returns>
-        private bool UpdateClientData(ClientData data)
+        private void UpdateClientData(ClientData data)
         {
-            bool fileSuccessfullyUpdated = UpdateClientDataFile(data);
-
-            if (!fileSuccessfullyUpdated) return false;
-
-            _clients[data.Username] = data;
-            return true;
-        }
-
-        /// <summary>
-        /// Updates the specified client's data in the persistent memory (file).
-        /// </summary>
-        /// <param name="data">New client's data.</param>
-        /// <returns>True if updating was successful, false otherwise.</returns>
-        private bool UpdateClientDataFile(ClientData data)
-        {
-            if (!IsRegistered(data.Username)) return false;
-
-            try
+            if (!IsRegistered(data.Username)) return;
+            
+            lock (_fileLock)
             {
-                lock (_fileLock)
+                string[] lines = File.ReadAllLines(_filePath);
+                for (int i = 0; i < lines.Length; i++)
                 {
-                    string[] lines = File.ReadAllLines(_filePath);
-                    for (int i = 0; i < lines.Length; i++)
-                    {
-                        if (!lines[i].StartsWith(data.Username)) continue;
-                        lines[i] = data.ToString();
-                        break;
-                    }
-
-                    File.WriteAllLines(_filePath, lines);
+                    if (!lines[i].StartsWith(data.Username)) continue;
+                    lines[i] = data.ToString();
+                    break;
                 }
 
-                return true;
+                File.WriteAllLines(_filePath, lines);
             }
-            catch
-            {
-                return false;
-            }
+            
+            _clients[data.Username] = data;
         }
 
         #endregion
@@ -228,8 +222,9 @@ namespace Dao
             public int WinCount { get; set; }
             public bool IsBanned { get; set; }
             public DateTime RewardTimestamp { get; set; }
+            public int EloRating { get; set; }
 
-            public ClientData(string username, string password, int chipCount, int winCount, bool isBanned, DateTime rewardTimestamp)
+            public ClientData(string username, string password, int chipCount, int winCount, bool isBanned, DateTime rewardTimestamp, int eloRating)
             {
                 Username = username;
                 Password = password;
@@ -237,11 +232,12 @@ namespace Dao
                 WinCount = winCount;
                 IsBanned = isBanned;
                 RewardTimestamp = rewardTimestamp;
+                EloRating = eloRating;
             }
 
             public ClientData Clone()
             {
-                return new ClientData(Username, Password, ChipCount, WinCount, IsBanned, RewardTimestamp);
+                return new ClientData(Username, Password, ChipCount, WinCount, IsBanned, RewardTimestamp, EloRating);
             }
 
             public override string ToString()
@@ -251,7 +247,8 @@ namespace Dao
                        ChipCount + Separator +
                        WinCount + Separator +
                        IsBanned + Separator +
-                       RewardTimestamp.ToString(RewardTimestampCulture);
+                       RewardTimestamp.ToString(RewardTimestampCulture) + Separator +
+                       EloRating;
             }
         }
     }

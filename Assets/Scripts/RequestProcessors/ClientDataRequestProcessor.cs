@@ -11,6 +11,7 @@ namespace RequestProcessors
 
             writer.WriteLine(DaoProvider.Dao.GetChipCount(requestedUsername).ToString());
             writer.WriteLine(DaoProvider.Dao.GetWinCount(requestedUsername).ToString());
+            writer.WriteLine(DaoProvider.Dao.GetEloRating(requestedUsername).ToString());
         }
     }
 }

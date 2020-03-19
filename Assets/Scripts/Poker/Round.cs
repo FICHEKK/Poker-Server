@@ -19,6 +19,11 @@ namespace Poker
         /// <summary> Index of the currently focused player. </summary>
         public int PlayerIndex { get; private set; }
         
+        /// <summary>
+        /// List of all the indexes of players that need to pay for big blind since they just joined.
+        /// </summary>
+        public List<int> JustJoinedPlayerIndexes { get; } = new List<int>();
+        
         /// <summary> List of all the current community cards.</summary>
         public List<Card> CommunityCards { get; } = new List<Card>();
         
@@ -37,8 +42,7 @@ namespace Poker
         private readonly TablePlayer[] _players;
         private int _betCounter;
         private readonly int _smallBlindIndex;
-        private readonly int _bigBlindIndex;
-        
+
         /// <summary> Value indicating the current minimum raise that must be made by the raising player. </summary>
         private int _raiseIncrement;
 
@@ -53,26 +57,34 @@ namespace Poker
             _raiseIncrement = smallBlind * 2;
             
             _smallBlindIndex = smallBlindIndex;
-            _bigBlindIndex = bigBlindIndex;
             PlayerIndex = playerIndex;
 
             foreach (var player in players)
             {
-                if (player != null)
+                if (player == null) continue;
+                
+                player.Bet = 0;
+                player.TotalBet = 0;
+                player.Folded = false;
+                _playerCount++;
+
+                if (player.HasJustJoined)
                 {
-                    player.Bet = 0;
-                    player.TotalBet = 0;
-                    player.Folded = false;
-                    _playerCount++;
+                    JustJoinedPlayerIndexes.Add(player.Index);
+                    PlaceChips(player.Index, _smallBlind * 2);
+                    player.HasJustJoined = false;
                 }
             }
+            
+            if(_players[_smallBlindIndex].Bet == 0)
+                PlaceChips(_smallBlindIndex, _smallBlind);
+            
+            if(_players[bigBlindIndex].Bet == 0)
+                PlaceChips(bigBlindIndex, _smallBlind * 2);
         }
 
         public void Start()
         {
-            PlaceChips(_smallBlindIndex, _smallBlind);
-            PlaceChips(_bigBlindIndex, _smallBlind * 2);
-            
             int requiredCall = HighestBet - _players[PlayerIndex].Bet;
             int minRaise = _players[PlayerIndex].Bet + requiredCall + _raiseIncrement;
             int maxRaise = _players[PlayerIndex].Stack + _players[PlayerIndex].Bet;
@@ -131,6 +143,25 @@ namespace Poker
         public void PlayerAllIn(int allInAmount)
         {
             PlayerRaised(allInAmount);
+        }
+
+        public void PlayerLeft(int index)
+        {
+            if (_players[index] == null || _players[index].Folded) return;
+            
+            _players[index].Folded = true;
+            _playerCount--;
+
+            if (_playerCount == 0) return;
+
+            if (_playerCount == 1)
+            {
+                OnRoundPhaseChanged(new RoundPhaseChangedEventArgs(Phase.OnePlayerLeft));
+            }
+            else if(index == PlayerIndex)
+            {
+                UpdateCurrentPlayerIndex();
+            }
         }
 
         private void PlaceChips(int index, int amount)

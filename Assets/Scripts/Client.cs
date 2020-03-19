@@ -14,12 +14,22 @@ public class Client
 {
     /// <summary> A dictionary that maps client request flags to processors that process corresponding request. </summary>
     private static readonly Dictionary<ClientRequest, IRequestProcessor> Processors;
-
-    /// <summary> Username of the client. </summary>
+    
+    /// <summary> This client's username. </summary>
     public string Username { get; private set; }
+    
+    /// <summary> Flag indicating whether this client is logged into the system (passed the log-in phase). </summary>
+    public bool IsLoggedIn { get; set; }
 
     /// <summary> The connection to the remote client. </summary>
     public TcpClient Connection { get; }
+    
+    public StreamWriter Writer { get; private set; }
+
+    public StreamReader Reader { get; private set; }
+    
+    /// <summary> This client's unique connection identifier. </summary>
+    public Guid Identifier { get; }
 
     /// <summary> Initializes request processors. </summary>
     static Client()
@@ -38,17 +48,19 @@ public class Client
             {ClientRequest.Fold, new FoldRequestProcessor()},
             {ClientRequest.Raise, new RaiseRequestProcessor()},
             {ClientRequest.AllIn, new AllInRequestProcessor()},
-            {ClientRequest.Disconnect, new DisconnectRequestProcessor()},
             {ClientRequest.LoginReward, new LoginRewardRequestProcessor()},
-            {ClientRequest.LeaveTable, new LeaveTableRequestProcessor()}
+            {ClientRequest.LeaveTable, new LeaveTableRequestProcessor()},
+            {ClientRequest.Disconnect, new DisconnectRequestProcessor()}
         };
     }
 
     /// <summary> Constructs and starts a new thread that will handle single client's requests. </summary>
     /// <param name="connection"> Connection to the client. </param>
-    public Client(TcpClient connection)
+    /// <param name="identifier"> Unique connection identifier. </param>
+    public Client(TcpClient connection, Guid identifier)
     {
         Connection = connection;
+        Identifier = identifier;
         new Thread(ProcessRequests).Start();
     }
 
@@ -58,24 +70,24 @@ public class Client
         try
         {
             using (Connection)
-            using (StreamReader reader = new StreamReader(Connection.GetStream()))
-            using (StreamWriter writer = new StreamWriter(Connection.GetStream()) {AutoFlush = true})
+            using (Writer = new StreamWriter(Connection.GetStream()) {AutoFlush = true})
+            using (Reader = new StreamReader(Connection.GetStream()))
             {
-                int flag = reader.BaseStream.ReadByte();
-                Username = reader.ReadLine();
+                int flag = Reader.BaseStream.ReadByte();
+                Username = Reader.ReadLine();
 
                 while (flag != -1)
                 {
                     if (Processors.TryGetValue((ClientRequest) flag, out var processor))
                     {
-                        processor.ProcessRequest(Username, reader, writer);
+                        processor.ProcessRequest(this);
                     }
                     else
                     {
                         break;
                     }
 
-                    flag = reader.BaseStream.ReadByte();
+                    flag = Reader.BaseStream.ReadByte();
                 }
             }
         }
@@ -85,6 +97,6 @@ public class Client
             Trace.WriteLine("Disconnecting the client...");
         }
 
-        Processors[ClientRequest.Disconnect].ProcessRequest(Username, null, null);
+        Processors[ClientRequest.Disconnect].ProcessRequest(this);
     }
 }

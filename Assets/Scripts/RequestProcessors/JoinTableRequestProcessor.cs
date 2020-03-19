@@ -1,18 +1,19 @@
 using System.IO;
 using Poker;
+using Poker.Players;
 
 namespace RequestProcessors
 {
     public class JoinTableRequestProcessor : IRequestProcessor
     {
-        public void ProcessRequest(string username, StreamReader reader, StreamWriter writer)
+        public void ProcessRequest(Client client)
         {
-            string tableTitle = reader.ReadLine();
-            int buyIn = int.Parse(reader.ReadLine());
+            string tableTitle = client.Reader.ReadLine();
+            int buyIn = int.Parse(client.Reader.ReadLine());
 
             if (!Casino.HasTableWithTitle(tableTitle))
             {
-                writer.BaseStream.WriteByte((byte) ServerJoinTableResponse.TableDoesNotExist);
+                client.Writer.BaseStream.WriteByte((byte) ServerJoinTableResponse.TableDoesNotExist);
                 return;
             }
 
@@ -20,13 +21,19 @@ namespace RequestProcessors
 
             if (table.IsFull)
             {
-                writer.BaseStream.WriteByte((byte) ServerJoinTableResponse.TableFull);
+                client.Writer.BaseStream.WriteByte((byte) ServerJoinTableResponse.TableFull);
                 return;
             }
 
-            writer.BaseStream.WriteByte((byte) ServerJoinTableResponse.Success);
-            SendTableData(table, writer);
-            Casino.MovePlayerFromLobbyToTable(username, table, buyIn);
+            client.Writer.BaseStream.WriteByte((byte) ServerJoinTableResponse.Success);
+            SendTableData(table, client.Writer);
+
+            LobbyPlayer lobbyPlayer = Casino.GetLobbyPlayer(client.Username);
+            Casino.RemoveLobbyPlayer(lobbyPlayer);
+
+            int index = table.GetFirstFreeSeatIndex();
+            TablePlayer tablePlayer = new TablePlayer(client.Username, lobbyPlayer.ChipCount, table, buyIn, index, lobbyPlayer.Reader, lobbyPlayer.Writer);
+            Casino.AddTablePlayer(tablePlayer);
         }
 
         private static void SendTableData(Table table, StreamWriter writer)

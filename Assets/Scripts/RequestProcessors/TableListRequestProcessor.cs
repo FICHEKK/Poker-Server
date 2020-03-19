@@ -1,22 +1,21 @@
-using System.IO;
 using Poker;
 
 namespace RequestProcessors
 {
     public class TableListRequestProcessor : IRequestProcessor
     {
-        public void ProcessRequest(string username, StreamReader reader, StreamWriter writer)
+        public void ProcessRequest(Client client)
         {
-            writer.WriteLine(Casino.TableCount);
+            client.Writer.WriteLine(Casino.TableCount);
 
             foreach (string tableName in Casino.TableNames)
             {
                 Table table = Casino.GetTable(tableName);
 
-                writer.WriteLine(tableName);
-                writer.WriteLine(table.SmallBlind);
-                writer.WriteLine(table.PlayerCount);
-                writer.WriteLine(table.MaxPlayers);
+                client.Writer.WriteLine(tableName);
+                client.Writer.WriteLine(table.SmallBlind);
+                client.Writer.WriteLine(table.PlayerCount);
+                client.Writer.WriteLine(table.MaxPlayers);
             }
         }
     }

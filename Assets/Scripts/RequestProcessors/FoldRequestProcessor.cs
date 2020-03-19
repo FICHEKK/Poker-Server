@@ -1,14 +1,13 @@
-﻿using System.IO;
-using Poker;
+﻿using Poker;
 using Poker.Players;
 
 namespace RequestProcessors
 {
     public class FoldRequestProcessor : IRequestProcessor
     {
-        public void ProcessRequest(string username, StreamReader reader, StreamWriter writer)
+        public void ProcessRequest(Client client)
         {
-            TablePlayer player = Casino.GetTablePlayer(username);
+            TablePlayer player = Casino.GetTablePlayer(client.Username);
             Dealer dealer = player.Table.Dealer;
             dealer.Broadcast(ServerResponse.PlayerFolded);
             dealer.Broadcast(player.Index.ToString());

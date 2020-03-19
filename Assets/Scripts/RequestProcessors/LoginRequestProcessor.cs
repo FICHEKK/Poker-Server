@@ -1,4 +1,3 @@
-using System.IO;
 using Dao;
 using Poker;
 using Poker.Players;
@@ -7,19 +6,20 @@ namespace RequestProcessors
 {
     public class LoginRequestProcessor : IRequestProcessor
     {
-        public void ProcessRequest(string username, StreamReader reader, StreamWriter writer)
+        public void ProcessRequest(Client client)
         {
-            string password = reader.ReadLine();
+            string password = client.Reader.ReadLine();
 
-            ServerLoginResponse response = EvaluateProperResponse(username, password);
+            ServerLoginResponse response = EvaluateProperResponse(client.Username, password);
 
             if (response == ServerLoginResponse.Success)
             {
-                int chipCount = DaoProvider.Dao.GetChipCount(username);
-                Casino.AddLobbyPlayer(new LobbyPlayer(username, chipCount, reader, writer));
+                int chipCount = DaoProvider.Dao.GetChipCount(client.Username);
+                Casino.AddLobbyPlayer(new LobbyPlayer(client.Username, chipCount, client.Reader, client.Writer));
+                client.IsLoggedIn = true;
             }
             
-            writer.BaseStream.WriteByte((byte) response);
+            client.Writer.BaseStream.WriteByte((byte) response);
         }
 
         private static ServerLoginResponse EvaluateProperResponse(string username, string password)

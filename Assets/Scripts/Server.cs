@@ -58,7 +58,7 @@ public static class Server
             while (IsRunning)
             {
                 TcpClient client = _listener.AcceptTcpClient();
-                Clients.Add(new Client(client));
+                Clients.Add(new Client(client, Guid.NewGuid()));
             }
         }
         catch
@@ -85,13 +85,14 @@ public static class Server
         DisconnectPlayers();
     }
 
-    public static void DisconnectClient(string username)
+    /// <summary> Disconnects the client with the provided identifier. </summary>
+    public static void DisconnectClient(Guid identifier)
     {
         for (var index = 0; index < Clients.Count; index++)
         {
             Client client = Clients[index];
 
-            if (client.Username == username)
+            if (client.Identifier == identifier)
             {
                 client.Connection.Close();
                 Clients.RemoveAt(index);

@@ -11,6 +11,9 @@ namespace Poker
     /// <summary>Models a poker table dealer.</summary>
     public class Dealer
     {
+        /// <summary>Pause duration in-between 2 rounds (in milliseconds).</summary>
+        private const int RoundFinishPauseDuration = 5000;
+        
         /// <summary>The table that this dealer is dealing on.</summary>
         public Table Table { get; }
 
@@ -39,17 +42,28 @@ namespace Poker
             int bigBlindIndex = Table.GetNextOccupiedSeatIndex(smallBlindIndex);
             int playerIndex = Table.GetNextOccupiedSeatIndex(bigBlindIndex);
 
-            Broadcast(ServerResponse.Blinds);
-            Broadcast(Table.DealerButtonIndex.ToString());
-            Broadcast(smallBlindIndex.ToString());
-            Broadcast(bigBlindIndex.ToString());
-
             Round = new Round(Table.GetPlayerArray(), smallBlindIndex, bigBlindIndex, playerIndex, Table.SmallBlind);
             Round.RoundPhaseChanged += RoundPhaseChangedEventHandler;
             Round.CurrentPlayerChanged += CurrentPlayerChangedEventHandler;
             
+            BroadcastBlindsData(smallBlindIndex, bigBlindIndex);
             ProcessPreFlop();
             Round.Start();
+        }
+
+        private void BroadcastBlindsData(int smallBlindIndex, int bigBlindIndex)
+        {
+            Broadcast(ServerResponse.Blinds);
+            
+            Broadcast(Round.JustJoinedPlayerIndexes.Count.ToString());
+            foreach (var index in Round.JustJoinedPlayerIndexes)
+            {
+                Broadcast(index.ToString());
+            }
+
+            Broadcast(Table.DealerButtonIndex.ToString());
+            Broadcast(smallBlindIndex.ToString());
+            Broadcast(bigBlindIndex.ToString());
         }
 
         #region Event handlers
@@ -69,10 +83,15 @@ namespace Poker
 
         private void PlayerLeftEventHandler(object sender, PlayerLeftEventArgs e)
         {
-            BroadcastToEveryoneExcept(e.Index, ServerResponse.PlayerLeft);
-            BroadcastToEveryoneExcept(e.Index, e.Index.ToString());
+            Broadcast(ServerResponse.PlayerLeft);
+            Broadcast(e.Index.ToString());
 
-            // TODO remove player from round and if there is only 1 player left, he wins the round
+            Round?.PlayerLeft(e.Index);
+
+            if (Table.PlayerCount == 1)
+            {
+                Round = null;
+            }
         }
 
         private void RoundPhaseChangedEventHandler(object sender, RoundPhaseChangedEventArgs e)
@@ -160,15 +179,17 @@ namespace Poker
 
             Broadcast(ServerResponse.Showdown);
             Broadcast(winners.Count.ToString());
-
             foreach (TablePlayer winner in winners)
-            {
                 Broadcast(winner.Index.ToString());
-            }
 
-            Thread.Sleep(4000);
+            Broadcast(ServerResponse.WaitForMilliseconds);
+            Broadcast(RoundFinishPauseDuration.ToString());
             Broadcast(ServerResponse.RoundFinished);
-            StartNewRound();
+
+            if (Table.PlayerCount > 1)
+            {
+                StartNewRound();
+            }
         }
 
         private List<TablePlayer> DetermineWinners()
@@ -254,24 +275,6 @@ namespace Poker
         {
             for (int i = 0; i < Table.MaxPlayers; i++)
             {
-                Signal(i, data);
-            }
-        }
-
-        public void BroadcastToEveryoneExcept(int index, ServerResponse response)
-        {
-            for (int i = 0; i < Table.MaxPlayers; i++)
-            {
-                if (i == index) continue;
-                Signal(i, response);
-            }
-        }
-
-        public void BroadcastToEveryoneExcept(int index, string data)
-        {
-            for (int i = 0; i < Table.MaxPlayers; i++)
-            {
-                if (i == index) continue;
                 Signal(i, data);
             }
         }

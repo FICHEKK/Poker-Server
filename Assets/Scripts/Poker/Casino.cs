@@ -47,8 +47,7 @@ namespace Poker
         public static IEnumerable<Table> Tables => TableByTitle.Values;
 
         /// <summary>A thread-safe dictionary that maps table's name to its corresponding table.</summary>
-        private static readonly ConcurrentDictionary<string, Table> TableByTitle =
-            new ConcurrentDictionary<string, Table>();
+        private static readonly ConcurrentDictionary<string, Table> TableByTitle = new ConcurrentDictionary<string, Table>();
 
         /// <summary>Lock used by the lobby-players hash-set.</summary>
         private static readonly object LobbyPlayersPadlock = new object();
@@ -173,27 +172,6 @@ namespace Poker
         public static bool HasPlayerWithUsername(string username)
         {
             return GetLobbyPlayer(username) != null || GetTablePlayer(username) != null;
-        }
-
-        public static void MovePlayerFromLobbyToTable(string username, Table table, int buyIn)
-        {
-            LobbyPlayer lobbyPlayer = GetLobbyPlayer(username);
-            RemoveLobbyPlayer(lobbyPlayer);
-
-            int index = table.GetFirstFreeSeatIndex();
-            TablePlayer tablePlayer = new TablePlayer(username, lobbyPlayer.ChipCount, table, buyIn, index,
-                lobbyPlayer.Reader, lobbyPlayer.Writer);
-            AddTablePlayer(tablePlayer);
-        }
-
-        public static void MovePlayerFromTableToLobby(string username)
-        {
-            TablePlayer tablePlayer = GetTablePlayer(username);
-            RemoveTablePlayer(tablePlayer);
-
-            LobbyPlayer lobbyPlayer =
-                new LobbyPlayer(username, tablePlayer.ChipCount, tablePlayer.Reader, tablePlayer.Writer);
-            AddLobbyPlayer(lobbyPlayer);
         }
     }
 }

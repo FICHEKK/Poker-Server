@@ -1,26 +1,22 @@
-﻿using System.IO;
-using Poker;
+﻿using Poker;
 using Poker.Players;
 
 namespace RequestProcessors
 {
     public class DisconnectRequestProcessor : IRequestProcessor
     {
-        public void ProcessRequest(string username, StreamReader reader, StreamWriter writer)
+        public void ProcessRequest(Client client)
         {
-            LobbyPlayer lobbyPlayer = Casino.GetLobbyPlayer(username);
-            if (lobbyPlayer != null)
+            if (client.IsLoggedIn)
             {
-                Casino.RemoveLobbyPlayer(lobbyPlayer);
+                LobbyPlayer lobbyPlayer = Casino.GetLobbyPlayer(client.Username);
+                if (lobbyPlayer != null) Casino.RemoveLobbyPlayer(lobbyPlayer);
+
+                TablePlayer tablePlayer = Casino.GetTablePlayer(client.Username);
+                if (tablePlayer != null) Casino.RemoveTablePlayer(tablePlayer);
             }
 
-            TablePlayer tablePlayer = Casino.GetTablePlayer(username);
-            if (tablePlayer != null)
-            {
-                Casino.RemoveTablePlayer(tablePlayer);
-            }
-            
-            Server.DisconnectClient(username);
+            Server.DisconnectClient(client.Identifier);
         }
     }
 }

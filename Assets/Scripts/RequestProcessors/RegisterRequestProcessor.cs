@@ -1,14 +1,13 @@
-using System.IO;
 using Dao;
 
 namespace RequestProcessors
 {
     public class RegisterRequestProcessor : IRequestProcessor
     {
-        public void ProcessRequest(string username, StreamReader reader, StreamWriter writer)
+        public void ProcessRequest(Client client)
         {
-            string password = reader.ReadLine();
-            writer.BaseStream.WriteByte((byte) EvaluateProperResponse(username, password));
+            string password = client.Reader.ReadLine();
+            client.Writer.BaseStream.WriteByte((byte) EvaluateProperResponse(client.Username, password));
         }
 
         private static ServerRegistrationResponse EvaluateProperResponse(string username, string password)

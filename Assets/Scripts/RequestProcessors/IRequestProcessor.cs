@@ -1,5 +1,3 @@
-using System.IO;
-
 namespace RequestProcessors
 {
     /// <summary>
@@ -7,12 +5,8 @@ namespace RequestProcessors
     /// </summary>
     public interface IRequestProcessor
     {
-        /// <summary>
-        /// Processes the request.
-        /// </summary>
-        /// <param name="username">Username to apply the request for.</param>
-        /// <param name="reader">Stream reader used to read incoming data.</param>
-        /// <param name="writer">Stream writer used to write output data.</param>
-        void ProcessRequest(string username, StreamReader reader, StreamWriter writer);
+        /// <summary>Processes the request from the client.</summary>
+        /// <param name="client">Client that is performing the request.</param>
+        void ProcessRequest(Client client);
     }
 }

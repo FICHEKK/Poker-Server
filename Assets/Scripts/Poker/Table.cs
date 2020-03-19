@@ -7,7 +7,7 @@ namespace Poker
     /// <summary>
     /// Encapsulates data of a single poker table.
     /// </summary>
-    public class Table
+    public sealed class Table
     {
         /// <summary>Event that gets raised every time a player joins this table.</summary>
         public event EventHandler<PlayerJoinedEventArgs> PlayerJoined;
@@ -141,6 +141,7 @@ namespace Poker
                     _playerCount--;
 
                     OnPlayerLeft(new PlayerLeftEventArgs(i));
+                    break;
                 }
             }
         }
@@ -172,7 +173,7 @@ namespace Poker
             return _players[index] != null;
         }
 
-        protected virtual void OnPlayerJoined(PlayerJoinedEventArgs args) => PlayerJoined?.Invoke(this, args);
-        protected virtual void OnPlayerLeft(PlayerLeftEventArgs args) => PlayerLeft?.Invoke(this, args);
+        private void OnPlayerJoined(PlayerJoinedEventArgs args) => PlayerJoined?.Invoke(this, args);
+        private void OnPlayerLeft(PlayerLeftEventArgs args) => PlayerLeft?.Invoke(this, args);
     }
 }

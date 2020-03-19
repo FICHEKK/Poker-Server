@@ -28,6 +28,12 @@ namespace Poker.Players
         /// </summary>
         public bool Folded { get; set; } = true;
 
+        /// <summary>
+        /// Flag indicating whether this player has just joined and hasn't played any rounds.
+        /// Defaults to true and if true, player must pay for big blind.
+        /// </summary>
+        public bool HasJustJoined { get; set; } = true;
+
         /// <summary> This player's first hand card. </summary>
         public Card FirstHandCard => _handCards[0];
         

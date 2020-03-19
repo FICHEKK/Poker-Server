@@ -1,17 +1,16 @@
-﻿using System.IO;
-using Poker;
+﻿using Poker;
 
 namespace RequestProcessors
 {
     public class AllInRequestProcessor : IRequestProcessor
     {
-        public void ProcessRequest(string username, StreamReader reader, StreamWriter writer)
+        public void ProcessRequest(Client client)
         {
-            string allInAmount = reader.ReadLine();
+            string allInAmount = client.Reader.ReadLine();
 
-            Dealer dealer = Casino.GetTablePlayer(username).Table.Dealer;
+            Dealer dealer = Casino.GetTablePlayer(client.Username).Table.Dealer;
             dealer.Broadcast(ServerResponse.PlayerAllIn);
-            dealer.Broadcast(dealer.Table.GetPlayerIndex(username).ToString());
+            dealer.Broadcast(dealer.Table.GetPlayerIndex(client.Username).ToString());
             dealer.Broadcast(allInAmount);
 
             dealer.Round.PlayerAllIn(int.Parse(allInAmount));

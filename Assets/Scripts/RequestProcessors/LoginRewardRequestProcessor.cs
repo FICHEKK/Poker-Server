@@ -1,5 +1,4 @@
 ﻿using System;
-using System.IO;
 using Dao;
 using Poker;
 
@@ -12,25 +11,25 @@ namespace RequestProcessors
         private const int MinRewardValue = 100;
         private const int MaxRewardValue = 1_000_000;
         
-        public void ProcessRequest(string username, StreamReader reader, StreamWriter writer)
+        public void ProcessRequest(Client client)
         {
-            if (DateTime.Now >= DaoProvider.Dao.GetRewardTimestamp(username))
+            if (DateTime.Now >= DaoProvider.Dao.GetRewardTimestamp(client.Username))
             {
-                int reward = CalculateReward(username);
+                int reward = CalculateReward(client.Username);
                 
-                DaoProvider.Dao.SetChipCount(username, DaoProvider.Dao.GetChipCount(username) + reward);
-                DaoProvider.Dao.UpdateRewardTimestamp(username);
+                DaoProvider.Dao.SetChipCount(client.Username, DaoProvider.Dao.GetChipCount(client.Username) + reward);
+                DaoProvider.Dao.UpdateRewardTimestamp(client.Username);
 
-                Casino.GetLobbyPlayer(username).ChipCount += reward;
+                Casino.GetLobbyPlayer(client.Username).ChipCount += reward;
                 
-                writer.BaseStream.WriteByte((byte) ServerResponse.LoginRewardActive);
-                writer.WriteLine(reward);
+                client.Writer.BaseStream.WriteByte((byte) ServerResponse.LoginRewardActive);
+                client.Writer.WriteLine(reward);
             }
             else
             {
-                writer.BaseStream.WriteByte((byte) ServerResponse.LoginRewardNotActive);
-                TimeSpan? timeUntilReward = DaoProvider.Dao.GetRewardTimestamp(username) - DateTime.Now;
-                writer.WriteLine(timeUntilReward?.ToString(@"hh\:mm"));
+                client.Writer.BaseStream.WriteByte((byte) ServerResponse.LoginRewardNotActive);
+                TimeSpan? timeUntilReward = DaoProvider.Dao.GetRewardTimestamp(client.Username) - DateTime.Now;
+                client.Writer.WriteLine(timeUntilReward?.ToString(@"hh\:mm"));
             }
         }
 

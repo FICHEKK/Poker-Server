@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Threading;
 using Dao;
 using Poker.Cards;
 using Poker.EventArguments;
@@ -12,8 +11,11 @@ namespace Poker
     public class Dealer
     {
         /// <summary>Pause duration in-between 2 rounds (in milliseconds).</summary>
-        private const int RoundFinishPauseDuration = 5000;
-        
+        private const int RoundFinishPauseDuration = 6000;
+
+        /// <summary>Pause duration for a single card to flip over.</summary>
+        private const int PausePerCardDuration = 500;
+
         /// <summary>The table that this dealer is dealing on.</summary>
         public Table Table { get; }
 
@@ -130,18 +132,21 @@ namespace Poker
             RevealCommunityCard();
             RevealCommunityCard();
             RevealCommunityCard();
+            Wait(PausePerCardDuration * 3);
         }
 
         private void ProcessTurn()
         {
             Broadcast(ServerResponse.Turn);
             RevealCommunityCard();
+            Wait(PausePerCardDuration);
         }
 
         private void ProcessRiver()
         {
             Broadcast(ServerResponse.River);
             RevealCommunityCard();
+            Wait(PausePerCardDuration);
         }
 
         private void RevealCommunityCard()
@@ -177,18 +182,41 @@ namespace Poker
                 DaoProvider.Dao.SetChipCount(participant.Username, participant.ChipCount);
             }
 
+            if (Round.ActivePlayers.Count > 1)
+            {
+                RevealActivePlayersCards();
+            }
+            
             Broadcast(ServerResponse.Showdown);
             Broadcast(winners.Count.ToString());
             foreach (TablePlayer winner in winners)
                 Broadcast(winner.Index.ToString());
 
-            Broadcast(ServerResponse.WaitForMilliseconds);
-            Broadcast(RoundFinishPauseDuration.ToString());
+            Wait(RoundFinishPauseDuration);
             Broadcast(ServerResponse.RoundFinished);
 
             if (Table.PlayerCount > 1)
             {
                 StartNewRound();
+            }
+        }
+
+        private void Wait(int milliseconds)
+        {
+            Broadcast(ServerResponse.WaitForMilliseconds);
+            Broadcast(milliseconds.ToString());
+        }
+
+        private void RevealActivePlayersCards()
+        {
+            Broadcast(ServerResponse.CardsReveal);
+            Broadcast(Round.ActivePlayers.Count.ToString());
+            
+            foreach (var player in Round.ActivePlayers)
+            {
+                Broadcast(player.Index.ToString());
+                Broadcast(player.FirstHandCard.ToString());
+                Broadcast(player.SecondHandCard.ToString());
             }
         }
 

@@ -43,12 +43,12 @@ namespace Poker.Players
         /// <summary> Cards that this player is currently holding. </summary>
         private readonly Card[] _handCards = new Card[2];
 
-        public TablePlayer(string username, int chipCount, Table table, int buyIn, int index, StreamReader reader,
+        public TablePlayer(string username, int chipCount, Table table, int stack, int index, StreamReader reader,
             StreamWriter writer) : base(username, chipCount, reader, writer)
         {
             Table = table;
             Index = index;
-            Stack = buyIn;
+            Stack = stack;
         }
 
         /// <summary> Sets this player's hand cards. </summary>

@@ -19,9 +19,7 @@ namespace Poker
         /// <summary> Index of the currently focused player. </summary>
         public int PlayerIndex { get; private set; }
         
-        /// <summary>
-        /// List of all the indexes of players that need to pay for big blind since they just joined.
-        /// </summary>
+        /// <summary> List of all the indexes of players that need to pay for big blind since they just joined. </summary>
         public List<int> JustJoinedPlayerIndexes { get; } = new List<int>();
         
         /// <summary> List of all the current community cards.</summary>
@@ -42,14 +40,11 @@ namespace Poker
         private readonly TablePlayer[] _players;
         private int _betCounter;
         private readonly int _smallBlindIndex;
-
-        /// <summary> Value indicating the current minimum raise that must be made by the raising player. </summary>
         private int _raiseIncrement;
 
         public event EventHandler<RoundPhaseChangedEventArgs> RoundPhaseChanged;
         public event EventHandler<CurrentPlayerChangedEventArgs> CurrentPlayerChanged;
-
-        /// <summary>Constructs a new poker round.</summary>
+        
         public Round(TablePlayer[] players, int smallBlindIndex, int bigBlindIndex, int playerIndex, int smallBlind)
         {
             _players = players ?? throw new ArgumentNullException(nameof(players));
@@ -85,19 +80,7 @@ namespace Poker
 
         public void Start()
         {
-            int requiredCall = HighestBet - _players[PlayerIndex].Bet;
-            int minRaise = _players[PlayerIndex].Bet + requiredCall + _raiseIncrement;
-            int maxRaise = _players[PlayerIndex].Stack + _players[PlayerIndex].Bet;
-            OnCurrentPlayerChanged(new CurrentPlayerChangedEventArgs(PlayerIndex, requiredCall, minRaise, maxRaise));
-        }
-
-        /// <summary>Adds a new community card to this round.</summary>
-        public void AddCommunityCard(Card card)
-        {
-            if (CommunityCards.Count == MaxCommunityCardCount)
-                throw new IndexOutOfRangeException("Maximum number of community cards has already been reached.");
-
-            CommunityCards.Add(card);
+            SendBettingDataToCurrentPlayer();
         }
 
         //----------------------------------------------------------------
@@ -164,6 +147,75 @@ namespace Poker
             }
         }
 
+        private void UpdateCurrentPlayerIndex()
+        {
+            FindFirstValidIndexFrom(PlayerIndex + 1);
+
+            if (_betCounter >= _playerCount)
+            {
+                GoToNextPhase();
+            }
+            else
+            {
+                SendBettingDataToCurrentPlayer();
+            }
+        }
+
+        private void GoToNextPhase()
+        {
+            _betCounter = 0;
+            _raiseIncrement = _smallBlind * 2;
+            OnRoundPhaseChanged(new RoundPhaseChangedEventArgs(++_phase));
+            
+            // There are at least 2 players who can bet.
+            if (_players.Count(p => p?.Stack > 0) >= 2)
+            {
+                if (_phase == Phase.Showdown) return;
+                
+                FindFirstValidIndexFrom(_smallBlindIndex);
+                SendBettingDataToCurrentPlayer();
+            }
+            else
+            {
+                while (_phase != Phase.Showdown)
+                {
+                    OnRoundPhaseChanged(new RoundPhaseChangedEventArgs(++_phase));
+                }
+            }
+        }
+
+        private void FindFirstValidIndexFrom(int startingIndex)
+        {
+            PlayerIndex = startingIndex;
+            
+            for (int i = 0; i < _players.Length - 1; i++)
+            {
+                PlayerIndex %= _players.Length;
+            
+                if (_players[PlayerIndex] != null && !_players[PlayerIndex].Folded)
+                {
+                    if (_players[PlayerIndex].Stack == 0)
+                    {
+                        if(++_betCounter >= _playerCount) break;
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+            
+                PlayerIndex++;
+            }
+        }
+
+        private void SendBettingDataToCurrentPlayer()
+        {
+            int requiredCall = Math.Min(HighestBet - _players[PlayerIndex].Bet, _players[PlayerIndex].Stack);
+            int minRaise = HighestBet + _raiseIncrement;
+            int maxRaise = _players[PlayerIndex].Stack + _players[PlayerIndex].Bet;
+            CurrentPlayerChanged?.Invoke(this, new CurrentPlayerChangedEventArgs(PlayerIndex, requiredCall, minRaise, maxRaise));
+        }
+
         private void PlaceChips(int index, int amount)
         {
             if (_players[index] == null)
@@ -174,40 +226,13 @@ namespace Poker
             _players[index].Bet += amount;
             _players[index].TotalBet += amount;
         }
-
-        private void UpdateCurrentPlayerIndex()
+        
+        public void AddCommunityCard(Card card)
         {
-            bool isPhaseOver = _betCounter == _playerCount;
-            PlayerIndex = isPhaseOver ? _smallBlindIndex : PlayerIndex + 1;
+            if (CommunityCards.Count == MaxCommunityCardCount)
+                throw new IndexOutOfRangeException("Maximum number of community cards has already been reached.");
 
-            for (int i = 0; i < _players.Length - 1; i++)
-            {
-                PlayerIndex %= _players.Length;
-                if (_players[PlayerIndex] != null && !_players[PlayerIndex].Folded) break;
-                PlayerIndex++;
-            }
-            
-            if (isPhaseOver)
-            {
-                _betCounter = 0;
-                _raiseIncrement = _smallBlind * 2;
-                OnRoundPhaseChanged(new RoundPhaseChangedEventArgs(++_phase));
-
-                if (_phase != Phase.Showdown)
-                {
-                    int requiredCall = 0;
-                    int minRaise = _raiseIncrement;
-                    int maxRaise = _players[PlayerIndex].Stack;
-                    OnCurrentPlayerChanged(new CurrentPlayerChangedEventArgs(PlayerIndex, requiredCall, minRaise, maxRaise));
-                }
-            }
-            else
-            {
-                int requiredCall = HighestBet - _players[PlayerIndex].Bet;
-                int minRaise = HighestBet + _raiseIncrement;
-                int maxRaise = _players[PlayerIndex].Stack + _players[PlayerIndex].Bet;
-                OnCurrentPlayerChanged(new CurrentPlayerChangedEventArgs(PlayerIndex, requiredCall, minRaise, maxRaise));
-            }
+            CommunityCards.Add(card);
         }
 
         //----------------------------------------------------------------
@@ -218,19 +243,12 @@ namespace Poker
         {
             foreach (var player in _players)
             {
-                if (player != null)
-                {
-                    Pot += player.Bet;
-                    player.Bet = 0;
-                }
+                if (player == null) continue;
+                Pot += player.Bet;
+                player.Bet = 0;
             }
 
             RoundPhaseChanged?.Invoke(this, args);
-        }
-
-        private void OnCurrentPlayerChanged(CurrentPlayerChangedEventArgs args)
-        {
-            CurrentPlayerChanged?.Invoke(this, args);
         }
 
         //----------------------------------------------------------------

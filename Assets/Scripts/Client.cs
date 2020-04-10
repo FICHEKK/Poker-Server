@@ -50,7 +50,8 @@ public class Client
             {ClientRequest.AllIn, new AllInRequestProcessor()},
             {ClientRequest.LoginReward, new LoginRewardRequestProcessor()},
             {ClientRequest.LeaveTable, new LeaveTableRequestProcessor()},
-            {ClientRequest.Disconnect, new DisconnectRequestProcessor()}
+            {ClientRequest.Disconnect, new DisconnectRequestProcessor()},
+            {ClientRequest.SendChatMessage, new SendChatMessageRequestProcessor()},
         };
     }
 

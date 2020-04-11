@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
+using System.Timers;
 using Dao;
 using Poker.Cards;
 using Poker.EventArguments;
@@ -11,12 +11,6 @@ namespace Poker
     /// <summary>Models a poker table dealer.</summary>
     public class Dealer
     {
-        /// <summary>Pause duration in-between 2 rounds (in milliseconds).</summary>
-        private const int RoundFinishPauseDuration = 5000;
-
-        /// <summary>Pause duration for a single card to flip over.</summary>
-        private const int PausePerCardDuration = 500;
-
         /// <summary>The table that this dealer is dealing on.</summary>
         public Table Table { get; }
 
@@ -28,13 +22,31 @@ namespace Poker
 
         /// <summary> True if there are not enough players for the round to start. </summary>
         public bool IsWaitingForPlayers => Round == null;
+        
+        /// <summary> Timer used to time player's turn durations. </summary>
+        private readonly Timer _decisionTimer = new Timer {AutoReset = false};
+        
+        /// <summary> A collection of waiting times used by the decision timer. </summary>
+        private readonly Stack<int> _waitingTimes = new Stack<int>();
 
         public Dealer(Table table)
         {
             Table = table ?? throw new ArgumentNullException(nameof(table));
             Table.PlayerJoined += PlayerJoinedEventHandler;
             Table.PlayerLeft += PlayerLeftEventHandler;
+            
+            _decisionTimer.Elapsed += (sender, e) =>
+            {
+                if (IsWaitingForPlayers) return;
+                Broadcast(ServerResponse.PlayerFolded);
+                Broadcast(Round.PlayerIndex);
+                Round.PlayerFolded();
+            };
         }
+        
+        //----------------------------------------------------------------
+        //                     Starting new round
+        //----------------------------------------------------------------
 
         private void StartNewRound()
         {
@@ -50,7 +62,7 @@ namespace Poker
             Round.CurrentPlayerChanged += CurrentPlayerChangedEventHandler;
             
             BroadcastBlindsData(smallBlindIndex, bigBlindIndex);
-            ProcessPreFlop();
+            DealHandCards();
             Round.Start();
         }
 
@@ -58,16 +70,15 @@ namespace Poker
         {
             Broadcast(ServerResponse.Blinds);
             
-            Broadcast(Round.JustJoinedPlayerIndexes.Count.ToString());
-            foreach (var index in Round.JustJoinedPlayerIndexes)
-                Broadcast(index.ToString());
+            Broadcast(Round.JustJoinedPlayerIndexes.Count);
+            foreach (var index in Round.JustJoinedPlayerIndexes) Broadcast(index);
 
-            Broadcast(Table.DealerButtonIndex.ToString());
-            Broadcast(smallBlindIndex.ToString());
-            Broadcast(bigBlindIndex.ToString());
+            Broadcast(Table.DealerButtonIndex);
+            Broadcast(smallBlindIndex);
+            Broadcast(bigBlindIndex);
         }
 
-        private void ProcessPreFlop()
+        private void DealHandCards()
         {
             Broadcast(ServerResponse.Hand);
 
@@ -80,34 +91,26 @@ namespace Poker
 
                 Table.GetPlayerAt(i).SetHand(handCard1, handCard2);
 
-                Signal(i, handCard1.ToString());
-                Signal(i, handCard2.ToString());
+                Signal(i, handCard1);
+                Signal(i, handCard2);
             }
-            
-            Wait(PausePerCardDuration * 2);
+        }
+        
+        //----------------------------------------------------------------
+        //                    Flop, turn & river
+        //----------------------------------------------------------------
+
+        private void ProcessPhase(ServerResponse response, int cardCount)
+        {
+            Broadcast(response);
+            for(int i = 0; i < cardCount; i++) RevealCommunityCard();
         }
 
-        private void ProcessFlop()
+        private void RevealCommunityCard()
         {
-            Broadcast(ServerResponse.Flop);
-            RevealCommunityCard();
-            RevealCommunityCard();
-            RevealCommunityCard();
-            Wait(PausePerCardDuration * 3);
-        }
-
-        private void ProcessTurn()
-        {
-            Broadcast(ServerResponse.Turn);
-            RevealCommunityCard();
-            Wait(PausePerCardDuration);
-        }
-
-        private void ProcessRiver()
-        {
-            Broadcast(ServerResponse.River);
-            RevealCommunityCard();
-            Wait(PausePerCardDuration);
+            Card card = Deck.GetNextCard();
+            Broadcast(card);
+            Round.AddCommunityCard(card);
         }
 
         private void ProcessShowdown()
@@ -115,58 +118,55 @@ namespace Poker
             RevealActivePlayersCards();
 
             var sidePots = Pot.CalculateSidePots(Round.ParticipatingPlayers);
-            var alreadyIncreasedWinCountPlayers = new HashSet<TablePlayer>();
+            var winningPlayers = new HashSet<TablePlayer>();
             
-            // [sidePotCount] ([sidePotValue] [winnerCount] [winnerIndexes]*)*
             Broadcast(ServerResponse.Showdown);
-            Broadcast(sidePots.Count.ToString());
+            Broadcast(sidePots.Count);
 
             for (int i = sidePots.Count - 1; i >= 0; i--)
             {
-                var winners = DetermineWinners(sidePots[i].Contenders, Round.CommunityCards);
-                var winAmount = sidePots[i].Value / winners.Count;
+                var sidePotWinners = DetermineWinners(sidePots[i].Contenders, Round.CommunityCards);
+                var winAmount = sidePots[i].Value / sidePotWinners.Count;
                 
-                foreach (var player in winners)
+                foreach (var player in sidePotWinners)
                 {
                     player.Stack += winAmount;
                     player.ChipCount += winAmount;
-
-                    if (alreadyIncreasedWinCountPlayers.Contains(player)) continue;
-                    
-                    DaoProvider.Dao.SetWinCount(player.Username, DaoProvider.Dao.GetWinCount(player.Username) + 1);
-                    alreadyIncreasedWinCountPlayers.Add(player);
+                    winningPlayers.Add(player);
                 }
-                
-                Broadcast(sidePots[i].Value.ToString());
-                Broadcast(winners.Count.ToString());
-                foreach (var player in winners)
-                    Broadcast(player.Index.ToString());
+
+                BroadcastSidePotData(sidePots[i].Value, sidePotWinners.Count, sidePotWinners);
             }
+            
+            foreach (var player in winningPlayers)
+                DaoProvider.Dao.SetWinCount(player.Username, DaoProvider.Dao.GetWinCount(player.Username) + 1);
 
             foreach (var participant in Round.ParticipatingPlayers)
-            {
                 DaoProvider.Dao.SetChipCount(participant.Username, participant.ChipCount);
-            }
-
-            Wait(RoundFinishPauseDuration + sidePots.Count * 1000);
+            
+            Wait(TableConstant.RoundFinishPauseDuration + sidePots.Count * 1000);
             Broadcast(ServerResponse.RoundFinished);
 
-            if (Table.PlayerCount > 1)
-            {
-                StartNewRound();
-            }
+            if (Table.PlayerCount >= 2) StartNewRound();
         }
-        
+
+        private void BroadcastSidePotData(int value, int winnerCount, List<TablePlayer> winners)
+        {
+            Broadcast(value);
+            Broadcast(winnerCount);
+            foreach (var winner in winners) Broadcast(winner.Index);
+        }
+
         private void RevealActivePlayersCards()
         {
             Broadcast(ServerResponse.CardsReveal);
-            Broadcast(Round.ActivePlayers.Count.ToString());
+            Broadcast(Round.ActivePlayers.Count);
             
             foreach (var player in Round.ActivePlayers)
             {
-                Broadcast(player.Index.ToString());
-                Broadcast(player.FirstHandCard.ToString());
-                Broadcast(player.SecondHandCard.ToString());
+                Broadcast(player.Index);
+                Broadcast(player.FirstHandCard);
+                Broadcast(player.SecondHandCard);
             }
         }
 
@@ -210,38 +210,31 @@ namespace Poker
             var winner = Round.ActivePlayers[0];
             
             Broadcast(ServerResponse.Showdown);
-            Broadcast(1.ToString());
-            Broadcast(Round.Pot.ToString());
-            Broadcast(1.ToString());
-            Broadcast(winner.Index.ToString());
+            Broadcast(1);
+            Broadcast(Round.Pot);
+            Broadcast(1);
+            Broadcast(winner.Index);
             
             DaoProvider.Dao.SetWinCount(winner.Username, DaoProvider.Dao.GetWinCount(winner.Username) + 1);
             winner.Stack += Round.Pot;
             winner.ChipCount += Round.Pot;
             
             foreach (var participant in Round.ParticipatingPlayers)
-            {
                 DaoProvider.Dao.SetChipCount(participant.Username, participant.ChipCount);
-            }
 
-            Wait(RoundFinishPauseDuration);
+            Wait(TableConstant.RoundFinishPauseDuration);
             Broadcast(ServerResponse.RoundFinished);
 
-            if (Table.PlayerCount > 1)
-            {
-                StartNewRound();
-            }
+            if (Table.PlayerCount >= 2) StartNewRound();
         }
-        
-        #region Event handlers
-        
+
         private void RoundPhaseChangedEventHandler(object sender, RoundPhaseChangedEventArgs e)
         {
             switch (e.CurrentPhase)
             {
-                case Round.Phase.Flop: ProcessFlop(); break;
-                case Round.Phase.Turn: ProcessTurn(); break;
-                case Round.Phase.River: ProcessRiver(); break;
+                case Round.Phase.Flop: ProcessPhase(ServerResponse.Flop, 3); break;
+                case Round.Phase.Turn: ProcessPhase(ServerResponse.Turn, 1); break;
+                case Round.Phase.River: ProcessPhase(ServerResponse.River, 1); break;
                 case Round.Phase.Showdown: ProcessShowdown(); break;
                 case Round.Phase.OnePlayerLeft: ProcessOnePlayerLeft(); break;
             }
@@ -250,31 +243,42 @@ namespace Poker
         private void CurrentPlayerChangedEventHandler(object sender, CurrentPlayerChangedEventArgs e)
         {
             Broadcast(ServerResponse.PlayerIndex);
-            Broadcast(e.CurrentPlayerIndex.ToString());
+            Broadcast(e.CurrentPlayerIndex);
             
             Signal(e.CurrentPlayerIndex, ServerResponse.RequiredBet);
-            Signal(e.CurrentPlayerIndex, e.RequiredCall.ToString());
-            Signal(e.CurrentPlayerIndex, e.MinRaise.ToString());
-            Signal(e.CurrentPlayerIndex, e.MaxRaise.ToString());
+            Signal(e.CurrentPlayerIndex, e.RequiredCall);
+            Signal(e.CurrentPlayerIndex, e.MinRaise);
+            Signal(e.CurrentPlayerIndex, e.MaxRaise);
+            
+            StartDecisionTimer();
         }
-        
+
+        private void StartDecisionTimer()
+        {
+            double interval = (TableConstant.PlayerTurnDuration + TableConstant.PlayerTurnOvertime) * 1000;
+            
+            while (_waitingTimes.Count > 0)
+                interval += _waitingTimes.Pop();
+
+            _decisionTimer.Interval = interval;
+            _decisionTimer.Stop();
+            _decisionTimer.Start();
+        }
+
         private void PlayerJoinedEventHandler(object sender, PlayerJoinedEventArgs e)
         {
             Broadcast(ServerResponse.PlayerJoined);
-            Broadcast(e.Player.Index.ToString());
+            Broadcast(e.Player.Index);
             Broadcast(e.Player.Username);
-            Broadcast(e.Player.Stack.ToString());
+            Broadcast(e.Player.Stack);
 
-            if (Table.PlayerCount == 2)
-            {
-                StartNewRound();
-            }
+            if (Table.PlayerCount == 2) StartNewRound();
         }
 
         private void PlayerLeftEventHandler(object sender, PlayerLeftEventArgs e)
         {
             Broadcast(ServerResponse.PlayerLeft);
-            Broadcast(e.Index.ToString());
+            Broadcast(e.Index);
 
             Round?.PlayerLeft(e.Index);
 
@@ -284,63 +288,39 @@ namespace Poker
             }
         }
 
-        #endregion
-
-        #region Helper methods
-        
-        private void RevealCommunityCard()
-        {
-            Card card = Deck.GetNextCard();
-            Broadcast(card.ToString());
-            Round.AddCommunityCard(card);
-        }
-
         private void Wait(int milliseconds)
         {
             Broadcast(ServerResponse.WaitForMilliseconds);
-            Broadcast(milliseconds.ToString());
+            Broadcast(milliseconds);
+            _waitingTimes.Push(milliseconds);
         }
-
-        #endregion
-
-        #region Signal and broadcast
 
         /// <summary> Sends a server response to the single specified position. </summary>
         /// <param name="index"> The index of the player to send a response to. </param>
         /// <param name="response"> The response to be sent. </param>
-        public void Signal(int index, ServerResponse response)
-        {
+        private void Signal(int index, ServerResponse response) =>
             Table.GetPlayerAt(index)?.Writer.BaseStream.WriteByte((byte) response);
-        }
 
         /// <summary> Sends given data to the single specified position. </summary>
         /// <param name="index"> The index of the client to send a response to. </param>
         /// <param name="data"> The data to be sent. </param>
-        public void Signal(int index, string data)
-        {
-            Table.GetPlayerAt(index)?.Writer.WriteLine(data);
-        }
+        private void Signal<T>(int index, T data) =>
+            Table.GetPlayerAt(index)?.Writer.WriteLine(data.ToString());
 
         /// <summary> Sends a server response to every player on the table. </summary>
         /// <param name="response"> The response to be sent. </param>
         public void Broadcast(ServerResponse response)
         {
             for (int i = 0; i < Table.MaxPlayers; i++)
-            {
                 Signal(i, response);
-            }
         }
 
         /// <summary> Sends given data to every player on the table. </summary>
         /// <param name="data"> The data to be sent. </param>
-        public void Broadcast(string data)
+        public void Broadcast<T>(T data)
         {
             for (int i = 0; i < Table.MaxPlayers; i++)
-            {
                 Signal(i, data);
-            }
         }
-
-        #endregion
     }
 }

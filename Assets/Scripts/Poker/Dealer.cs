@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 using System.Timers;
 using Dao;
 using Poker.Cards;
@@ -104,6 +105,7 @@ namespace Poker
         {
             Broadcast(response);
             for(int i = 0; i < cardCount; i++) RevealCommunityCard();
+            Wait(TableConstant.PausePerCardDuration * cardCount);
         }
 
         private void RevealCommunityCard()
@@ -125,7 +127,7 @@ namespace Poker
 
             for (int i = sidePots.Count - 1; i >= 0; i--)
             {
-                var sidePotWinners = DetermineWinners(sidePots[i].Contenders, Round.CommunityCards);
+                var sidePotWinners = DetermineWinners(sidePots[i].Contenders, Round.CommunityCards, out var bestHandValue);
                 var winAmount = sidePots[i].Value / sidePotWinners.Count;
                 
                 foreach (var player in sidePotWinners)
@@ -135,7 +137,7 @@ namespace Poker
                     winningPlayers.Add(player);
                 }
 
-                BroadcastSidePotData(sidePots[i].Value, sidePotWinners.Count, sidePotWinners);
+                BroadcastSidePotData(sidePots[i].Value, sidePotWinners.Count, sidePotWinners, bestHandValue);
             }
             
             foreach (var player in winningPlayers)
@@ -150,11 +152,12 @@ namespace Poker
             if (Table.PlayerCount >= 2) StartNewRound();
         }
 
-        private void BroadcastSidePotData(int value, int winnerCount, List<TablePlayer> winners)
+        private void BroadcastSidePotData(int value, int winnerCount, List<TablePlayer> winners, string bestHandValue)
         {
             Broadcast(value);
             Broadcast(winnerCount);
             foreach (var winner in winners) Broadcast(winner.Index);
+            Broadcast(bestHandValue);
         }
 
         private void RevealActivePlayersCards()
@@ -170,8 +173,13 @@ namespace Poker
             }
         }
 
-        private static List<TablePlayer> DetermineWinners(List<TablePlayer> players, List<Card> communityCards)
+        private static List<TablePlayer> DetermineWinners(List<TablePlayer> players, List<Card> communityCards, out string bestHandValue)
         {
+            if(players == null) throw new ArgumentNullException(nameof(players));
+            if(communityCards == null) throw new ArgumentNullException(nameof(communityCards));
+            if(players.Count == 0) throw new ArgumentException("Player collection must be non-empty.");
+            if(communityCards.Count != 5) throw new ArgumentException("Expected all 5 community cards.");
+            
             var winners = new List<TablePlayer>();
 
             Hand bestHand = null;
@@ -202,6 +210,12 @@ namespace Poker
                 }
             }
 
+            bestHandValue = Regex.Replace(
+                bestHand.HandAnalyser.HandValue.ToString(),
+                "[a-z][A-Z]",
+                m => m.Value[0] + " " + char.ToLower(m.Value[1])
+            );
+            
             return winners;
         }
 
@@ -214,6 +228,7 @@ namespace Poker
             Broadcast(Round.Pot);
             Broadcast(1);
             Broadcast(winner.Index);
+            Broadcast(string.Empty);
             
             DaoProvider.Dao.SetWinCount(winner.Username, DaoProvider.Dao.GetWinCount(winner.Username) + 1);
             winner.Stack += Round.Pot;

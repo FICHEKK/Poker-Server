@@ -26,7 +26,8 @@ namespace RequestProcessors
             }
 
             client.Writer.BaseStream.WriteByte((byte) ServerJoinTableResponse.Success);
-            SendTableData(table, client.Writer);
+            client.Writer.BaseStream.WriteByte((byte) ServerResponse.TableState);
+            SendTableState(table, client.Writer);
 
             LobbyPlayer lobbyPlayer = Casino.GetLobbyPlayer(client.Username);
             Casino.RemoveLobbyPlayer(lobbyPlayer);
@@ -36,7 +37,7 @@ namespace RequestProcessors
             Casino.AddTablePlayer(tablePlayer);
         }
 
-        private static void SendTableData(Table table, StreamWriter writer)
+        private static void SendTableState(Table table, StreamWriter writer)
         {
             writer.WriteLine(table.DealerButtonIndex);
             writer.WriteLine(table.SmallBlind);

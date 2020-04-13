@@ -2,15 +2,23 @@ using Dao;
 
 namespace RequestProcessors
 {
-    public class ClientDataRequestProcessor : IRequestProcessor
+    public class ClientDataRequestProcessor : IClientRequestProcessor
     {
-        public void ProcessRequest(Client client)
-        {
-            string requestedUsername = client.Reader.ReadLine();
+        public bool CanWait => false;
+        private Client _client;
+        private string _requestedUsername;
 
-            client.Writer.WriteLine(DaoProvider.Dao.GetChipCount(requestedUsername).ToString());
-            client.Writer.WriteLine(DaoProvider.Dao.GetWinCount(requestedUsername).ToString());
-            client.Writer.WriteLine(DaoProvider.Dao.GetEloRating(requestedUsername).ToString());
+        public void ReadPayloadData(Client client)
+        {
+            _client = client;
+            _requestedUsername = client.Reader.ReadLine();
+        }
+
+        public void ProcessRequest()
+        {
+            _client.Writer.WriteLine(DaoProvider.Dao.GetChipCount(_requestedUsername).ToString());
+            _client.Writer.WriteLine(DaoProvider.Dao.GetWinCount(_requestedUsername).ToString());
+            _client.Writer.WriteLine(DaoProvider.Dao.GetEloRating(_requestedUsername).ToString());
         }
     }
 }

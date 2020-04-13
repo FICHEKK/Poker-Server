@@ -1,19 +1,25 @@
 ﻿using Poker;
-using Poker.Players;
 
 namespace RequestProcessors
 {
-    public class LeaveTableRequestProcessor : IRequestProcessor
+    public class LeaveTableRequestProcessor : IClientRequestProcessor
     {
-        public void ProcessRequest(Client client)
+        public bool CanWait => false;
+        private Client _client;
+        
+        public void ReadPayloadData(Client client)
         {
-            TablePlayer tablePlayer = Casino.GetTablePlayer(client.Username);
-            Casino.RemoveTablePlayer(tablePlayer);
+            _client = client;
+        }
 
-            LobbyPlayer lobbyPlayer = new LobbyPlayer(client.Username, tablePlayer.ChipCount, tablePlayer.Reader, tablePlayer.Writer);
-            Casino.AddLobbyPlayer(lobbyPlayer);
+        public void ProcessRequest()
+        {
+            // Execute the potentially blocking part of this request on the table thread.
+            var blockingRequestProcessor = new LeaveTableBlockingRequestProcessor();
+            blockingRequestProcessor.ReadPayloadData(_client);
+            Casino.GetTablePlayer(_client.Username).Table.RequestProcessors.Add(blockingRequestProcessor);
             
-            client.Writer.BaseStream.WriteByte((byte) ServerResponse.LeaveTableSuccess);
+            _client.Writer.BaseStream.WriteByte((byte) ServerResponse.LeaveTableSuccess);
         }
     }
 }

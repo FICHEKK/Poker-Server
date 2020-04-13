@@ -4,36 +4,45 @@ using Poker.Players;
 
 namespace RequestProcessors
 {
-    public class JoinTableRequestProcessor : IRequestProcessor
+    public class JoinTableRequestProcessor : IClientRequestProcessor
     {
-        public void ProcessRequest(Client client)
-        {
-            string tableTitle = client.Reader.ReadLine();
-            int buyIn = int.Parse(client.Reader.ReadLine());
+        public bool CanWait => false;
+        private Client _client;
+        private string _tableTitle;
+        private int _buyIn;
 
-            if (!Casino.HasTableWithTitle(tableTitle))
+        public void ReadPayloadData(Client client)
+        {
+            _client = client;
+            _tableTitle = client.Reader.ReadLine();
+            _buyIn = int.Parse(client.Reader.ReadLine());
+        }
+
+        public void ProcessRequest()
+        {
+            if (!Casino.HasTableWithTitle(_tableTitle))
             {
-                client.Writer.BaseStream.WriteByte((byte) ServerJoinTableResponse.TableDoesNotExist);
+                _client.Writer.BaseStream.WriteByte((byte) ServerJoinTableResponse.TableDoesNotExist);
                 return;
             }
 
-            Table table = Casino.GetTable(tableTitle);
+            Table table = Casino.GetTable(_tableTitle);
 
             if (table.IsFull)
             {
-                client.Writer.BaseStream.WriteByte((byte) ServerJoinTableResponse.TableFull);
+                _client.Writer.BaseStream.WriteByte((byte) ServerJoinTableResponse.TableFull);
                 return;
             }
 
-            client.Writer.BaseStream.WriteByte((byte) ServerJoinTableResponse.Success);
-            client.Writer.BaseStream.WriteByte((byte) ServerResponse.TableState);
-            SendTableState(table, client.Writer);
+            _client.Writer.BaseStream.WriteByte((byte) ServerJoinTableResponse.Success);
+            _client.Writer.BaseStream.WriteByte((byte) ServerResponse.TableState);
+            SendTableState(table, _client.Writer);
 
-            LobbyPlayer lobbyPlayer = Casino.GetLobbyPlayer(client.Username);
+            LobbyPlayer lobbyPlayer = Casino.GetLobbyPlayer(_client.Username);
             Casino.RemoveLobbyPlayer(lobbyPlayer);
 
             int index = table.GetFirstFreeSeatIndex();
-            TablePlayer tablePlayer = new TablePlayer(client.Username, lobbyPlayer.ChipCount, table, buyIn, index, lobbyPlayer.Reader, lobbyPlayer.Writer);
+            TablePlayer tablePlayer = new TablePlayer(_client.Username, lobbyPlayer.ChipCount, table, _buyIn, index, lobbyPlayer.Reader, lobbyPlayer.Writer);
             Casino.AddTablePlayer(tablePlayer);
         }
 
@@ -44,7 +53,7 @@ namespace RequestProcessors
             writer.WriteLine(table.MaxPlayers);
             SendPlayerList(table, writer);
 
-            if (table.Dealer.IsWaitingForPlayers)
+            if (table.Dealer.Round == null)
             {
                 writer.WriteLine(0); // community card count
                 writer.WriteLine(-1); // player index

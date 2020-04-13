@@ -2,12 +2,20 @@
 
 namespace RequestProcessors
 {
-    public class LogoutRequestProcessor : IRequestProcessor
+    public class LogoutRequestProcessor : IClientRequestProcessor
     {
-        public void ProcessRequest(Client client)
+        public bool CanWait => false;
+        private Client _client;
+
+        public void ReadPayloadData(Client client)
         {
-            Casino.RemoveLobbyPlayer(Casino.GetLobbyPlayer(client.Username));
-            client.IsLoggedIn = false;
+            _client = client;
+        }
+
+        public void ProcessRequest()
+        {
+            Casino.RemoveLobbyPlayer(Casino.GetLobbyPlayer(_client.Username));
+            _client.IsLoggedIn = false;
         }
     }
 }

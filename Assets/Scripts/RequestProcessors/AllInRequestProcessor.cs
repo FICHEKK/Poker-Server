@@ -2,18 +2,26 @@
 
 namespace RequestProcessors
 {
-    public class AllInRequestProcessor : IRequestProcessor
+    public class AllInRequestProcessor : IClientRequestProcessor
     {
-        public void ProcessRequest(Client client)
+        public bool CanWait => true;
+        private Client _client;
+        private int _allInAmount;
+
+        public void ReadPayloadData(Client client)
         {
-            string allInAmount = client.Reader.ReadLine();
+            _client = client;
+            _allInAmount = int.Parse(client.Reader.ReadLine());
+        }
 
-            Dealer dealer = Casino.GetTablePlayer(client.Username).Table.Dealer;
+        public void ProcessRequest()
+        {
+            Dealer dealer = Casino.GetTablePlayer(_client.Username).Table.Dealer;
             dealer.Broadcast(ServerResponse.PlayerAllIn);
-            dealer.Broadcast(dealer.Table.GetPlayerIndex(client.Username).ToString());
-            dealer.Broadcast(allInAmount);
+            dealer.Broadcast(dealer.Table.GetPlayerIndex(_client.Username).ToString());
+            dealer.Broadcast(_allInAmount);
 
-            dealer.Round.PlayerAllIn(int.Parse(allInAmount));
+            dealer.Round.PlayerAllIn(_allInAmount);
         }
     }
 }

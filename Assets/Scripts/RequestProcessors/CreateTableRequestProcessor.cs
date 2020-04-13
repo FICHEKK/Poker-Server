@@ -2,22 +2,32 @@ using Poker;
 
 namespace RequestProcessors
 {
-    public class CreateTableRequestProcessor : IRequestProcessor
+    public class CreateTableRequestProcessor : IClientRequestProcessor
     {
-        public void ProcessRequest(Client client)
-        {
-            string tableTitle = client.Reader.ReadLine();
-            int smallBlind = int.Parse(client.Reader.ReadLine());
-            int maxPlayers = int.Parse(client.Reader.ReadLine());
+        public bool CanWait => false;
+        private Client _client;
+        private string _tableTitle;
+        private int _smallBlind;
+        private int _maxPlayers;
 
-            if (Casino.HasTableWithTitle(tableTitle))
+        public void ReadPayloadData(Client client)
+        {
+            _client = client;
+            _tableTitle = client.Reader.ReadLine();
+            _smallBlind = int.Parse(client.Reader.ReadLine());
+            _maxPlayers = int.Parse(client.Reader.ReadLine());
+        }
+
+        public void ProcessRequest()
+        {
+            if (Casino.HasTableWithTitle(_tableTitle))
             {
-                client.Writer.BaseStream.WriteByte((byte) ServerCreateTableResponse.TitleTaken);
+                _client.Writer.BaseStream.WriteByte((byte) ServerCreateTableResponse.TitleTaken);
                 return;
             }
 
-            Casino.AddTable(new Table(tableTitle, smallBlind, maxPlayers));
-            client.Writer.BaseStream.WriteByte((byte) ServerCreateTableResponse.Success);
+            Casino.AddTable(new Table(_tableTitle, _smallBlind, _maxPlayers));
+            _client.Writer.BaseStream.WriteByte((byte) ServerCreateTableResponse.Success);
         }
     }
 }

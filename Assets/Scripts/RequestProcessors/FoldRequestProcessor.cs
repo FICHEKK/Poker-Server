@@ -3,11 +3,19 @@ using Poker.Players;
 
 namespace RequestProcessors
 {
-    public class FoldRequestProcessor : IRequestProcessor
+    public class FoldRequestProcessor : IClientRequestProcessor
     {
-        public void ProcessRequest(Client client)
+        public bool CanWait => true;
+        private Client _client;
+
+        public void ReadPayloadData(Client client)
         {
-            TablePlayer player = Casino.GetTablePlayer(client.Username);
+            _client = client;
+        }
+
+        public void ProcessRequest()
+        {
+            TablePlayer player = Casino.GetTablePlayer(_client.Username);
             Dealer dealer = player.Table.Dealer;
             dealer.Broadcast(ServerResponse.PlayerFolded);
             dealer.Broadcast(player.Index.ToString());

@@ -33,10 +33,12 @@ namespace Poker
         
         /// <summary> Highest bet value of the current round phase. </summary>
         private int HighestBet => _players.Where(player => player != null).Select(player => player.Bet).Max();
+        
+        /// <summary>The phase that this round is currently in.</summary>
+        public Phase CurrentPhase;
 
         private readonly int _smallBlind;
         private int _playerCount;
-        private Phase _phase;
         private readonly TablePlayer[] _players;
         private int _betCounter;
         private readonly int _smallBlindIndex;
@@ -107,7 +109,8 @@ namespace Poker
 
             if (_playerCount == 1)
             {
-                OnRoundPhaseChanged(new RoundPhaseChangedEventArgs(Phase.OnePlayerLeft));
+                CurrentPhase = Phase.OnePlayerLeft;
+                OnRoundPhaseChanged(new RoundPhaseChangedEventArgs(CurrentPhase));
             }
             else
             {
@@ -130,6 +133,8 @@ namespace Poker
 
         public void PlayerLeft(int index)
         {
+            if (CurrentPhase == Phase.Showdown) return;
+            if (CurrentPhase == Phase.OnePlayerLeft) return;
             if (_players[index] == null || _players[index].Folded) return;
             
             _players[index].Folded = true;
@@ -139,7 +144,8 @@ namespace Poker
 
             if (_playerCount == 1)
             {
-                OnRoundPhaseChanged(new RoundPhaseChangedEventArgs(Phase.OnePlayerLeft));
+                CurrentPhase = Phase.OnePlayerLeft;
+                OnRoundPhaseChanged(new RoundPhaseChangedEventArgs(CurrentPhase));
             }
             else if(index == PlayerIndex)
             {
@@ -165,21 +171,21 @@ namespace Poker
         {
             _betCounter = 0;
             _raiseIncrement = _smallBlind * 2;
-            OnRoundPhaseChanged(new RoundPhaseChangedEventArgs(++_phase));
+            OnRoundPhaseChanged(new RoundPhaseChangedEventArgs(++CurrentPhase));
             
             // There are at least 2 players who can bet.
             if (_players.Count(p => p?.Stack > 0) >= 2)
             {
-                if (_phase == Phase.Showdown) return;
+                if (CurrentPhase == Phase.Showdown) return;
                 
                 FindFirstValidIndexFrom(_smallBlindIndex);
                 SendBettingDataToCurrentPlayer();
             }
             else
             {
-                while (_phase != Phase.Showdown)
+                while (CurrentPhase != Phase.Showdown)
                 {
-                    OnRoundPhaseChanged(new RoundPhaseChangedEventArgs(++_phase));
+                    OnRoundPhaseChanged(new RoundPhaseChangedEventArgs(++CurrentPhase));
                 }
             }
         }

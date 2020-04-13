@@ -1,11 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
-using System.Timers;
+using System.Threading;
 using Dao;
 using Poker.Cards;
 using Poker.EventArguments;
 using Poker.Players;
+using Timer = System.Timers.Timer;
 
 namespace Poker
 {
@@ -21,14 +22,8 @@ namespace Poker
         /// <summary>The deck used by this dealer to deal cards.</summary>
         public Deck Deck { get; } = new Deck();
 
-        /// <summary> True if there are not enough players for the round to start. </summary>
-        public bool IsWaitingForPlayers => Round == null;
-        
         /// <summary> Timer used to time player's turn durations. </summary>
         private readonly Timer _decisionTimer = new Timer {AutoReset = false};
-        
-        /// <summary> A collection of waiting times used by the decision timer. </summary>
-        private readonly Stack<int> _waitingTimes = new Stack<int>();
 
         public Dealer(Table table)
         {
@@ -36,9 +31,13 @@ namespace Poker
             Table.PlayerJoined += PlayerJoinedEventHandler;
             Table.PlayerLeft += PlayerLeftEventHandler;
             
+            _decisionTimer.Interval = (TableConstant.PlayerTurnDuration + TableConstant.PlayerTurnOvertime) * 1000;
             _decisionTimer.Elapsed += (sender, e) =>
             {
-                if (IsWaitingForPlayers) return;
+                if (Round == null) return;
+                if (Round.CurrentPhase == Round.Phase.OnePlayerLeft) return;
+                if (Round.CurrentPhase == Round.Phase.Showdown) return;
+                
                 Broadcast(ServerResponse.PlayerFolded);
                 Broadcast(Round.PlayerIndex);
                 Round.PlayerFolded();
@@ -101,18 +100,18 @@ namespace Poker
         //                    Flop, turn & river
         //----------------------------------------------------------------
 
-        private void ProcessPhase(ServerResponse response, int cardCount)
+        private void RevealCommunityCards(ServerResponse response, int cardCount)
         {
             Broadcast(response);
-            for(int i = 0; i < cardCount; i++) RevealCommunityCard();
-            Wait(TableConstant.PausePerCardDuration * cardCount);
-        }
-
-        private void RevealCommunityCard()
-        {
-            Card card = Deck.GetNextCard();
-            Broadcast(card);
-            Round.AddCommunityCard(card);
+            
+            for (int i = 0; i < cardCount; i++)
+            {
+                Card card = Deck.GetNextCard();
+                Broadcast(card);
+                Round.AddCommunityCard(card);
+            }
+            
+            Thread.Sleep(TableConstant.PausePerCardDuration * cardCount);
         }
 
         private void ProcessShowdown()
@@ -146,10 +145,28 @@ namespace Poker
             foreach (var participant in Round.ParticipatingPlayers)
                 DaoProvider.Dao.SetChipCount(participant.Username, participant.ChipCount);
             
-            Wait(TableConstant.RoundFinishPauseDuration + sidePots.Count * 1000);
+            Thread.Sleep(TableConstant.RoundFinishPauseDuration + sidePots.Count * 1000);
+            KickBrokePlayers();
             Broadcast(ServerResponse.RoundFinished);
 
             if (Table.PlayerCount >= 2) StartNewRound();
+        }
+        
+        private void KickBrokePlayers()
+        {
+            for (int i = 0; i < Table.MaxPlayers; i++)
+            {
+                var player = Table.GetPlayerAt(i);
+                if(player == null) continue;
+
+                if (player.Stack == 0)
+                {
+                    Signal(i, ServerResponse.LeaveTableSuccess);
+                    
+                    Casino.RemoveTablePlayer(player);
+                    Casino.AddLobbyPlayer(new LobbyPlayer(player.Username, player.ChipCount, player.Reader, player.Writer));
+                }
+            }
         }
 
         private void BroadcastSidePotData(int value, int winnerCount, List<TablePlayer> winners, string bestHandValue)
@@ -236,8 +253,9 @@ namespace Poker
             
             foreach (var participant in Round.ParticipatingPlayers)
                 DaoProvider.Dao.SetChipCount(participant.Username, participant.ChipCount);
-
-            Wait(TableConstant.RoundFinishPauseDuration);
+            
+            Thread.Sleep(TableConstant.RoundFinishPauseDuration);
+            KickBrokePlayers();
             Broadcast(ServerResponse.RoundFinished);
 
             if (Table.PlayerCount >= 2) StartNewRound();
@@ -247,9 +265,9 @@ namespace Poker
         {
             switch (e.CurrentPhase)
             {
-                case Round.Phase.Flop: ProcessPhase(ServerResponse.Flop, 3); break;
-                case Round.Phase.Turn: ProcessPhase(ServerResponse.Turn, 1); break;
-                case Round.Phase.River: ProcessPhase(ServerResponse.River, 1); break;
+                case Round.Phase.Flop: RevealCommunityCards(ServerResponse.Flop, 3); break;
+                case Round.Phase.Turn: RevealCommunityCards(ServerResponse.Turn, 1); break;
+                case Round.Phase.River: RevealCommunityCards(ServerResponse.River, 1); break;
                 case Round.Phase.Showdown: ProcessShowdown(); break;
                 case Round.Phase.OnePlayerLeft: ProcessOnePlayerLeft(); break;
             }
@@ -265,17 +283,6 @@ namespace Poker
             Signal(e.CurrentPlayerIndex, e.MinRaise);
             Signal(e.CurrentPlayerIndex, e.MaxRaise);
             
-            StartDecisionTimer();
-        }
-
-        private void StartDecisionTimer()
-        {
-            double interval = (TableConstant.PlayerTurnDuration + TableConstant.PlayerTurnOvertime) * 1000;
-            
-            while (_waitingTimes.Count > 0)
-                interval += _waitingTimes.Pop();
-
-            _decisionTimer.Interval = interval;
             _decisionTimer.Stop();
             _decisionTimer.Start();
         }
@@ -301,13 +308,6 @@ namespace Poker
             {
                 Round = null;
             }
-        }
-
-        private void Wait(int milliseconds)
-        {
-            Broadcast(ServerResponse.WaitForMilliseconds);
-            Broadcast(milliseconds);
-            _waitingTimes.Push(milliseconds);
         }
 
         /// <summary> Sends a server response to the single specified position. </summary>

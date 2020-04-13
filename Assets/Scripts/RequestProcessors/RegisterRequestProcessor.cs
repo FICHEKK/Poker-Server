@@ -2,12 +2,21 @@ using Dao;
 
 namespace RequestProcessors
 {
-    public class RegisterRequestProcessor : IRequestProcessor
+    public class RegisterRequestProcessor : IClientRequestProcessor
     {
-        public void ProcessRequest(Client client)
+        public bool CanWait => false;
+        private Client _client;
+        private string _password;
+
+        public void ReadPayloadData(Client client)
         {
-            string password = client.Reader.ReadLine();
-            client.Writer.BaseStream.WriteByte((byte) EvaluateProperResponse(client.Username, password));
+            _client = client;
+            _password = client.Reader.ReadLine();
+        }
+
+        public void ProcessRequest()
+        {
+            _client.Writer.BaseStream.WriteByte((byte) EvaluateProperResponse(_client.Username, _password));
         }
 
         private static ServerRegistrationResponse EvaluateProperResponse(string username, string password)

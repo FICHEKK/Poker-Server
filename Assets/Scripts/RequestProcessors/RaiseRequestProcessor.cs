@@ -2,18 +2,26 @@
 
 namespace RequestProcessors
 {
-    public class RaiseRequestProcessor : IRequestProcessor
+    public class RaiseRequestProcessor : IClientRequestProcessor
     {
-        public void ProcessRequest(Client client)
+        public bool CanWait => true;
+        private Client _client;
+        private int _raisedToAmount;
+
+        public void ReadPayloadData(Client client)
         {
-            string raisedToAmount = client.Reader.ReadLine();
+            _client = client;
+            _raisedToAmount = int.Parse(client.Reader.ReadLine());
+        }
 
-            Dealer dealer = Casino.GetTablePlayer(client.Username).Table.Dealer;
+        public void ProcessRequest()
+        {
+            Dealer dealer = Casino.GetTablePlayer(_client.Username).Table.Dealer;
             dealer.Broadcast(ServerResponse.PlayerRaised);
-            dealer.Broadcast(dealer.Table.GetPlayerIndex(client.Username).ToString());
-            dealer.Broadcast(raisedToAmount);
+            dealer.Broadcast(dealer.Table.GetPlayerIndex(_client.Username).ToString());
+            dealer.Broadcast(_raisedToAmount);
 
-            dealer.Round.PlayerRaised(int.Parse(raisedToAmount));
+            dealer.Round.PlayerRaised(_raisedToAmount);
         }
     }
 }

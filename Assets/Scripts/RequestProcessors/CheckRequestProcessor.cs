@@ -2,13 +2,21 @@
 
 namespace RequestProcessors
 {
-    public class CheckRequestProcessor : IRequestProcessor
+    public class CheckRequestProcessor : IClientRequestProcessor
     {
-        public void ProcessRequest(Client client)
+        public bool CanWait => true;
+        private Client _client;
+
+        public void ReadPayloadData(Client client)
         {
-            Dealer dealer = Casino.GetTablePlayer(client.Username).Table.Dealer;
+            _client = client;
+        }
+
+        public void ProcessRequest()
+        {
+            Dealer dealer = Casino.GetTablePlayer(_client.Username).Table.Dealer;
             dealer.Broadcast(ServerResponse.PlayerChecked);
-            dealer.Broadcast(dealer.Table.GetPlayerIndex(client.Username).ToString());
+            dealer.Broadcast(dealer.Table.GetPlayerIndex(_client.Username).ToString());
 
             dealer.Round.PlayerChecked();
         }

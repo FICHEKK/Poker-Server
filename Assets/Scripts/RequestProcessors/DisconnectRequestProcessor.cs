@@ -3,20 +3,28 @@ using Poker.Players;
 
 namespace RequestProcessors
 {
-    public class DisconnectRequestProcessor : IRequestProcessor
+    public class DisconnectRequestProcessor : IClientRequestProcessor
     {
-        public void ProcessRequest(Client client)
+        public bool CanWait => false;
+        private Client _client;
+
+        public void ReadPayloadData(Client client)
         {
-            if (client.IsLoggedIn)
+            _client = client;
+        }
+
+        public void ProcessRequest()
+        {
+            if (_client.IsLoggedIn)
             {
-                LobbyPlayer lobbyPlayer = Casino.GetLobbyPlayer(client.Username);
+                LobbyPlayer lobbyPlayer = Casino.GetLobbyPlayer(_client.Username);
                 if (lobbyPlayer != null) Casino.RemoveLobbyPlayer(lobbyPlayer);
 
-                TablePlayer tablePlayer = Casino.GetTablePlayer(client.Username);
+                TablePlayer tablePlayer = Casino.GetTablePlayer(_client.Username);
                 if (tablePlayer != null) Casino.RemoveTablePlayer(tablePlayer);
             }
 
-            Server.DisconnectClient(client.Identifier);
+            Server.DisconnectClient(_client.Identifier);
         }
     }
 }

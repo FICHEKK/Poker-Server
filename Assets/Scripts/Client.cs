@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Net.Sockets;
 using System.Threading;
+using Poker;
 using RequestProcessors;
 
 /// <summary>
@@ -12,9 +13,9 @@ using RequestProcessors;
 /// </summary>
 public class Client
 {
-    /// <summary> A dictionary that maps client request flags to processors that process corresponding request. </summary>
-    private static readonly Dictionary<ClientRequest, IRequestProcessor> Processors;
-    
+    /// <summary> Maps client request to factory method for creating the appropriate request processor. </summary>
+    private static readonly Dictionary<ClientRequest, Func<IClientRequestProcessor>> RequestToProcessorFactory;
+
     /// <summary> This client's username. </summary>
     public string Username { get; private set; }
     
@@ -34,24 +35,24 @@ public class Client
     /// <summary> Initializes request processors. </summary>
     static Client()
     {
-        Processors = new Dictionary<ClientRequest, IRequestProcessor>
+        RequestToProcessorFactory = new Dictionary<ClientRequest, Func<IClientRequestProcessor>>
         {
-            {ClientRequest.Login, new LoginRequestProcessor()},
-            {ClientRequest.Register, new RegisterRequestProcessor()},
-            {ClientRequest.JoinTable, new JoinTableRequestProcessor()},
-            {ClientRequest.CreateTable, new CreateTableRequestProcessor()},
-            {ClientRequest.TableList, new TableListRequestProcessor()},
-            {ClientRequest.ClientData, new ClientDataRequestProcessor()},
-            {ClientRequest.Logout, new LogoutRequestProcessor()},
-            {ClientRequest.Check, new CheckRequestProcessor()},
-            {ClientRequest.Call, new CallRequestProcessor()},
-            {ClientRequest.Fold, new FoldRequestProcessor()},
-            {ClientRequest.Raise, new RaiseRequestProcessor()},
-            {ClientRequest.AllIn, new AllInRequestProcessor()},
-            {ClientRequest.LoginReward, new LoginRewardRequestProcessor()},
-            {ClientRequest.LeaveTable, new LeaveTableRequestProcessor()},
-            {ClientRequest.Disconnect, new DisconnectRequestProcessor()},
-            {ClientRequest.SendChatMessage, new SendChatMessageRequestProcessor()},
+            {ClientRequest.Login, () => new LoginRequestProcessor()},
+            {ClientRequest.Register, () => new RegisterRequestProcessor()},
+            {ClientRequest.JoinTable, () => new JoinTableRequestProcessor()},
+            {ClientRequest.CreateTable, () => new CreateTableRequestProcessor()},
+            {ClientRequest.TableList, () => new TableListRequestProcessor()},
+            {ClientRequest.ClientData, () => new ClientDataRequestProcessor()},
+            {ClientRequest.Logout, () => new LogoutRequestProcessor()},
+            {ClientRequest.Check, () => new CheckRequestProcessor()},
+            {ClientRequest.Call, () => new CallRequestProcessor()},
+            {ClientRequest.Fold, () => new FoldRequestProcessor()},
+            {ClientRequest.Raise, () => new RaiseRequestProcessor()},
+            {ClientRequest.AllIn, () => new AllInRequestProcessor()},
+            {ClientRequest.LoginReward, () => new LoginRewardRequestProcessor()},
+            {ClientRequest.LeaveTable, () => new LeaveTableRequestProcessor()},
+            {ClientRequest.Disconnect, () => new DisconnectRequestProcessor()},
+            {ClientRequest.SendChatMessage, () => new SendChatMessageRequestProcessor()},
         };
     }
 
@@ -79,13 +80,19 @@ public class Client
 
                 while (flag != -1)
                 {
-                    if (Processors.TryGetValue((ClientRequest) flag, out var processor))
+                    if (RequestToProcessorFactory.TryGetValue((ClientRequest) flag, out var processorFactory))
                     {
-                        processor.ProcessRequest(this);
-                    }
-                    else
-                    {
-                        break;
+                        var processor = processorFactory();
+                        processor.ReadPayloadData(this);
+
+                        if (processor.CanWait)
+                        {
+                            Casino.GetTablePlayer(Username).Table.RequestProcessors.Add(processor);
+                        }
+                        else
+                        {
+                            processor.ProcessRequest();
+                        }
                     }
 
                     flag = Reader.BaseStream.ReadByte();
@@ -98,6 +105,9 @@ public class Client
             Trace.WriteLine("Disconnecting the client...");
         }
 
-        Processors[ClientRequest.Disconnect].ProcessRequest(this);
+        // Disconnect the client
+        var disconnectProcessor = RequestToProcessorFactory[ClientRequest.Disconnect]();
+        disconnectProcessor.ReadPayloadData(this);
+        disconnectProcessor.ProcessRequest();
     }
 }

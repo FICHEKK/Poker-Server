@@ -2,20 +2,28 @@ using Poker;
 
 namespace RequestProcessors
 {
-    public class TableListRequestProcessor : IRequestProcessor
+    public class TableListRequestProcessor : IClientRequestProcessor
     {
-        public void ProcessRequest(Client client)
+        public bool CanWait => false;
+        private Client _client;
+
+        public void ReadPayloadData(Client client)
         {
-            client.Writer.WriteLine(Casino.TableCount);
+            _client = client;
+        }
+
+        public void ProcessRequest()
+        {
+            _client.Writer.WriteLine(Casino.TableCount);
 
             foreach (string tableName in Casino.TableNames)
             {
                 Table table = Casino.GetTable(tableName);
 
-                client.Writer.WriteLine(tableName);
-                client.Writer.WriteLine(table.SmallBlind);
-                client.Writer.WriteLine(table.PlayerCount);
-                client.Writer.WriteLine(table.MaxPlayers);
+                _client.Writer.WriteLine(tableName);
+                _client.Writer.WriteLine(table.SmallBlind);
+                _client.Writer.WriteLine(table.PlayerCount);
+                _client.Writer.WriteLine(table.MaxPlayers);
             }
         }
     }

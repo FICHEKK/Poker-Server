@@ -4,22 +4,30 @@ using Poker.Players;
 
 namespace RequestProcessors
 {
-    public class LoginRequestProcessor : IRequestProcessor
+    public class LoginRequestProcessor : IClientRequestProcessor
     {
-        public void ProcessRequest(Client client)
-        {
-            string password = client.Reader.ReadLine();
+        public bool CanWait => false;
+        private Client _client;
+        private string _password;
 
-            ServerLoginResponse response = EvaluateProperResponse(client.Username, password);
+        public void ReadPayloadData(Client client)
+        {
+            _client = client;
+            _password = client.Reader.ReadLine();
+        }
+
+        public void ProcessRequest()
+        {
+            ServerLoginResponse response = EvaluateProperResponse(_client.Username, _password);
 
             if (response == ServerLoginResponse.Success)
             {
-                int chipCount = DaoProvider.Dao.GetChipCount(client.Username);
-                Casino.AddLobbyPlayer(new LobbyPlayer(client.Username, chipCount, client.Reader, client.Writer));
-                client.IsLoggedIn = true;
+                int chipCount = DaoProvider.Dao.GetChipCount(_client.Username);
+                Casino.AddLobbyPlayer(new LobbyPlayer(_client.Username, chipCount, _client.Reader, _client.Writer));
+                _client.IsLoggedIn = true;
             }
             
-            client.Writer.BaseStream.WriteByte((byte) response);
+            _client.Writer.BaseStream.WriteByte((byte) response);
         }
 
         private static ServerLoginResponse EvaluateProperResponse(string username, string password)

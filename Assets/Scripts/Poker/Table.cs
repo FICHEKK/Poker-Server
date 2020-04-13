@@ -1,6 +1,9 @@
 ﻿using System;
+using System.Collections.Concurrent;
+using System.Threading;
 using Poker.EventArguments;
 using Poker.Players;
+using RequestProcessors;
 
 namespace Poker
 {
@@ -9,6 +12,12 @@ namespace Poker
     /// </summary>
     public sealed class Table
     {
+        /// <summary>A blocking queue used to store unprocessed client requests.</summary>
+        public BlockingCollection<IClientRequestProcessor> RequestProcessors { get; } = new BlockingCollection<IClientRequestProcessor>();
+
+        /// <summary>A dummy action that is used to indicate the end of the consuming.</summary>
+        private readonly IClientRequestProcessor _poisonPill = new PoisonPill();
+        
         /// <summary>Event that gets raised every time a player joins this table.</summary>
         public event EventHandler<PlayerJoinedEventArgs> PlayerJoined;
 
@@ -60,6 +69,18 @@ namespace Poker
             MaxPlayers = maxPlayers;
             Dealer = new Dealer(this);
             _players = new TablePlayer[MaxPlayers];
+            
+            new Thread(ConsumeClientRequests).Start();
+        }
+
+        private void ConsumeClientRequests()
+        {
+            while (true)
+            {
+                var processor = RequestProcessors.Take();
+                if (processor == _poisonPill) return;
+                processor.ProcessRequest();
+            }
         }
 
         #region Button
@@ -106,8 +127,8 @@ namespace Poker
 
             _players[index] = player ?? throw new ArgumentNullException(nameof(player));
             _playerCount++;
-
-            OnPlayerJoined(new PlayerJoinedEventArgs(player));
+            
+            PlayerJoined?.Invoke(this, new PlayerJoinedEventArgs(player));
         }
 
         /// <summary> Finds the player with the given username and returns the index of that player's position on the table. </summary>
@@ -140,7 +161,7 @@ namespace Poker
                     _players[i] = null;
                     _playerCount--;
 
-                    OnPlayerLeft(new PlayerLeftEventArgs(i));
+                    PlayerLeft?.Invoke(this, new PlayerLeftEventArgs(i));
                     break;
                 }
             }
@@ -172,8 +193,5 @@ namespace Poker
         {
             return _players[index] != null;
         }
-
-        private void OnPlayerJoined(PlayerJoinedEventArgs args) => PlayerJoined?.Invoke(this, args);
-        private void OnPlayerLeft(PlayerLeftEventArgs args) => PlayerLeft?.Invoke(this, args);
     }
 }

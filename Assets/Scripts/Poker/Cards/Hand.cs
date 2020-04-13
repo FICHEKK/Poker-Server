@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace Poker.Cards
 {
@@ -162,6 +164,111 @@ namespace Poker.Cards
             sb.Append(HandAnalyser.HandValue);
 
             return sb.ToString();
+        }
+
+        public string ToStringPretty()
+        {
+            switch (HandAnalyser.HandValue)
+            {
+                case HandValue.HighCard:      return HighCardToString();
+                case HandValue.OnePair:       return OnePairToString();
+                case HandValue.TwoPair:       return TwoPairToString();
+                case HandValue.Threes:        return ThreesToString();
+                case HandValue.Straight:      return StraightToString(false);
+                case HandValue.Flush:         return FlushToString();
+                case HandValue.FullHouse:     return FullHouseToString();
+                case HandValue.Fours:         return FoursToString();
+                case HandValue.StraightFlush: return StraightToString(true);
+                case HandValue.RoyalFlush:    return RoyalFlushToString();
+                default: throw new ArgumentOutOfRangeException(nameof(HandAnalyser.HandValue), "Invalid hand value!");
+            }
+        }
+
+        private string HighCardToString()
+        {
+            return "High card " + RankToString(Cards.Last().Rank);
+        }
+
+        private string OnePairToString()
+        {
+            var index = FindIndexOfRank(this, 2);
+            return "One pair of " + IndexToString(index) + "'s";
+        }
+
+        private string TwoPairToString()
+        {
+            var indexes = FindAllIndexesOfRank(this, 2);
+            return "Two pair " + IndexToString(indexes[0]) + "'s and " + IndexToString(indexes[1]) + "'s";
+        }
+
+        private string ThreesToString()
+        {
+            var index = FindIndexOfRank(this, 3);
+            return "Three of a kind " + IndexToString(index) + "'s";
+        }
+
+        private string StraightToString(bool isFlush)
+        {
+            var first = Cards.First().Rank;
+            var last = Cards.Last().Rank;
+            
+            // 2 3 4 5 A exception
+            if (first == Rank.Two && last == Rank.Ace)
+            {
+                first = last;
+                last = Cards[3].Rank;
+            }
+            
+            return "Straight " + (isFlush ? "flush " : "") + RankToString(first) + " to " + RankToString(last) + (isFlush ? " !!" : "");
+        }
+
+        private string FlushToString()
+        {
+            return "Flush up to " + RankToString(Cards.Last().Rank);
+        }
+
+        private string FullHouseToString()
+        {
+            int threes = FindIndexOfRank(this, 3);
+            int pair = FindIndexOfRank(this, 2);
+            return "Full house " + IndexToString(threes) + "'s over " + IndexToString(pair) + "'s";
+        }
+
+        private string FoursToString()
+        {
+            var index = FindIndexOfRank(this, 4);
+            return "Four of a kind " + IndexToString(index) + "'s !";
+        }
+
+        private string RoyalFlushToString()
+        {
+            return "Royal flush !!!";
+        }
+
+        private string IndexToString(int index)
+        {
+            return RankToString((Rank) (index + 1));
+        }
+
+        private string RankToString(Rank rank)
+        {
+            switch (rank)
+            {
+                case Rank.Two:   return "2";
+                case Rank.Three: return "3";
+                case Rank.Four:  return "4";
+                case Rank.Five:  return "5";
+                case Rank.Six:   return "6";
+                case Rank.Seven: return "7";
+                case Rank.Eight: return "8";
+                case Rank.Nine:  return "9";
+                case Rank.Ten:   return "10";
+                case Rank.Jack:  return "J";
+                case Rank.Queen: return "Q";
+                case Rank.King:  return "K";
+                case Rank.Ace:   return "A";
+                default: throw new ArgumentOutOfRangeException(nameof(rank), rank, "Invalid rank value!");
+            }
         }
     }
 }

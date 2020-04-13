@@ -59,7 +59,7 @@ namespace Poker.Cards
 
             if (isFlush && isStraight)
             {
-                HandValue = ContainsRank(Rank.Ace) ? HandValue.RoyalFlush : HandValue.StraightFlush;
+                HandValue = ContainsRank(Rank.Ace) && ContainsRank(Rank.Ten) ? HandValue.RoyalFlush : HandValue.StraightFlush;
             }
             else if (_fours == 1)
             {

@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text.RegularExpressions;
 using System.Threading;
 using Dao;
 using Poker.Cards;
@@ -227,11 +226,7 @@ namespace Poker
                 }
             }
 
-            bestHandValue = Regex.Replace(
-                bestHand.HandAnalyser.HandValue.ToString(),
-                "[a-z][A-Z]",
-                m => m.Value[0] + " " + char.ToLower(m.Value[1])
-            );
+            bestHandValue = bestHand.ToStringPretty();
             
             return winners;
         }

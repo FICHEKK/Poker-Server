@@ -13,21 +13,26 @@ namespace RequestProcessors
         public void ReadPayloadData(Client client)
         {
             _client = client;
-            _tableTitle = client.Reader.ReadLine();
-            _smallBlind = int.Parse(client.Reader.ReadLine());
-            _maxPlayers = int.Parse(client.Reader.ReadLine());
+            _tableTitle = _client.ReadLine();
+            _smallBlind = int.Parse(_client.ReadLine());
+            _maxPlayers = int.Parse(_client.ReadLine());
         }
 
         public void ProcessRequest()
         {
+            var package = new Client.Package(_client);
+            
             if (Casino.HasTableWithTitle(_tableTitle))
             {
-                _client.Writer.BaseStream.WriteByte((byte) ServerCreateTableResponse.TitleTaken);
-                return;
+                package.Append(ServerResponse.CreateTableTitleTaken);
             }
-
-            Casino.AddTable(new Table(_tableTitle, _smallBlind, _maxPlayers));
-            _client.Writer.BaseStream.WriteByte((byte) ServerCreateTableResponse.Success);
+            else
+            {
+                Casino.AddTable(new Table(_tableTitle, _smallBlind, _maxPlayers));
+                package.Append(ServerResponse.CreateTableSuccess);
+            }
+            
+            package.Send();
         }
     }
 }

@@ -1,4 +1,3 @@
-using System.IO;
 using Poker;
 using Poker.Players;
 
@@ -14,84 +13,82 @@ namespace RequestProcessors
         public void ReadPayloadData(Client client)
         {
             _client = client;
-            _tableTitle = client.Reader.ReadLine();
-            _buyIn = int.Parse(client.Reader.ReadLine());
+            _tableTitle = _client.ReadLine();
+            _buyIn = int.Parse(_client.ReadLine());
         }
 
         public void ProcessRequest()
         {
+            var package = new Client.Package(_client);
+            
             if (!Casino.HasTableWithTitle(_tableTitle))
             {
-                _client.Writer.BaseStream.WriteByte((byte) ServerJoinTableResponse.TableDoesNotExist);
+                package.Append(ServerResponse.JoinTableTableDoesNotExist);
+                package.Send();
                 return;
             }
 
-            Table table = Casino.GetTable(_tableTitle);
+            var table = Casino.GetTable(_tableTitle);
 
             if (table.IsFull)
             {
-                _client.Writer.BaseStream.WriteByte((byte) ServerJoinTableResponse.TableFull);
+                package.Append(ServerResponse.JoinTableTableFull);
+                package.Send();
                 return;
             }
 
-            _client.Writer.BaseStream.WriteByte((byte) ServerJoinTableResponse.Success);
-            _client.Writer.BaseStream.WriteByte((byte) ServerResponse.TableState);
-            SendTableState(table, _client.Writer);
+            package.Append(ServerResponse.JoinTableSuccess);
+            package.Send();
+            
+            // Second response that happens if the joining is successful.
+            SendTableState(table);
 
             LobbyPlayer lobbyPlayer = Casino.GetLobbyPlayer(_client.Username);
             Casino.RemoveLobbyPlayer(lobbyPlayer);
-
-            int index = table.GetFirstFreeSeatIndex();
-            TablePlayer tablePlayer = new TablePlayer(_client.Username, lobbyPlayer.ChipCount, table, _buyIn, index, lobbyPlayer.Reader, lobbyPlayer.Writer);
-            Casino.AddTablePlayer(tablePlayer);
+            Casino.AddTablePlayer(new TablePlayer(_client, lobbyPlayer.ChipCount, table, _buyIn, table.GetFirstFreeSeatIndex()));
         }
 
-        private static void SendTableState(Table table, StreamWriter writer)
+        private void SendTableState(Table table)
         {
-            writer.WriteLine(table.DealerButtonIndex);
-            writer.WriteLine(table.SmallBlind);
-            writer.WriteLine(table.MaxPlayers);
-            SendPlayerList(table, writer);
+            var package = new Client.Package(_client);
+            package.Append(ServerResponse.TableState);
+            
+            package.Append(table.DealerButtonIndex);
+            package.Append(table.SmallBlind);
+            package.Append(table.MaxPlayers);
+            AppendPlayerList(table, package);
 
             if (table.Dealer.Round == null)
             {
-                writer.WriteLine(0); // community card count
-                writer.WriteLine(-1); // player index
-                writer.WriteLine(0); // pot
+                package.Append(0); // community card count
+                package.Append(-1); // player index
+                package.Append(0); // pot
             }
             else
             {
-                SendCommunityCardList(table, writer);
-                writer.WriteLine(table.Dealer.Round.PlayerIndex);
-                writer.WriteLine(table.Dealer.Round.Pot);
+                package.Append(table.Dealer.Round.CommunityCards.Count);
+                table.Dealer.Round.CommunityCards.ForEach(card => package.Append(card));
+                package.Append(table.Dealer.Round.PlayerIndex);
+                package.Append(table.Dealer.Round.Pot);
             }
-        }
-
-        private static void SendPlayerList(Table table, StreamWriter writer)
-        {
-            writer.WriteLine(table.PlayerCount);
             
-            for (int index = 0; index < table.MaxPlayers; index++)
-            {
-                if (table.IsSeatOccupied(index))
-                {
-                    writer.WriteLine(index);
-                    writer.WriteLine(table.GetPlayerAt(index).Username);
-                    writer.WriteLine(table.GetPlayerAt(index).Stack);
-                    writer.WriteLine(table.GetPlayerAt(index).Bet);
-                    writer.WriteLine(table.GetPlayerAt(index).Folded);
-                }
-            }
+            package.Send();
         }
-        
-        private static void SendCommunityCardList(Table table, StreamWriter writer)
-        {
-            var communityCards = table.Dealer.Round.CommunityCards;
-            writer.WriteLine(communityCards.Count);
 
-            foreach (var card in communityCards)
+        private void AppendPlayerList(Table table, Client.Package package)
+        {
+            package.Append(table.PlayerCount);
+            
+            for (var index = 0; index < table.MaxPlayers; index++)
             {
-                writer.WriteLine(card.ToString());
+                var player = table.GetPlayerAt(index);
+                if(player == null) continue;
+
+                package.Append(index);
+                package.Append(player.Username);
+                package.Append(player.Stack);
+                package.Append(player.Bet);
+                package.Append(player.Folded);
             }
         }
     }

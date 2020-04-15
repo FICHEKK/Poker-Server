@@ -1,5 +1,4 @@
 ﻿using Poker;
-using Poker.Players;
 
 namespace RequestProcessors
 {
@@ -15,12 +14,13 @@ namespace RequestProcessors
 
         public void ProcessRequest()
         {
-            TablePlayer player = Casino.GetTablePlayer(_client.Username);
-            Dealer dealer = player.Table.Dealer;
-            dealer.Broadcast(ServerResponse.PlayerFolded);
-            dealer.Broadcast(player.Index.ToString());
+            var player = Casino.GetTablePlayer(_client.Username);
+            var package = new Client.Package(player.Table.GetActiveClients());
+            package.Append(ServerResponse.PlayerFolded);
+            package.Append(player.Index);
+            package.Send();
 
-            dealer.Round.PlayerFolded();
+            player.Table.Dealer.Round.PlayerFolded();
         }
     }
 }

@@ -11,23 +11,25 @@ namespace RequestProcessors
         public void ReadPayloadData(Client client)
         {
             _client = client;
-            _password = client.Reader.ReadLine();
+            _password = _client.ReadLine();
         }
 
         public void ProcessRequest()
         {
-            _client.Writer.BaseStream.WriteByte((byte) EvaluateProperResponse(_client.Username, _password));
+            var package = new Client.Package(_client);
+            package.Append(EvaluateProperResponse(_client.Username, _password));
+            package.Send();
         }
 
-        private static ServerRegistrationResponse EvaluateProperResponse(string username, string password)
+        private static ServerResponse EvaluateProperResponse(string username, string password)
         {
             if (DaoProvider.Dao.IsRegistered(username))
-                return ServerRegistrationResponse.UsernameTaken;
+                return ServerResponse.RegistrationUsernameTaken;
             
             if (!DaoProvider.Dao.Register(username, password))
-                return ServerRegistrationResponse.DatabaseError;
+                return ServerResponse.RegistrationDatabaseError;
             
-            return ServerRegistrationResponse.Success;
+            return ServerResponse.RegistrationSuccess;
         }
     }
 }

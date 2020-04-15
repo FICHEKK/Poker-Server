@@ -14,11 +14,13 @@ namespace RequestProcessors
 
         public void ProcessRequest()
         {
-            Dealer dealer = Casino.GetTablePlayer(_client.Username).Table.Dealer;
-            dealer.Broadcast(ServerResponse.PlayerChecked);
-            dealer.Broadcast(dealer.Table.GetPlayerIndex(_client.Username).ToString());
+            var player = Casino.GetTablePlayer(_client.Username);
+            var package = new Client.Package(player.Table.GetActiveClients());
+            package.Append(ServerResponse.PlayerChecked);
+            package.Append(player.Index);
+            package.Send();
 
-            dealer.Round.PlayerChecked();
+            player.Table.Dealer.Round.PlayerChecked();
         }
     }
 }

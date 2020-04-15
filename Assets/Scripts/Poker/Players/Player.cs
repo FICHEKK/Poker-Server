@@ -1,29 +1,22 @@
-﻿using System.IO;
-
-namespace Poker.Players
+﻿namespace Poker.Players
 {
     /// <summary> Abstract implementation of a player. </summary>
     public abstract class Player
     {
-        /// <summary> The username of this player. </summary>
-        public string Username { get; }
+        /// <summary> The client connection represented by this player. </summary>
+        public Client Client { get; }
+        
+        /// <summary>This player's username. Shortcut for Client.Username.</summary>
+        public string Username => Client.Username;
 
         /// <summary> The chip count of this player. </summary>
         public int ChipCount { get; set; }
 
-        /// <summary> The reader used to read data from this player. </summary>
-        public StreamReader Reader { get; }
-
-        /// <summary> The writer used to write data to this player. </summary>
-        public StreamWriter Writer { get; }
-
         /// <summary> Constructs a new player. </summary>
-        protected Player(string username, int chipCount, StreamReader reader, StreamWriter writer)
+        protected Player(Client client, int chipCount)
         {
-            Username = username;
+            Client = client;
             ChipCount = chipCount;
-            Reader = reader;
-            Writer = writer;
         }
 
         /// <summary> Players are equal if they have the same username. </summary>

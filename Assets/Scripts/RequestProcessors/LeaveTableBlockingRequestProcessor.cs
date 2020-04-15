@@ -15,11 +15,9 @@ namespace RequestProcessors
 
         public void ProcessRequest()
         {
-            TablePlayer tablePlayer = Casino.GetTablePlayer(_client.Username);
+            var tablePlayer = Casino.GetTablePlayer(_client.Username);
             Casino.RemoveTablePlayer(tablePlayer);
-
-            LobbyPlayer lobbyPlayer = new LobbyPlayer(_client.Username, tablePlayer.ChipCount, tablePlayer.Reader, tablePlayer.Writer);
-            Casino.AddLobbyPlayer(lobbyPlayer);
+            Casino.AddLobbyPlayer(new LobbyPlayer(_client, tablePlayer.ChipCount));
         }
     }
 }

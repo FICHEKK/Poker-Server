@@ -21,6 +21,8 @@ namespace RequestProcessors
 
         public void ProcessRequest()
         {
+            var package = new Client.Package(_client);
+
             if (DateTime.Now >= DaoProvider.Dao.GetRewardTimestamp(_client.Username))
             {
                 int reward = CalculateReward(_client.Username);
@@ -30,15 +32,17 @@ namespace RequestProcessors
 
                 Casino.GetLobbyPlayer(_client.Username).ChipCount += reward;
                 
-                _client.Writer.BaseStream.WriteByte((byte) ServerResponse.LoginRewardActive);
-                _client.Writer.WriteLine(reward);
+                package.Append(ServerResponse.LoginRewardActive);
+                package.Append(reward);
             }
             else
             {
-                _client.Writer.BaseStream.WriteByte((byte) ServerResponse.LoginRewardNotActive);
+                package.Append(ServerResponse.LoginRewardNotActive);
                 TimeSpan? timeUntilReward = DaoProvider.Dao.GetRewardTimestamp(_client.Username) - DateTime.Now;
-                _client.Writer.WriteLine(timeUntilReward?.ToString(@"hh\:mm"));
+                package.Append(timeUntilReward?.ToString(@"hh\:mm"));
             }
+            
+            package.Send();
         }
 
         private static int CalculateReward(string username)

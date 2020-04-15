@@ -14,17 +14,20 @@ namespace RequestProcessors
 
         public void ProcessRequest()
         {
-            _client.Writer.WriteLine(Casino.TableCount);
+            var package = new Client.Package(_client);
+            package.Append(Casino.TableCount);
 
             foreach (string tableName in Casino.TableNames)
             {
-                Table table = Casino.GetTable(tableName);
+                var table = Casino.GetTable(tableName);
 
-                _client.Writer.WriteLine(tableName);
-                _client.Writer.WriteLine(table.SmallBlind);
-                _client.Writer.WriteLine(table.PlayerCount);
-                _client.Writer.WriteLine(table.MaxPlayers);
+                package.Append(tableName);
+                package.Append(table.SmallBlind);
+                package.Append(table.PlayerCount);
+                package.Append(table.MaxPlayers);
             }
+            
+            package.Send();
         }
     }
 }

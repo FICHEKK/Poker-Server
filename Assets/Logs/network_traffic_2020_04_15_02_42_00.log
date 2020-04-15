@@ -1,0 +1,11 @@
+
+[2020:04:15:02:42:00 f1] Login 12345678 
+[2020:04:15:02:42:00 f1] ClientData f1 
+[2020:04:15:02:42:43 f2] Login 12345678 
+[2020:04:15:02:42:43 f2] ClientData f2 
+[2020:04:15:02:42:59 f2] CreateTable Stolek 7 5 
+[2020:04:15:02:43:10 f2] CreateTable Stolek 7 5 
+[2020:04:15:02:43:13 f2] CreateTable Stolek 7 5 
+[2020:04:15:02:43:14 f2] CreateTable Stolek 7 5 
+[2020:04:15:02:43:14 f2] CreateTable Stolek 7 5 
+[2020:04:15:02:43:15 f2] CreateTable Stolek 7 5 

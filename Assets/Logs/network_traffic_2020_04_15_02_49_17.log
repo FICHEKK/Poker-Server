@@ -1,0 +1,9 @@
+
+[2020.04.15. 02:49:17 REQ f2] Login 12345678 
+[2020.04.15. 02:49:17 REQ f2] LoginReward 
+[2020.04.15. 02:49:17 REQ f2] ClientData f2 
+[2020.04.15. 02:49:17 REQ f2] TableList 
+[2020.04.15. 02:50:04 REQ f2] TableList 
+[2020.04.15. 02:50:23 REQ f2] CreateTable NoviStol 100 5 
+[2020.04.15. 02:50:30 REQ f2] CreateTable NoviStol 100 5 
+[2020.04.15. 02:50:44 REQ f2] Logout 

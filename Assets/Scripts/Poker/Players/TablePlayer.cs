@@ -1,5 +1,4 @@
 ﻿using System;
-using System.IO;
 using Poker.Cards;
 
 namespace Poker.Players
@@ -43,8 +42,7 @@ namespace Poker.Players
         /// <summary> Cards that this player is currently holding. </summary>
         private readonly Card[] _handCards = new Card[2];
 
-        public TablePlayer(string username, int chipCount, Table table, int stack, int index, StreamReader reader,
-            StreamWriter writer) : base(username, chipCount, reader, writer)
+        public TablePlayer(Client client, int chipCount, Table table, int stack, int index) : base(client, chipCount)
         {
             Table = table;
             Index = index;

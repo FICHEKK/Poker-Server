@@ -11,17 +11,19 @@ namespace RequestProcessors
         public void ReadPayloadData(Client client)
         {
             _client = client;
-            _callAmount = int.Parse(client.Reader.ReadLine());
+            _callAmount = int.Parse(client.ReadLine());
         }
 
         public void ProcessRequest()
         {
-            Dealer dealer = Casino.GetTablePlayer(_client.Username).Table.Dealer;
-            dealer.Broadcast(ServerResponse.PlayerCalled);
-            dealer.Broadcast(dealer.Table.GetPlayerIndex(_client.Username).ToString());
-            dealer.Broadcast(_callAmount);
+            var player = Casino.GetTablePlayer(_client.Username);
+            var package = new Client.Package(player.Table.GetActiveClients());
+            package.Append(ServerResponse.PlayerCalled);
+            package.Append(player.Index);
+            package.Append(_callAmount);
+            package.Send();
 
-            dealer.Round.PlayerCalled(_callAmount);
+            player.Table.Dealer.Round.PlayerCalled(_callAmount);
         }
     }
 }

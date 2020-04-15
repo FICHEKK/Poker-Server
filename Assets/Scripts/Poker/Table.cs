@@ -108,7 +108,7 @@ namespace Poker
                 index++;
                 index %= MaxPlayers;
 
-                if (IsSeatOccupied(index)) return index;
+                if (_players[index] != null) return index;
             }
 
             return -1;
@@ -131,19 +131,6 @@ namespace Poker
             PlayerJoined?.Invoke(this, new PlayerJoinedEventArgs(player));
         }
 
-        /// <summary> Finds the player with the given username and returns the index of that player's position on the table. </summary>
-        /// <param name="username"> Username to be processed. </param>
-        /// <returns> Index of the player with the given username. </returns>
-        public int GetPlayerIndex(string username)
-        {
-            for (int i = 0; i < MaxPlayers; i++)
-            {
-                if (IsSeatOccupied(i) && _players[i].Username == username) return i;
-            }
-
-            return -1;
-        }
-
         public TablePlayer GetPlayerAt(int index)
         {
             return _players[index];
@@ -156,7 +143,7 @@ namespace Poker
         {
             for (int i = 0; i < MaxPlayers; i++)
             {
-                if (IsSeatOccupied(i) && _players[i].Equals(player))
+                if (_players[i] != null && _players[i].Equals(player))
                 {
                     _players[i] = null;
                     _playerCount--;
@@ -170,7 +157,7 @@ namespace Poker
         /// <summary> Returns the copy of the internal table array. </summary>
         public TablePlayer[] GetPlayerArray()
         {
-            TablePlayer[] players = new TablePlayer[_players.Length];
+            var players = new TablePlayer[_players.Length];
             Array.Copy(_players, players, _players.Length);
             return players;
         }
@@ -183,15 +170,24 @@ namespace Poker
         {
             for (int i = 0; i < MaxPlayers; i++)
             {
-                if (!IsSeatOccupied(i)) return i;
+                if (_players[i] == null) return i;
             }
 
             return -1;
         }
-
-        public bool IsSeatOccupied(int index)
+        
+        /// <summary> Returns an array of all the currently active clients at the this table. </summary>
+        public Client[] GetActiveClients()
         {
-            return _players[index] != null;
+            var clients = new Client[_playerCount];
+            
+            for (int i = 0, insertIndex = 0; i < MaxPlayers; i++)
+            {
+                if(_players[i] == null) continue;
+                clients[insertIndex++] = _players[i].Client;
+            }
+
+            return clients;
         }
     }
 }

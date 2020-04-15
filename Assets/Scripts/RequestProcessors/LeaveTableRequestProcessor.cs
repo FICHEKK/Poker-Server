@@ -18,8 +18,10 @@ namespace RequestProcessors
             var blockingRequestProcessor = new LeaveTableBlockingRequestProcessor();
             blockingRequestProcessor.ReadPayloadData(_client);
             Casino.GetTablePlayer(_client.Username).Table.RequestProcessors.Add(blockingRequestProcessor);
-            
-            _client.Writer.BaseStream.WriteByte((byte) ServerResponse.LeaveTableSuccess);
+
+            var package = new Client.Package(_client);
+            package.Append(ServerResponse.LeaveTableSuccess);
+            package.Send();
         }
     }
 }

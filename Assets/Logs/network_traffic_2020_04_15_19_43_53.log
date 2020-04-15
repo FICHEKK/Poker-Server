@@ -1,0 +1,104 @@
+[2020.04.15. 19:43:53 REQ f1] Login 12345678 
+[2020.04.15. 19:44:00 RES f1] LoginSuccess 
+[2020.04.15. 19:44:00 REQ f1] LoginReward 
+[2020.04.15. 19:44:00 RES f1] LoginRewardNotActive 03:29 
+[2020.04.15. 19:44:00 REQ f1] ClientData f1 
+[2020.04.15. 19:44:00 RES f1] 167046 313 1000 
+[2020.04.15. 19:44:00 REQ f1] TableList 
+[2020.04.15. 19:44:00 RES f1] 8 On The Rise 20 0 10 Local Tourney 100 0 10 A Radical Table 500 0 10 Poor Player Penthouse 1 0 10 Las Vegas Baller 2000 0 10 Casual Playa Secret Room 5 0 10 A Middle Class Table 50 0 10 WSOP High Rollers 10000 0 10 
+[2020.04.15. 19:44:03 REQ f1] JoinTable On The Rise 400 
+[2020.04.15. 19:44:03 RES f1] JoinTableSuccess 
+[2020.04.15. 19:44:03 RES f1] TableState 0 20 10 0 0 -1 0 
+[2020.04.15. 19:44:03 RES f1] PlayerJoined 0 f1 400 
+[2020.04.15. 19:44:04 REQ f2] Login 12345678 
+[2020.04.15. 19:44:04 RES f2] LoginSuccess 
+[2020.04.15. 19:44:04 REQ f2] LoginReward 
+[2020.04.15. 19:44:04 RES f2] LoginRewardNotActive 03:31 
+[2020.04.15. 19:44:04 REQ f2] ClientData f2 
+[2020.04.15. 19:44:04 RES f2] 109992 354 1000 
+[2020.04.15. 19:44:04 REQ f2] TableList 
+[2020.04.15. 19:44:04 RES f2] 8 On The Rise 20 1 10 Local Tourney 100 0 10 A Radical Table 500 0 10 Poor Player Penthouse 1 0 10 Las Vegas Baller 2000 0 10 Casual Playa Secret Room 5 0 10 A Middle Class Table 50 0 10 WSOP High Rollers 10000 0 10 
+[2020.04.15. 19:44:06 REQ f2] JoinTable On The Rise 400 
+[2020.04.15. 19:44:06 RES f2] JoinTableSuccess 
+[2020.04.15. 19:44:06 RES f2] TableState 0 20 10 1 0 f1 400 0 True 0 -1 0 
+[2020.04.15. 19:44:06 RES f1] PlayerJoined 1 f2 400 
+[2020.04.15. 19:44:06 RES f2] PlayerJoined 1 f2 400 
+[2020.04.15. 19:45:22 RES f1] Blinds 2 0 1 1 0 1 
+[2020.04.15. 19:45:27 RES f2] Blinds 2 0 1 1 0 1 
+[2020.04.15. 19:45:27 RES f1] Hand 7C AD 
+[2020.04.15. 19:45:27 RES f2] Hand 5D 9D 
+[2020.04.15. 19:45:27 RES f1] PlayerIndex 0 
+[2020.04.15. 19:45:27 RES f2] PlayerIndex 0 
+[2020.04.15. 19:45:27 RES f1] RequiredBet 0 80 400 
+[2020.04.15. 19:45:30 REQ f1] Check 
+[2020.04.15. 19:45:30 RES f1] PlayerChecked 0 
+[2020.04.15. 19:45:30 RES f2] PlayerChecked 0 
+[2020.04.15. 19:45:30 RES f1] PlayerIndex 1 
+[2020.04.15. 19:45:30 RES f2] PlayerIndex 1 
+[2020.04.15. 19:45:30 RES f2] RequiredBet 0 80 400 
+[2020.04.15. 19:45:31 REQ f2] Check 
+[2020.04.15. 19:45:31 RES f1] PlayerChecked 1 
+[2020.04.15. 19:45:31 RES f2] PlayerChecked 1 
+[2020.04.15. 19:45:31 RES f1] Flop 6D 5S 8C 
+[2020.04.15. 19:45:31 RES f2] Flop 6D 5S 8C 
+[2020.04.15. 19:45:33 RES f1] PlayerIndex 0 
+[2020.04.15. 19:45:33 RES f2] PlayerIndex 0 
+[2020.04.15. 19:45:33 RES f1] RequiredBet 0 40 360 
+[2020.04.15. 19:45:34 REQ f1] Check 
+[2020.04.15. 19:45:34 RES f1] PlayerChecked 0 
+[2020.04.15. 19:45:34 RES f2] PlayerChecked 0 
+[2020.04.15. 19:45:34 RES f1] PlayerIndex 1 
+[2020.04.15. 19:45:34 RES f2] PlayerIndex 1 
+[2020.04.15. 19:45:34 RES f2] RequiredBet 0 40 360 
+[2020.04.15. 19:45:35 REQ f2] Check 
+[2020.04.15. 19:45:35 RES f1] PlayerChecked 1 
+[2020.04.15. 19:45:35 RES f2] PlayerChecked 1 
+[2020.04.15. 19:45:35 RES f1] Turn 3C 
+[2020.04.15. 19:45:35 RES f2] Turn 3C 
+[2020.04.15. 19:45:36 RES f1] PlayerIndex 0 
+[2020.04.15. 19:45:36 RES f2] PlayerIndex 0 
+[2020.04.15. 19:45:36 RES f1] RequiredBet 0 40 360 
+[2020.04.15. 19:45:37 REQ f1] Check 
+[2020.04.15. 19:45:37 RES f1] PlayerChecked 0 
+[2020.04.15. 19:45:37 RES f2] PlayerChecked 0 
+[2020.04.15. 19:45:37 RES f1] PlayerIndex 1 
+[2020.04.15. 19:45:37 RES f2] PlayerIndex 1 
+[2020.04.15. 19:45:37 RES f2] RequiredBet 0 40 360 
+[2020.04.15. 19:45:38 REQ f2] Check 
+[2020.04.15. 19:45:38 RES f1] PlayerChecked 1 
+[2020.04.15. 19:45:38 RES f2] PlayerChecked 1 
+[2020.04.15. 19:45:38 RES f1] River 2D 
+[2020.04.15. 19:45:38 RES f2] River 2D 
+[2020.04.15. 19:45:38 RES f1] PlayerIndex 0 
+[2020.04.15. 19:45:38 RES f2] PlayerIndex 0 
+[2020.04.15. 19:45:38 RES f1] RequiredBet 0 40 360 
+[2020.04.15. 19:45:40 REQ f1] Check 
+[2020.04.15. 19:45:40 RES f1] PlayerChecked 0 
+[2020.04.15. 19:45:40 RES f2] PlayerChecked 0 
+[2020.04.15. 19:45:40 RES f1] PlayerIndex 1 
+[2020.04.15. 19:45:40 RES f2] PlayerIndex 1 
+[2020.04.15. 19:45:40 RES f2] RequiredBet 0 40 360 
+[2020.04.15. 19:45:41 REQ f2] Check 
+[2020.04.15. 19:45:41 RES f1] PlayerChecked 1 
+[2020.04.15. 19:45:41 RES f2] PlayerChecked 1 
+[2020.04.15. 19:45:41 RES f1] CardsReveal 2 0 7C AD 1 5D 9D 
+[2020.04.15. 19:45:41 RES f2] CardsReveal 2 0 7C AD 1 5D 9D 
+[2020.04.15. 19:45:41 RES f1] Showdown 1 80 1 System.Linq.Enumerable+SelectListIterator`2[Poker.Players.TablePlayer,System.Int32] One pair of 5's 
+[2020.04.15. 19:45:41 RES f2] Showdown 1 80 1 System.Linq.Enumerable+SelectListIterator`2[Poker.Players.TablePlayer,System.Int32] One pair of 5's 
+[2020.04.15. 19:45:47 RES f1] RoundFinished 
+[2020.04.15. 19:45:47 RES f2] RoundFinished 
+[2020.04.15. 19:46:34 RES f1] Blinds 0 0 1 0 
+[2020.04.15. 19:46:35 RES f2] Blinds 0 0 1 0 
+[2020.04.15. 19:46:35 RES f1] Hand 8C 4C 
+[2020.04.15. 19:46:35 RES f2] Hand 8S QH 
+[2020.04.15. 19:46:35 RES f1] PlayerFolded 1 
+[2020.04.15. 19:46:35 RES f1] PlayerIndex 1 
+[2020.04.15. 19:46:35 RES f2] PlayerFolded 1 
+[2020.04.15. 19:46:35 RES f2] PlayerIndex 1 
+[2020.04.15. 19:46:35 RES f1] Showdown 1 60 1 0  
+[2020.04.15. 19:46:35 RES f2] RequiredBet 20 80 440 
+[2020.04.15. 19:46:35 RES f2] Showdown 1 60 1 0  
+[2020.04.15. 19:46:38 REQ f1] LeaveTable 
+[2020.04.15. 19:46:38 RES f1] LeaveTableSuccess 
+[2020.04.15. 19:46:38 RES f2] PlayerLeft 0 
+[2020.04.15. 19:46:40 RES f2] RoundFinished 

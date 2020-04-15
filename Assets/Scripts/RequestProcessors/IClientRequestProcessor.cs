@@ -12,9 +12,7 @@ namespace RequestProcessors
         /// </summary>
         bool CanWait { get; }
         
-        /// <summary>
-        /// Reads the payload data from the client request.
-        /// </summary>
+        /// <summary>Reads the payload data from the client request.</summary>
         void ReadPayloadData(Client client);
         
         /// <summary>Processes the request from the client.</summary>

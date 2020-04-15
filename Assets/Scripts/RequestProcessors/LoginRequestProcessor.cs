@@ -13,41 +13,43 @@ namespace RequestProcessors
         public void ReadPayloadData(Client client)
         {
             _client = client;
-            _password = client.Reader.ReadLine();
+            _password = _client.ReadLine();
         }
 
         public void ProcessRequest()
         {
-            ServerLoginResponse response = EvaluateProperResponse(_client.Username, _password);
+            ServerResponse response = EvaluateProperResponse(_client.Username, _password);
 
-            if (response == ServerLoginResponse.Success)
+            if (response == ServerResponse.LoginSuccess)
             {
                 int chipCount = DaoProvider.Dao.GetChipCount(_client.Username);
-                Casino.AddLobbyPlayer(new LobbyPlayer(_client.Username, chipCount, _client.Reader, _client.Writer));
+                Casino.AddLobbyPlayer(new LobbyPlayer(_client, chipCount));
                 _client.IsLoggedIn = true;
             }
-            
-            _client.Writer.BaseStream.WriteByte((byte) response);
+
+            var package = new Client.Package(_client);
+            package.Append(response);
+            package.Send();
         }
 
-        private static ServerLoginResponse EvaluateProperResponse(string username, string password)
+        private static ServerResponse EvaluateProperResponse(string username, string password)
         {
             if (Server.ClientCount > Server.Capacity)
-                return ServerLoginResponse.ServerFull;
+                return ServerResponse.LoginServerFull;
             
             if (!DaoProvider.Dao.IsRegistered(username))
-                return ServerLoginResponse.UsernameNotRegistered;
+                return ServerResponse.LoginUsernameNotRegistered;
             
             if (DaoProvider.Dao.IsBanned(username))
-                return ServerLoginResponse.UsernameBanned;
+                return ServerResponse.LoginUsernameBanned;
             
             if (Casino.HasPlayerWithUsername(username))
-                return ServerLoginResponse.AlreadyLoggedIn;
+                return ServerResponse.LoginAlreadyLoggedIn;
             
             if (!DaoProvider.Dao.Login(username, password))
-                return ServerLoginResponse.WrongPassword;
+                return ServerResponse.LoginWrongPassword;
             
-            return ServerLoginResponse.Success;
+            return ServerResponse.LoginSuccess;
         }
     }
 }

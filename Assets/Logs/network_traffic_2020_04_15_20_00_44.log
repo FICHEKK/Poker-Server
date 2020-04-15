@@ -1,0 +1,355 @@
+[2020.04.15. 20:00:44 REQ f1] Login 12345678 
+[2020.04.15. 20:00:45 RES f1] LoginSuccess 
+[2020.04.15. 20:00:45 REQ f1] LoginReward 
+[2020.04.15. 20:00:45 RES f1] LoginRewardNotActive 03:13 
+[2020.04.15. 20:00:45 REQ f1] ClientData f1 
+[2020.04.15. 20:00:45 RES f1] 166946 315 1000 
+[2020.04.15. 20:00:45 REQ f1] TableList 
+[2020.04.15. 20:00:45 RES f1] 8 On The Rise 20 0 10 Local Tourney 100 0 10 A Radical Table 500 0 10 Poor Player Penthouse 1 0 10 Las Vegas Baller 2000 0 10 Casual Playa Secret Room 5 0 10 A Middle Class Table 50 0 10 WSOP High Rollers 10000 0 10 
+[2020.04.15. 20:00:46 REQ f2] Login 12345678 
+[2020.04.15. 20:00:46 RES f2] LoginSuccess 
+[2020.04.15. 20:00:46 REQ f2] LoginReward 
+[2020.04.15. 20:00:46 RES f2] LoginRewardNotActive 03:14 
+[2020.04.15. 20:00:46 REQ f2] ClientData f2 
+[2020.04.15. 20:00:46 RES f2] 110092 358 1000 
+[2020.04.15. 20:00:46 REQ f2] TableList 
+[2020.04.15. 20:00:46 RES f2] 8 On The Rise 20 0 10 Local Tourney 100 0 10 A Radical Table 500 0 10 Poor Player Penthouse 1 0 10 Las Vegas Baller 2000 0 10 Casual Playa Secret Room 5 0 10 A Middle Class Table 50 0 10 WSOP High Rollers 10000 0 10 
+[2020.04.15. 20:00:48 REQ f1] JoinTable On The Rise 400 
+[2020.04.15. 20:00:48 RES f1] JoinTableSuccess 
+[2020.04.15. 20:00:48 RES f1] TableState 0 20 10 0 0 -1 0 
+[2020.04.15. 20:00:48 RES f1] PlayerJoined 0 f1 400 
+[2020.04.15. 20:00:49 REQ f2] JoinTable On The Rise 400 
+[2020.04.15. 20:00:49 RES f2] JoinTableSuccess 
+[2020.04.15. 20:00:49 RES f2] TableState 0 20 10 1 0 f1 400 0 True 0 -1 0 
+[2020.04.15. 20:00:49 RES f1] PlayerJoined 1 f2 400 
+[2020.04.15. 20:00:49 RES f2] PlayerJoined 1 f2 400 
+[2020.04.15. 20:00:49 RES f1] Blinds 2 0 1 1 0 1 
+[2020.04.15. 20:00:49 RES f2] Blinds 2 0 1 1 0 1 
+[2020.04.15. 20:00:49 RES f1] Hand JH 9H 
+[2020.04.15. 20:00:49 RES f2] Hand 7S 9D 
+[2020.04.15. 20:00:49 RES f1] PlayerIndex 0 
+[2020.04.15. 20:00:50 RES f2] PlayerIndex 0 
+[2020.04.15. 20:00:50 RES f1] RequiredBet 0 80 400 
+[2020.04.15. 20:00:53 REQ f1] Check 
+[2020.04.15. 20:00:53 RES f1] PlayerChecked 0 
+[2020.04.15. 20:00:53 RES f2] PlayerChecked 0 
+[2020.04.15. 20:00:53 RES f1] PlayerIndex 1 
+[2020.04.15. 20:00:53 RES f2] PlayerIndex 1 
+[2020.04.15. 20:00:53 RES f2] RequiredBet 0 80 400 
+[2020.04.15. 20:00:54 REQ f2] Check 
+[2020.04.15. 20:00:54 RES f1] PlayerChecked 1 
+[2020.04.15. 20:00:54 RES f2] PlayerChecked 1 
+[2020.04.15. 20:00:54 RES f1] Flop 8S 9C 5S 
+[2020.04.15. 20:00:54 RES f2] Flop 8S 9C 5S 
+[2020.04.15. 20:00:55 RES f1] PlayerIndex 0 
+[2020.04.15. 20:00:55 RES f2] PlayerIndex 0 
+[2020.04.15. 20:00:55 RES f1] RequiredBet 0 40 360 
+[2020.04.15. 20:00:56 REQ f1] Check 
+[2020.04.15. 20:00:56 RES f1] PlayerChecked 0 
+[2020.04.15. 20:00:56 RES f2] PlayerChecked 0 
+[2020.04.15. 20:00:56 RES f1] PlayerIndex 1 
+[2020.04.15. 20:00:56 RES f2] PlayerIndex 1 
+[2020.04.15. 20:00:56 RES f2] RequiredBet 0 40 360 
+[2020.04.15. 20:00:57 REQ f2] Check 
+[2020.04.15. 20:00:57 RES f1] PlayerChecked 1 
+[2020.04.15. 20:00:57 RES f2] PlayerChecked 1 
+[2020.04.15. 20:00:57 RES f1] Turn 6S 
+[2020.04.15. 20:00:57 RES f2] Turn 6S 
+[2020.04.15. 20:00:58 RES f1] PlayerIndex 0 
+[2020.04.15. 20:00:58 RES f2] PlayerIndex 0 
+[2020.04.15. 20:00:58 RES f1] RequiredBet 0 40 360 
+[2020.04.15. 20:00:59 REQ f1] Check 
+[2020.04.15. 20:00:59 RES f1] PlayerChecked 0 
+[2020.04.15. 20:00:59 RES f2] PlayerChecked 0 
+[2020.04.15. 20:00:59 RES f1] PlayerIndex 1 
+[2020.04.15. 20:00:59 RES f2] PlayerIndex 1 
+[2020.04.15. 20:00:59 RES f2] RequiredBet 0 40 360 
+[2020.04.15. 20:01:00 REQ f2] Check 
+[2020.04.15. 20:01:00 RES f1] PlayerChecked 1 
+[2020.04.15. 20:01:00 RES f2] PlayerChecked 1 
+[2020.04.15. 20:01:00 RES f1] River AD 
+[2020.04.15. 20:01:00 RES f2] River AD 
+[2020.04.15. 20:01:00 RES f1] PlayerIndex 0 
+[2020.04.15. 20:01:00 RES f2] PlayerIndex 0 
+[2020.04.15. 20:01:00 RES f1] RequiredBet 0 40 360 
+[2020.04.15. 20:01:01 REQ f1] Check 
+[2020.04.15. 20:01:01 RES f1] PlayerChecked 0 
+[2020.04.15. 20:01:01 RES f2] PlayerChecked 0 
+[2020.04.15. 20:01:01 RES f1] PlayerIndex 1 
+[2020.04.15. 20:01:01 RES f2] PlayerIndex 1 
+[2020.04.15. 20:01:01 RES f2] RequiredBet 0 40 360 
+[2020.04.15. 20:01:02 REQ f2] Check 
+[2020.04.15. 20:01:02 RES f1] PlayerChecked 1 
+[2020.04.15. 20:01:02 RES f2] PlayerChecked 1 
+[2020.04.15. 20:01:02 RES f1] CardsReveal 2 0 JH 9H 1 7S 9D 
+[2020.04.15. 20:01:02 RES f2] CardsReveal 2 0 JH 9H 1 7S 9D 
+[2020.04.15. 20:01:02 RES f1] Showdown 1 80 1 1 Straight 5 to 9 
+[2020.04.15. 20:01:02 RES f2] Showdown 1 80 1 1 Straight 5 to 9 
+[2020.04.15. 20:01:08 RES f1] RoundFinished 
+[2020.04.15. 20:01:08 RES f2] RoundFinished 
+[2020.04.15. 20:01:08 RES f1] Blinds 0 0 1 0 
+[2020.04.15. 20:01:08 RES f2] Blinds 0 0 1 0 
+[2020.04.15. 20:01:08 RES f1] Hand QC 8D 
+[2020.04.15. 20:01:08 RES f2] Hand KC 7D 
+[2020.04.15. 20:01:08 RES f1] PlayerIndex 1 
+[2020.04.15. 20:01:08 RES f2] PlayerIndex 1 
+[2020.04.15. 20:01:08 RES f2] RequiredBet 20 80 440 
+[2020.04.15. 20:01:15 REQ f2] Call 20 
+[2020.04.15. 20:01:15 RES f1] PlayerCalled 1 20 
+[2020.04.15. 20:01:15 RES f2] PlayerCalled 1 20 
+[2020.04.15. 20:01:15 RES f1] PlayerIndex 0 
+[2020.04.15. 20:01:15 RES f2] PlayerIndex 0 
+[2020.04.15. 20:01:15 RES f1] RequiredBet 0 80 360 
+[2020.04.15. 20:01:18 REQ f1] Check 
+[2020.04.15. 20:01:18 RES f1] PlayerChecked 0 
+[2020.04.15. 20:01:18 RES f2] PlayerChecked 0 
+[2020.04.15. 20:01:18 RES f1] Flop JS 4D KH 
+[2020.04.15. 20:01:18 RES f2] Flop JS 4D KH 
+[2020.04.15. 20:01:19 RES f1] PlayerIndex 1 
+[2020.04.15. 20:01:19 RES f2] PlayerIndex 1 
+[2020.04.15. 20:01:19 RES f2] RequiredBet 0 40 400 
+[2020.04.15. 20:01:23 REQ f2] Check 
+[2020.04.15. 20:01:23 RES f1] PlayerChecked 1 
+[2020.04.15. 20:01:23 RES f2] PlayerChecked 1 
+[2020.04.15. 20:01:23 RES f1] PlayerIndex 0 
+[2020.04.15. 20:01:23 RES f2] PlayerIndex 0 
+[2020.04.15. 20:01:23 RES f1] RequiredBet 0 40 320 
+[2020.04.15. 20:01:25 REQ f1] Raise 40 
+[2020.04.15. 20:01:25 RES f1] PlayerRaised 0 40 
+[2020.04.15. 20:01:25 RES f2] PlayerRaised 0 40 
+[2020.04.15. 20:01:25 RES f1] PlayerIndex 1 
+[2020.04.15. 20:01:25 RES f2] PlayerIndex 1 
+[2020.04.15. 20:01:25 RES f2] RequiredBet 40 80 400 
+[2020.04.15. 20:01:34 REQ f2] Call 40 
+[2020.04.15. 20:01:34 RES f1] PlayerCalled 1 40 
+[2020.04.15. 20:01:34 RES f2] PlayerCalled 1 40 
+[2020.04.15. 20:01:34 RES f1] Turn 3S 
+[2020.04.15. 20:01:34 RES f2] Turn 3S 
+[2020.04.15. 20:01:34 RES f1] PlayerIndex 1 
+[2020.04.15. 20:01:34 RES f2] PlayerIndex 1 
+[2020.04.15. 20:01:34 RES f2] RequiredBet 0 40 360 
+[2020.04.15. 20:01:37 REQ f2] Check 
+[2020.04.15. 20:01:37 RES f1] PlayerChecked 1 
+[2020.04.15. 20:01:37 RES f2] PlayerChecked 1 
+[2020.04.15. 20:01:37 RES f1] PlayerIndex 0 
+[2020.04.15. 20:01:37 RES f2] PlayerIndex 0 
+[2020.04.15. 20:01:37 RES f1] RequiredBet 0 40 280 
+[2020.04.15. 20:01:41 REQ f1] AllIn 280 
+[2020.04.15. 20:01:41 RES f1] PlayerAllIn 0 280 
+[2020.04.15. 20:01:41 RES f2] PlayerAllIn 0 280 
+[2020.04.15. 20:01:41 RES f1] PlayerIndex 1 
+[2020.04.15. 20:01:41 RES f2] PlayerIndex 1 
+[2020.04.15. 20:01:41 RES f2] RequiredBet 280 560 360 
+[2020.04.15. 20:01:44 REQ f2] Call 280 
+[2020.04.15. 20:01:44 RES f1] PlayerCalled 1 280 
+[2020.04.15. 20:01:44 RES f2] PlayerCalled 1 280 
+[2020.04.15. 20:01:44 RES f1] River 7S 
+[2020.04.15. 20:01:44 RES f2] River 7S 
+[2020.04.15. 20:01:44 RES f1] CardsReveal 2 0 QC 8D 1 KC 7D 
+[2020.04.15. 20:01:44 RES f2] CardsReveal 2 0 QC 8D 1 KC 7D 
+[2020.04.15. 20:01:44 RES f1] Showdown 1 720 1 1 Two pair 7's and K's 
+[2020.04.15. 20:01:44 RES f2] Showdown 1 720 1 1 Two pair 7's and K's 
+[2020.04.15. 20:01:50 RES f1] LeaveTableSuccess 
+[2020.04.15. 20:01:50 RES f2] PlayerLeft 0 
+[2020.04.15. 20:01:50 RES f2] RoundFinished 
+[2020.04.15. 20:01:50 REQ f1] ClientData f1 
+[2020.04.15. 20:01:50 RES f1] 166546 315 1000 
+[2020.04.15. 20:01:50 REQ f1] TableList 
+[2020.04.15. 20:01:50 RES f1] 8 On The Rise 20 1 10 Local Tourney 100 0 10 A Radical Table 500 0 10 Poor Player Penthouse 1 0 10 Las Vegas Baller 2000 0 10 Casual Playa Secret Room 5 0 10 A Middle Class Table 50 0 10 WSOP High Rollers 10000 0 10 
+[2020.04.15. 20:04:15 REQ f1] JoinTable On The Rise 400 
+[2020.04.15. 20:04:15 RES f1] JoinTableSuccess 
+[2020.04.15. 20:04:15 RES f1] TableState 0 20 10 1 1 f2 800 0 False 0 -1 0 
+[2020.04.15. 20:04:16 RES f1] PlayerJoined 0 f1 400 
+[2020.04.15. 20:04:16 RES f2] PlayerJoined 0 f1 400 
+[2020.04.15. 20:04:16 RES f1] Blinds 1 0 1 0 1 
+[2020.04.15. 20:04:16 RES f2] Blinds 1 0 1 0 1 
+[2020.04.15. 20:04:16 RES f1] Hand QS 4C 
+[2020.04.15. 20:04:16 RES f2] Hand 9H 4H 
+[2020.04.15. 20:04:16 RES f1] PlayerIndex 0 
+[2020.04.15. 20:04:16 RES f2] PlayerIndex 0 
+[2020.04.15. 20:04:16 RES f1] RequiredBet 0 80 400 
+[2020.04.15. 20:04:19 REQ f1] SendChatMessage yo yo 
+[2020.04.15. 20:04:19 RES f1] ChatMessage 0 yo yo 
+[2020.04.15. 20:04:19 RES f2] ChatMessage 0 yo yo 
+[2020.04.15. 20:04:25 REQ f1] Check 
+[2020.04.15. 20:04:25 RES f1] PlayerChecked 0 
+[2020.04.15. 20:04:25 RES f2] PlayerChecked 0 
+[2020.04.15. 20:04:25 RES f1] PlayerIndex 1 
+[2020.04.15. 20:04:25 RES f2] PlayerIndex 1 
+[2020.04.15. 20:04:25 RES f2] RequiredBet 0 80 800 
+[2020.04.15. 20:04:36 RES f1] PlayerFolded 1 
+[2020.04.15. 20:04:36 RES f2] PlayerFolded 1 
+[2020.04.15. 20:04:36 RES f1] Showdown 1 80 1 0  
+[2020.04.15. 20:04:36 RES f2] Showdown 1 80 1 0  
+[2020.04.15. 20:04:41 RES f1] RoundFinished 
+[2020.04.15. 20:04:41 RES f2] RoundFinished 
+[2020.04.15. 20:04:41 RES f1] Blinds 0 0 1 0 
+[2020.04.15. 20:04:41 RES f2] Blinds 0 0 1 0 
+[2020.04.15. 20:04:41 RES f1] Hand 3C 4S 
+[2020.04.15. 20:04:41 RES f2] Hand 9S QH 
+[2020.04.15. 20:04:41 RES f1] PlayerIndex 1 
+[2020.04.15. 20:04:41 RES f2] PlayerIndex 1 
+[2020.04.15. 20:04:41 RES f2] RequiredBet 20 80 760 
+[2020.04.15. 20:04:49 REQ f2] Call 20 
+[2020.04.15. 20:04:49 RES f1] PlayerCalled 1 20 
+[2020.04.15. 20:04:49 RES f2] PlayerCalled 1 20 
+[2020.04.15. 20:04:49 RES f1] PlayerIndex 0 
+[2020.04.15. 20:04:49 RES f2] PlayerIndex 0 
+[2020.04.15. 20:04:49 RES f1] RequiredBet 0 80 440 
+[2020.04.15. 20:04:57 REQ f1] Check 
+[2020.04.15. 20:04:57 RES f1] PlayerChecked 0 
+[2020.04.15. 20:04:57 RES f2] PlayerChecked 0 
+[2020.04.15. 20:04:57 RES f1] Flop 8H 2D QS 
+[2020.04.15. 20:04:57 RES f2] Flop 8H 2D QS 
+[2020.04.15. 20:04:58 RES f1] PlayerIndex 1 
+[2020.04.15. 20:04:58 RES f2] PlayerIndex 1 
+[2020.04.15. 20:04:58 RES f2] RequiredBet 0 40 720 
+[2020.04.15. 20:05:03 REQ f2] Check 
+[2020.04.15. 20:05:03 RES f1] PlayerChecked 1 
+[2020.04.15. 20:05:03 RES f2] PlayerChecked 1 
+[2020.04.15. 20:05:03 RES f1] PlayerIndex 0 
+[2020.04.15. 20:05:03 RES f2] PlayerIndex 0 
+[2020.04.15. 20:05:03 RES f1] RequiredBet 0 40 400 
+[2020.04.15. 20:05:05 REQ f1] Raise 40 
+[2020.04.15. 20:05:05 RES f1] PlayerRaised 0 40 
+[2020.04.15. 20:05:05 RES f2] PlayerRaised 0 40 
+[2020.04.15. 20:05:05 RES f1] PlayerIndex 1 
+[2020.04.15. 20:05:05 RES f2] PlayerIndex 1 
+[2020.04.15. 20:05:05 RES f2] RequiredBet 40 80 720 
+[2020.04.15. 20:05:14 REQ f2] Fold 
+[2020.04.15. 20:05:14 RES f1] PlayerFolded 1 
+[2020.04.15. 20:05:14 RES f2] PlayerFolded 1 
+[2020.04.15. 20:05:14 RES f1] Showdown 1 120 1 0  
+[2020.04.15. 20:05:14 RES f2] Showdown 1 120 1 0  
+[2020.04.15. 20:05:19 RES f1] RoundFinished 
+[2020.04.15. 20:05:19 RES f2] RoundFinished 
+[2020.04.15. 20:05:19 RES f1] Blinds 0 1 0 1 
+[2020.04.15. 20:05:19 RES f2] Blinds 0 1 0 1 
+[2020.04.15. 20:05:19 RES f1] Hand 5D 5S 
+[2020.04.15. 20:05:19 RES f2] Hand 5C JD 
+[2020.04.15. 20:05:19 RES f1] PlayerIndex 0 
+[2020.04.15. 20:05:19 RES f2] PlayerIndex 0 
+[2020.04.15. 20:05:19 RES f1] RequiredBet 20 80 480 
+[2020.04.15. 20:05:29 REQ f1] Call 20 
+[2020.04.15. 20:05:29 RES f1] PlayerCalled 0 20 
+[2020.04.15. 20:05:29 RES f2] PlayerCalled 0 20 
+[2020.04.15. 20:05:29 RES f1] PlayerIndex 1 
+[2020.04.15. 20:05:29 RES f2] PlayerIndex 1 
+[2020.04.15. 20:05:29 RES f2] RequiredBet 0 80 720 
+[2020.04.15. 20:05:36 REQ f2] Check 
+[2020.04.15. 20:05:36 RES f1] PlayerChecked 1 
+[2020.04.15. 20:05:36 RES f2] PlayerChecked 1 
+[2020.04.15. 20:05:36 RES f1] Flop 9S KD 2S 
+[2020.04.15. 20:05:36 RES f2] Flop 9S KD 2S 
+[2020.04.15. 20:05:37 RES f1] PlayerIndex 0 
+[2020.04.15. 20:05:37 RES f2] PlayerIndex 0 
+[2020.04.15. 20:05:37 RES f1] RequiredBet 0 40 440 
+[2020.04.15. 20:05:48 RES f1] PlayerFolded 0 
+[2020.04.15. 20:05:48 RES f2] PlayerFolded 0 
+[2020.04.15. 20:05:48 RES f1] Showdown 1 80 1 1  
+[2020.04.15. 20:05:48 RES f2] Showdown 1 80 1 1  
+[2020.04.15. 20:05:53 RES f1] RoundFinished 
+[2020.04.15. 20:05:53 RES f2] RoundFinished 
+[2020.04.15. 20:05:53 RES f1] Blinds 0 0 1 0 
+[2020.04.15. 20:05:53 RES f2] Blinds 0 0 1 0 
+[2020.04.15. 20:05:53 RES f1] Hand AD 8H 
+[2020.04.15. 20:05:53 RES f2] Hand 9H QD 
+[2020.04.15. 20:05:53 RES f1] PlayerIndex 1 
+[2020.04.15. 20:05:53 RES f2] PlayerIndex 1 
+[2020.04.15. 20:05:53 RES f2] RequiredBet 20 80 760 
+[2020.04.15. 20:06:04 RES f1] PlayerFolded 1 
+[2020.04.15. 20:06:04 RES f2] PlayerFolded 1 
+[2020.04.15. 20:06:04 RES f1] Showdown 1 60 1 0  
+[2020.04.15. 20:06:04 RES f2] Showdown 1 60 1 0  
+[2020.04.15. 20:06:09 RES f1] RoundFinished 
+[2020.04.15. 20:06:09 RES f2] RoundFinished 
+[2020.04.15. 20:06:09 RES f1] Blinds 0 1 0 1 
+[2020.04.15. 20:06:09 RES f2] Blinds 0 1 0 1 
+[2020.04.15. 20:06:09 RES f1] Hand 3D 5C 
+[2020.04.15. 20:06:09 RES f2] Hand 7H 9D 
+[2020.04.15. 20:06:09 RES f1] PlayerIndex 0 
+[2020.04.15. 20:06:09 RES f2] PlayerIndex 0 
+[2020.04.15. 20:06:09 RES f1] RequiredBet 20 80 460 
+[2020.04.15. 20:06:20 RES f1] PlayerFolded 0 
+[2020.04.15. 20:06:20 RES f2] PlayerFolded 0 
+[2020.04.15. 20:06:20 RES f1] Showdown 1 60 1 1  
+[2020.04.15. 20:06:20 RES f2] Showdown 1 60 1 1  
+[2020.04.15. 20:06:25 RES f1] RoundFinished 
+[2020.04.15. 20:06:25 RES f2] RoundFinished 
+[2020.04.15. 20:06:25 RES f1] Blinds 0 0 1 0 
+[2020.04.15. 20:06:25 RES f2] Blinds 0 0 1 0 
+[2020.04.15. 20:06:25 RES f1] Hand 2H 8H 
+[2020.04.15. 20:06:25 RES f2] Hand 10C 6D 
+[2020.04.15. 20:06:25 RES f1] PlayerIndex 1 
+[2020.04.15. 20:06:25 RES f2] PlayerIndex 1 
+[2020.04.15. 20:06:25 RES f2] RequiredBet 20 80 760 
+[2020.04.15. 20:06:34 REQ f2] Call 20 
+[2020.04.15. 20:06:34 RES f1] PlayerCalled 1 20 
+[2020.04.15. 20:06:34 RES f2] PlayerCalled 1 20 
+[2020.04.15. 20:06:34 RES f1] PlayerIndex 0 
+[2020.04.15. 20:06:34 RES f2] PlayerIndex 0 
+[2020.04.15. 20:06:34 RES f1] RequiredBet 0 80 440 
+[2020.04.15. 20:06:35 REQ f1] Check 
+[2020.04.15. 20:06:35 RES f1] PlayerChecked 0 
+[2020.04.15. 20:06:35 RES f2] PlayerChecked 0 
+[2020.04.15. 20:06:35 RES f1] Flop 9D JC 4C 
+[2020.04.15. 20:06:35 RES f2] Flop 9D JC 4C 
+[2020.04.15. 20:06:37 RES f1] PlayerIndex 1 
+[2020.04.15. 20:06:37 RES f2] PlayerIndex 1 
+[2020.04.15. 20:06:37 RES f2] RequiredBet 0 40 720 
+[2020.04.15. 20:06:43 REQ f2] Check 
+[2020.04.15. 20:06:43 RES f1] PlayerChecked 1 
+[2020.04.15. 20:06:43 RES f2] PlayerChecked 1 
+[2020.04.15. 20:06:43 RES f1] PlayerIndex 0 
+[2020.04.15. 20:06:43 RES f2] PlayerIndex 0 
+[2020.04.15. 20:06:43 RES f1] RequiredBet 0 40 400 
+[2020.04.15. 20:06:53 REQ f1] Check 
+[2020.04.15. 20:06:53 RES f1] PlayerChecked 0 
+[2020.04.15. 20:06:53 RES f2] PlayerChecked 0 
+[2020.04.15. 20:06:53 RES f1] Turn 5C 
+[2020.04.15. 20:06:53 RES f2] Turn 5C 
+[2020.04.15. 20:06:54 RES f1] PlayerIndex 1 
+[2020.04.15. 20:06:54 RES f2] PlayerIndex 1 
+[2020.04.15. 20:06:54 RES f2] RequiredBet 0 40 720 
+[2020.04.15. 20:07:05 RES f1] PlayerFolded 1 
+[2020.04.15. 20:07:05 RES f2] PlayerFolded 1 
+[2020.04.15. 20:07:05 RES f1] Showdown 1 80 1 0  
+[2020.04.15. 20:07:05 RES f2] Showdown 1 80 1 0  
+[2020.04.15. 20:07:10 RES f1] RoundFinished 
+[2020.04.15. 20:07:10 RES f2] RoundFinished 
+[2020.04.15. 20:07:10 RES f1] Blinds 0 1 0 1 
+[2020.04.15. 20:07:10 RES f2] Blinds 0 1 0 1 
+[2020.04.15. 20:07:10 RES f1] Hand 2D KD 
+[2020.04.15. 20:07:10 RES f2] Hand 8S 4D 
+[2020.04.15. 20:07:10 RES f1] PlayerIndex 0 
+[2020.04.15. 20:07:10 RES f2] PlayerIndex 0 
+[2020.04.15. 20:07:10 RES f1] RequiredBet 20 80 480 
+[2020.04.15. 20:07:21 RES f1] PlayerFolded 0 
+[2020.04.15. 20:07:21 RES f2] PlayerFolded 0 
+[2020.04.15. 20:07:21 RES f1] Showdown 1 60 1 1  
+[2020.04.15. 20:07:21 RES f2] Showdown 1 60 1 1  
+[2020.04.15. 20:07:26 RES f1] RoundFinished 
+[2020.04.15. 20:07:26 RES f2] RoundFinished 
+[2020.04.15. 20:07:26 RES f1] Blinds 0 0 1 0 
+[2020.04.15. 20:07:26 RES f2] Blinds 0 0 1 0 
+[2020.04.15. 20:07:26 RES f1] Hand 8H 8C 
+[2020.04.15. 20:07:26 RES f2] Hand 8S 3S 
+[2020.04.15. 20:07:26 RES f1] PlayerIndex 1 
+[2020.04.15. 20:07:26 RES f2] PlayerIndex 1 
+[2020.04.15. 20:07:26 RES f2] RequiredBet 20 80 740 
+[2020.04.15. 20:07:36 REQ f1] LeaveTable 
+[2020.04.15. 20:07:36 RES f1] LeaveTableSuccess 
+[2020.04.15. 20:07:36 RES f2] PlayerLeft 0 
+[2020.04.15. 20:07:36 RES f2] Showdown 1 60 1 1  
+[2020.04.15. 20:07:36 REQ f1] ClientData f1 
+[2020.04.15. 20:07:36 RES f1] 166566 319 1000 
+[2020.04.15. 20:07:36 REQ f1] TableList 
+[2020.04.15. 20:07:36 RES f1] 8 On The Rise 20 1 10 Local Tourney 100 0 10 A Radical Table 500 0 10 Poor Player Penthouse 1 0 10 Las Vegas Baller 2000 0 10 Casual Playa Secret Room 5 0 10 A Middle Class Table 50 0 10 WSOP High Rollers 10000 0 10 
+[2020.04.15. 20:07:41 RES f2] RoundFinished 
+[2020.04.15. 20:08:04 REQ f2] LeaveTable 
+[2020.04.15. 20:08:04 RES f2] LeaveTableSuccess 
+[2020.04.15. 20:08:04 REQ f2] ClientData f2 
+[2020.04.15. 20:08:04 RES f2] 110472 364 1000 
+[2020.04.15. 20:08:04 REQ f2] TableList 
+[2020.04.15. 20:08:04 RES f2] 8 On The Rise 20 0 10 Local Tourney 100 0 10 A Radical Table 500 0 10 Poor Player Penthouse 1 0 10 Las Vegas Baller 2000 0 10 Casual Playa Secret Room 5 0 10 A Middle Class Table 50 0 10 WSOP High Rollers 10000 0 10 
+[2020.04.15. 20:08:13 REQ f2] Logout 

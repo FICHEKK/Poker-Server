@@ -36,9 +36,12 @@ namespace Poker
                 if (Round == null) return;
                 if (Round.CurrentPhase == Round.Phase.OnePlayerLeft) return;
                 if (Round.CurrentPhase == Round.Phase.Showdown) return;
+
+                var package = new Client.Package(Table.GetActiveClients());
+                package.Append(ServerResponse.PlayerFolded);
+                package.Append(Round.PlayerIndex);
+                package.Send();
                 
-                Broadcast(ServerResponse.PlayerFolded);
-                Broadcast(Round.PlayerIndex);
                 Round.PlayerFolded();
             };
         }
@@ -67,31 +70,33 @@ namespace Poker
 
         private void BroadcastBlindsData(int smallBlindIndex, int bigBlindIndex)
         {
-            Broadcast(ServerResponse.Blinds);
-            
-            Broadcast(Round.JustJoinedPlayerIndexes.Count);
-            foreach (var index in Round.JustJoinedPlayerIndexes) Broadcast(index);
-
-            Broadcast(Table.DealerButtonIndex);
-            Broadcast(smallBlindIndex);
-            Broadcast(bigBlindIndex);
+            var package = new Client.Package(Table.GetActiveClients());
+            package.Append(ServerResponse.Blinds);
+            package.Append(Round.JustJoinedPlayerIndexes.Count);
+            Round.JustJoinedPlayerIndexes.ForEach(index => package.Append(index));
+            package.Append(Table.DealerButtonIndex);
+            package.Append(smallBlindIndex);
+            package.Append(bigBlindIndex);
+            package.Send();
         }
 
         private void DealHandCards()
         {
-            Broadcast(ServerResponse.Hand);
-
             for (int i = 0; i < Table.MaxPlayers; i++)
             {
-                if (!Table.IsSeatOccupied(i)) continue;
+                var player = Table.GetPlayerAt(i);
+                if (player == null) continue;
 
                 Card handCard1 = Deck.GetNextCard();
                 Card handCard2 = Deck.GetNextCard();
 
-                Table.GetPlayerAt(i).SetHand(handCard1, handCard2);
+                player.SetHand(handCard1, handCard2);
 
-                Signal(i, handCard1);
-                Signal(i, handCard2);
+                var package = new Client.Package(player.Client);
+                package.Append(ServerResponse.Hand);
+                package.Append(handCard1);
+                package.Append(handCard2);
+                package.Send();
             }
         }
         
@@ -101,15 +106,17 @@ namespace Poker
 
         private void RevealCommunityCards(ServerResponse response, int cardCount)
         {
-            Broadcast(response);
-            
+            var package = new Client.Package(Table.GetActiveClients());
+            package.Append(response);
+
             for (int i = 0; i < cardCount; i++)
             {
                 Card card = Deck.GetNextCard();
-                Broadcast(card);
+                package.Append(card);
                 Round.AddCommunityCard(card);
             }
             
+            package.Send();
             Thread.Sleep(TableConstant.PausePerCardDuration * cardCount);
         }
 
@@ -119,9 +126,10 @@ namespace Poker
 
             var sidePots = Pot.CalculateSidePots(Round.ParticipatingPlayers);
             var winningPlayers = new HashSet<TablePlayer>();
-            
-            Broadcast(ServerResponse.Showdown);
-            Broadcast(sidePots.Count);
+
+            var package = new Client.Package(Table.GetActiveClients());
+            package.Append(ServerResponse.Showdown);
+            package.Append(sidePots.Count);
 
             for (int i = sidePots.Count - 1; i >= 0; i--)
             {
@@ -134,59 +142,32 @@ namespace Poker
                     player.ChipCount += winAmount;
                     winningPlayers.Add(player);
                 }
-
-                BroadcastSidePotData(sidePots[i].Value, sidePotWinners.Count, sidePotWinners, bestHandValue);
+                
+                package.Append(sidePots[i].Value);
+                package.Append(sidePotWinners.Count);
+                sidePotWinners.ForEach(winner => package.Append(winner.Index));
+                package.Append(bestHandValue);
             }
             
-            foreach (var player in winningPlayers)
-                DaoProvider.Dao.SetWinCount(player.Username, DaoProvider.Dao.GetWinCount(player.Username) + 1);
-
-            foreach (var participant in Round.ParticipatingPlayers)
-                DaoProvider.Dao.SetChipCount(participant.Username, participant.ChipCount);
+            package.Send();
             
-            Thread.Sleep(TableConstant.RoundFinishPauseDuration + sidePots.Count * 1000);
-            KickBrokePlayers();
-            Broadcast(ServerResponse.RoundFinished);
-
-            if (Table.PlayerCount >= 2) StartNewRound();
-        }
-        
-        private void KickBrokePlayers()
-        {
-            for (int i = 0; i < Table.MaxPlayers; i++)
-            {
-                var player = Table.GetPlayerAt(i);
-                if(player == null) continue;
-
-                if (player.Stack == 0)
-                {
-                    Signal(i, ServerResponse.LeaveTableSuccess);
-                    
-                    Casino.RemoveTablePlayer(player);
-                    Casino.AddLobbyPlayer(new LobbyPlayer(player.Username, player.ChipCount, player.Reader, player.Writer));
-                }
-            }
-        }
-
-        private void BroadcastSidePotData(int value, int winnerCount, List<TablePlayer> winners, string bestHandValue)
-        {
-            Broadcast(value);
-            Broadcast(winnerCount);
-            foreach (var winner in winners) Broadcast(winner.Index);
-            Broadcast(bestHandValue);
+            FinishRound(TableConstant.RoundFinishPauseDuration + sidePots.Count * 1000, winningPlayers);
         }
 
         private void RevealActivePlayersCards()
         {
-            Broadcast(ServerResponse.CardsReveal);
-            Broadcast(Round.ActivePlayers.Count);
+            var package = new Client.Package(Table.GetActiveClients());
+            package.Append(ServerResponse.CardsReveal);
+            package.Append(Round.ActivePlayers.Count);
             
             foreach (var player in Round.ActivePlayers)
             {
-                Broadcast(player.Index);
-                Broadcast(player.FirstHandCard);
-                Broadcast(player.SecondHandCard);
+                package.Append(player.Index);
+                package.Append(player.FirstHandCard);
+                package.Append(player.SecondHandCard);
             }
+            
+            package.Send();
         }
 
         private static List<TablePlayer> DetermineWinners(List<TablePlayer> players, List<Card> communityCards, out string bestHandValue)
@@ -234,26 +215,57 @@ namespace Poker
         private void ProcessOnePlayerLeft()
         {
             var winner = Round.ActivePlayers[0];
+
+            var package = new Client.Package(Table.GetActiveClients());
+            package.Append(ServerResponse.Showdown);
+            package.Append(1);
+            package.Append(Round.Pot);
+            package.Append(1);
+            package.Append(winner.Index);
+            package.Append(string.Empty);
+            package.Send();
             
-            Broadcast(ServerResponse.Showdown);
-            Broadcast(1);
-            Broadcast(Round.Pot);
-            Broadcast(1);
-            Broadcast(winner.Index);
-            Broadcast(string.Empty);
-            
-            DaoProvider.Dao.SetWinCount(winner.Username, DaoProvider.Dao.GetWinCount(winner.Username) + 1);
             winner.Stack += Round.Pot;
             winner.ChipCount += Round.Pot;
             
+            FinishRound(TableConstant.RoundFinishPauseDuration, new HashSet<TablePlayer>{winner});
+        }
+
+        private void FinishRound(int timeout, HashSet<TablePlayer> winningPlayers)
+        {
+            foreach (var player in winningPlayers)
+                DaoProvider.Dao.SetWinCount(player.Username, DaoProvider.Dao.GetWinCount(player.Username) + 1);
+
             foreach (var participant in Round.ParticipatingPlayers)
                 DaoProvider.Dao.SetChipCount(participant.Username, participant.ChipCount);
             
-            Thread.Sleep(TableConstant.RoundFinishPauseDuration);
+            Thread.Sleep(timeout);
             KickBrokePlayers();
-            Broadcast(ServerResponse.RoundFinished);
+
+            var package = new Client.Package(Table.GetActiveClients());
+            package.Append(ServerResponse.RoundFinished);
+            package.Send();
 
             if (Table.PlayerCount >= 2) StartNewRound();
+        }
+        
+        private void KickBrokePlayers()
+        {
+            for (int i = 0; i < Table.MaxPlayers; i++)
+            {
+                var player = Table.GetPlayerAt(i);
+                if(player == null) continue;
+
+                if (player.Stack == 0)
+                {
+                    var package = new Client.Package(player.Client);
+                    package.Append(ServerResponse.LeaveTableSuccess);
+                    package.Send();
+                    
+                    Casino.RemoveTablePlayer(player);
+                    Casino.AddLobbyPlayer(new LobbyPlayer(player.Client, player.ChipCount));
+                }
+            }
         }
 
         private void RoundPhaseChangedEventHandler(object sender, RoundPhaseChangedEventArgs e)
@@ -270,32 +282,40 @@ namespace Poker
 
         private void CurrentPlayerChangedEventHandler(object sender, CurrentPlayerChangedEventArgs e)
         {
-            Broadcast(ServerResponse.PlayerIndex);
-            Broadcast(e.CurrentPlayerIndex);
+            var package = new Client.Package(Table.GetActiveClients());
+            package.Append(ServerResponse.PlayerIndex);
+            package.Append(e.CurrentPlayerIndex);
+            package.Send();
             
-            Signal(e.CurrentPlayerIndex, ServerResponse.RequiredBet);
-            Signal(e.CurrentPlayerIndex, e.RequiredCall);
-            Signal(e.CurrentPlayerIndex, e.MinRaise);
-            Signal(e.CurrentPlayerIndex, e.MaxRaise);
-            
+            package = new Client.Package(Table.GetPlayerAt(e.CurrentPlayerIndex).Client);
+            package.Append(ServerResponse.RequiredBet);
+            package.Append(e.RequiredCall);
+            package.Append(e.MinRaise);
+            package.Append(e.MaxRaise);
+            package.Send();
+
             _decisionTimer.Stop();
             _decisionTimer.Start();
         }
 
         private void PlayerJoinedEventHandler(object sender, PlayerJoinedEventArgs e)
         {
-            Broadcast(ServerResponse.PlayerJoined);
-            Broadcast(e.Player.Index);
-            Broadcast(e.Player.Username);
-            Broadcast(e.Player.Stack);
+            var package = new Client.Package(Table.GetActiveClients());
+            package.Append(ServerResponse.PlayerJoined);
+            package.Append(e.Player.Index);
+            package.Append(e.Player.Username);
+            package.Append(e.Player.Stack);
+            package.Send();
 
             if (Table.PlayerCount == 2) StartNewRound();
         }
 
         private void PlayerLeftEventHandler(object sender, PlayerLeftEventArgs e)
         {
-            Broadcast(ServerResponse.PlayerLeft);
-            Broadcast(e.Index);
+            var package = new Client.Package(Table.GetActiveClients());
+            package.Append(ServerResponse.PlayerLeft);
+            package.Append(e.Index);
+            package.Send();
 
             Round?.PlayerLeft(e.Index);
 
@@ -303,34 +323,6 @@ namespace Poker
             {
                 Round = null;
             }
-        }
-
-        /// <summary> Sends a server response to the single specified position. </summary>
-        /// <param name="index"> The index of the player to send a response to. </param>
-        /// <param name="response"> The response to be sent. </param>
-        private void Signal(int index, ServerResponse response) =>
-            Table.GetPlayerAt(index)?.Writer.BaseStream.WriteByte((byte) response);
-
-        /// <summary> Sends given data to the single specified position. </summary>
-        /// <param name="index"> The index of the client to send a response to. </param>
-        /// <param name="data"> The data to be sent. </param>
-        private void Signal<T>(int index, T data) =>
-            Table.GetPlayerAt(index)?.Writer.WriteLine(data.ToString());
-
-        /// <summary> Sends a server response to every player on the table. </summary>
-        /// <param name="response"> The response to be sent. </param>
-        public void Broadcast(ServerResponse response)
-        {
-            for (int i = 0; i < Table.MaxPlayers; i++)
-                Signal(i, response);
-        }
-
-        /// <summary> Sends given data to every player on the table. </summary>
-        /// <param name="data"> The data to be sent. </param>
-        public void Broadcast<T>(T data)
-        {
-            for (int i = 0; i < Table.MaxPlayers; i++)
-                Signal(i, data);
         }
     }
 }

@@ -1,0 +1,12 @@
+[2020.04.15. 04:51:20 REQ f1] Login 12345678 
+[2020.04.15. 04:51:20 RES f1] LoginSuccess 
+[2020.04.15. 04:51:20 REQ f1] LoginReward 
+[2020.04.15. 04:51:20 RES f1] LoginRewardNotActive 00:09 
+[2020.04.15. 04:51:21 REQ f1] ClientData f1 
+[2020.04.15. 04:51:21 RES f1] 152130 312 1000 
+[2020.04.15. 04:51:21 REQ f1] TableList 
+[2020.04.15. 04:51:21 RES f1] 8 On The Rise 20 0 10 Local Tourney 100 0 10 A Radical Table 500 0 10 Poor Player Penthouse 1 0 10 Las Vegas Baller 2000 0 10 Casual Playa Secret Room 5 0 10 A Middle Class Table 50 0 10 WSOP High Rollers 10000 0 10 
+[2020.04.15. 04:52:14 REQ f1] TableList 
+[2020.04.15. 04:52:14 RES f1] 8 On The Rise 20 0 10 Local Tourney 100 0 10 A Radical Table 500 0 10 Poor Player Penthouse 1 0 10 Las Vegas Baller 2000 0 10 Casual Playa Secret Room 5 0 10 A Middle Class Table 50 0 10 WSOP High Rollers 10000 0 10 
+[2020.04.15. 04:52:38 REQ f1] Logout 
+[2020.04.15. 04:52:38 RES f1] 

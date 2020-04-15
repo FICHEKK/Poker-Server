@@ -11,14 +11,16 @@ namespace RequestProcessors
         public void ReadPayloadData(Client client)
         {
             _client = client;
-            _requestedUsername = client.Reader.ReadLine();
+            _requestedUsername = _client.ReadLine();
         }
 
         public void ProcessRequest()
         {
-            _client.Writer.WriteLine(DaoProvider.Dao.GetChipCount(_requestedUsername).ToString());
-            _client.Writer.WriteLine(DaoProvider.Dao.GetWinCount(_requestedUsername).ToString());
-            _client.Writer.WriteLine(DaoProvider.Dao.GetEloRating(_requestedUsername).ToString());
+            var package = new Client.Package(_client);
+            package.Append(DaoProvider.Dao.GetChipCount(_requestedUsername));
+            package.Append(DaoProvider.Dao.GetWinCount(_requestedUsername));
+            package.Append(DaoProvider.Dao.GetEloRating(_requestedUsername));
+            package.Send();
         }
     }
 }

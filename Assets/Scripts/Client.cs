@@ -2,8 +2,11 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Net.Sockets;
+using System.Text;
 using System.Threading;
+using Logger;
 using Poker;
 using RequestProcessors;
 
@@ -24,10 +27,11 @@ public class Client
 
     /// <summary> The connection to the remote client. </summary>
     public TcpClient Connection { get; }
-    
-    public StreamWriter Writer { get; private set; }
 
-    public StreamReader Reader { get; private set; }
+    private StreamWriter _writer;
+    private StreamReader _reader;
+
+    private readonly List<string> _requestLogBuffer = new List<string>();
     
     /// <summary> This client's unique connection identifier. </summary>
     public Guid Identifier { get; }
@@ -72,11 +76,11 @@ public class Client
         try
         {
             using (Connection)
-            using (Writer = new StreamWriter(Connection.GetStream()) {AutoFlush = true})
-            using (Reader = new StreamReader(Connection.GetStream()))
+            using (_writer = new StreamWriter(Connection.GetStream()) {AutoFlush = true})
+            using (_reader = new StreamReader(Connection.GetStream()))
             {
-                int flag = Reader.BaseStream.ReadByte();
-                Username = Reader.ReadLine();
+                int flag = _reader.BaseStream.ReadByte();
+                Username = _reader.ReadLine();
 
                 while (flag != -1)
                 {
@@ -84,6 +88,8 @@ public class Client
                     {
                         var processor = processorFactory();
                         processor.ReadPayloadData(this);
+                        
+                        LogRequest((ClientRequest) flag);
 
                         if (processor.CanWait)
                         {
@@ -95,7 +101,7 @@ public class Client
                         }
                     }
 
-                    flag = Reader.BaseStream.ReadByte();
+                    flag = _reader.BaseStream.ReadByte();
                 }
             }
         }
@@ -109,5 +115,81 @@ public class Client
         var disconnectProcessor = RequestToProcessorFactory[ClientRequest.Disconnect]();
         disconnectProcessor.ReadPayloadData(this);
         disconnectProcessor.ProcessRequest();
+    }
+    
+    public string ReadLine()
+    {
+        var line = _reader.ReadLine();
+        _requestLogBuffer.Add(line);
+        return line;
+    }
+
+    private void LogRequest(ClientRequest request)
+    {
+        var sb = new StringBuilder();
+        sb.Append($"[{DateTime.Now:yyyy.MM.dd. HH:mm:ss} REQ {Username}] {request} ");
+        
+        foreach (var logPiece in _requestLogBuffer)
+            sb.Append(logPiece).Append(' ');
+        
+        _requestLogBuffer.Clear();
+        LoggerProvider.Logger.Log(sb.Append(Environment.NewLine).ToString());
+    }
+
+    public class Package
+    {
+        private readonly Client[] _recipients;
+        private readonly List<object> _data = new List<object>();
+
+        /// <summary>Constructs a new package that will be sent to a single client.</summary>
+        public Package(Client recipient) : this(new[] {recipient}) { }
+        
+        /// <summary>Constructs a new package that will be sent to multiple clients.</summary>
+        public Package(Client[] recipients)
+        {
+            _recipients = recipients ?? throw new ArgumentNullException(nameof(recipients));
+
+            if (_recipients.Any(recipient => recipient == null))
+                throw new ArgumentException("A recipient must be non-null.");
+        }
+
+        /// <summary> Appends additional data to this package. </summary>
+        public void Append(object data) => _data.Add(data);
+
+        /// <summary> Sends all of the previously appended data to the recipients. </summary>
+        public void Send()
+        {
+            if (_recipients.Length == 0) return;
+            
+            foreach (var recipient in _recipients)
+            {
+                foreach (var value in _data)
+                {
+                    var response = value as ServerResponse?;
+
+                    if (response != null)
+                    {
+                        recipient._writer.BaseStream.WriteByte((byte) response);
+                    }
+                    else
+                    {
+                        recipient._writer.WriteLine(value.ToString());
+                    }
+                }
+            }
+
+            LogResponse();
+        }
+
+        private void LogResponse()
+        {
+            var sb = new StringBuilder();
+            sb.Append($"[{DateTime.Now:yyyy.MM.dd. HH:mm:ss} RES {string.Join(",", _recipients.Select(r => r.Username).ToArray())}] ");
+            
+            foreach (var value in _data) 
+                sb.Append(value).Append(' ');
+            
+            LoggerProvider.Logger.Log(sb.Append(Environment.NewLine).ToString());
+        }
     }
 }

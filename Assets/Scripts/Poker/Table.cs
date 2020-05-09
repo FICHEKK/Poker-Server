@@ -29,12 +29,9 @@ namespace Poker
 
         /// <summary>This table's small blind.</summary>
         public int SmallBlind { get; }
-
-        /// <summary>This table's big blind.</summary>
-        public int BigBlind => SmallBlind * 2;
-
-        /// <summary>Minimum amount of chips needed to join this table.</summary>
-        public int MinimumBuyIn => BigBlind * 10;
+        
+        /// <summary>Indicates whether this table is ranked.</summary>
+        public bool IsRanked { get; }
 
         /// <summary>Current dealer button index.</summary>
         public int DealerButtonIndex => _dealerButtonIndex;
@@ -62,11 +59,13 @@ namespace Poker
         /// <param name="title"> This table's title (name). </param>
         /// <param name="smallBlind"> The small blind. </param>
         /// <param name="maxPlayers"> Maximum number of players. </param>
-        public Table(string title, int smallBlind, int maxPlayers)
+        /// <param name="isRanked"> Indicates whether this table is ranked. </param>
+        public Table(string title, int smallBlind, int maxPlayers, bool isRanked = false)
         {
             Title = title;
             SmallBlind = smallBlind;
             MaxPlayers = maxPlayers;
+            IsRanked = isRanked;
             Dealer = new Dealer(this);
             _players = new TablePlayer[MaxPlayers];
             
@@ -130,11 +129,10 @@ namespace Poker
             
             PlayerJoined?.Invoke(this, new PlayerJoinedEventArgs(player));
         }
-
-        public TablePlayer GetPlayerAt(int index)
-        {
-            return _players[index];
-        }
+        
+        /// <summary>Returns the player at the specified index.</summary>
+        /// <param name="index">Index of the player.</param>
+        public TablePlayer this[int index] => _players[index];
 
         /// <summary> Removes the specified player from the table. </summary>
         /// <param name="player"> Player to be removed. </param>

@@ -81,7 +81,7 @@ namespace RequestProcessors
             
             for (var index = 0; index < table.MaxPlayers; index++)
             {
-                var player = table.GetPlayerAt(index);
+                var player = table[index];
                 if(player == null) continue;
 
                 package.Append(index);

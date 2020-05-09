@@ -84,7 +84,7 @@ namespace Poker
         {
             for (int i = 0; i < Table.MaxPlayers; i++)
             {
-                var player = Table.GetPlayerAt(i);
+                var player = Table[i];
                 if (player == null) continue;
 
                 Card handCard1 = Deck.GetNextCard();
@@ -253,13 +253,14 @@ namespace Poker
         {
             for (int i = 0; i < Table.MaxPlayers; i++)
             {
-                var player = Table.GetPlayerAt(i);
+                var player = Table[i];
                 if(player == null) continue;
 
                 if (player.Stack == 0)
                 {
                     var package = new Client.Package(player.Client);
-                    package.Append(ServerResponse.LeaveTableSuccess);
+                    package.Append(ServerResponse.LeaveTable);
+                    package.Append(ServerResponse.LeaveTableNoMoney);
                     package.Send();
                     
                     Casino.RemoveTablePlayer(player);
@@ -287,7 +288,7 @@ namespace Poker
             package.Append(e.CurrentPlayerIndex);
             package.Send();
             
-            package = new Client.Package(Table.GetPlayerAt(e.CurrentPlayerIndex).Client);
+            package = new Client.Package(Table[e.CurrentPlayerIndex].Client);
             package.Append(ServerResponse.RequiredBet);
             package.Append(e.RequiredCall);
             package.Append(e.MinRaise);

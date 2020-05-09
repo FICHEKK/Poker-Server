@@ -20,7 +20,8 @@ namespace RequestProcessors
             Casino.GetTablePlayer(_client.Username).Table.RequestProcessors.Add(blockingRequestProcessor);
 
             var package = new Client.Package(_client);
-            package.Append(ServerResponse.LeaveTableSuccess);
+            package.Append(ServerResponse.LeaveTable);
+            package.Append(ServerResponse.LeaveTableGranted);
             package.Send();
         }
     }

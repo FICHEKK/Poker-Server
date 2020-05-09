@@ -1,0 +1,106 @@
+[2020.05.09. 23:54:31 REQ f1] Login 12345678 
+[2020.05.09. 23:54:31 RES f1] LoginSuccess 
+[2020.05.09. 23:54:31 REQ f1] LoginReward 
+[2020.05.09. 23:54:31 RES f1] LoginRewardActive 8942 
+[2020.05.09. 23:54:31 REQ f1] ClientData f1 
+[2020.05.09. 23:54:31 RES f1] 175948 327 1000 
+[2020.05.09. 23:54:31 REQ f1] TableList 
+[2020.05.09. 23:54:31 RES f1] 8 On The Rise 20 0 10 False Local Tourney 100 0 10 False A Radical Table 500 0 10 False Poor Player Penthouse 1 0 10 False Las Vegas Baller 2000 0 10 False Casual Playa Secret Room 5 0 10 False A Middle Class Table 50 0 10 False WSOP High Rollers 10000 0 10 False 
+[2020.05.09. 23:54:54 REQ f1] CreateTable Stoltest 10 5 R 
+[2020.05.09. 23:54:54 RES f1] CreateTableSuccess 
+[2020.05.09. 23:54:55 REQ f1] CreateTable Stoltest 10 5 R 
+[2020.05.09. 23:54:55 RES f1] CreateTableTitleTaken 
+[2020.05.09. 23:55:00 REQ f1] TableList 
+[2020.05.09. 23:55:00 RES f1] 9 On The Rise 20 0 10 False Local Tourney 100 0 10 False A Radical Table 500 0 10 False Poor Player Penthouse 1 0 10 False Las Vegas Baller 2000 0 10 False Stoltest 10 0 5 True Casual Playa Secret Room 5 0 10 False A Middle Class Table 50 0 10 False WSOP High Rollers 10000 0 10 False 
+[2020.05.09. 23:55:19 REQ f1] JoinTable Stoltest 200 
+[2020.05.09. 23:55:19 RES f1] JoinTableSuccess 
+[2020.05.09. 23:55:19 RES f1] TableState 0 10 5 0 0 -1 0 
+[2020.05.09. 23:55:19 RES f1] PlayerJoined 0 f1 200 
+[2020.05.09. 23:55:33 REQ f2] Login 12345678 
+[2020.05.09. 23:55:33 RES f2] LoginSuccess 
+[2020.05.09. 23:55:33 REQ f2] LoginReward 
+[2020.05.09. 23:55:33 RES f2] LoginRewardActive 8200 
+[2020.05.09. 23:55:33 REQ f2] ClientData f2 
+[2020.05.09. 23:55:33 RES f2] 118232 370 1000 
+[2020.05.09. 23:55:33 REQ f2] TableList 
+[2020.05.09. 23:55:33 RES f2] 9 On The Rise 20 0 10 False Local Tourney 100 0 10 False A Radical Table 500 0 10 False Poor Player Penthouse 1 0 10 False Las Vegas Baller 2000 0 10 False Stoltest 10 1 5 True Casual Playa Secret Room 5 0 10 False A Middle Class Table 50 0 10 False WSOP High Rollers 10000 0 10 False 
+[2020.05.09. 23:55:41 REQ f2] JoinTable Stoltest 941 
+[2020.05.09. 23:55:41 RES f2] JoinTableSuccess 
+[2020.05.09. 23:55:41 RES f2] TableState 0 10 5 1 0 f1 200 0 True 0 -1 0 
+[2020.05.09. 23:55:41 RES f1,f2] PlayerJoined 1 f2 941 
+[2020.05.09. 23:55:41 RES f1,f2] Blinds 2 0 1 1 0 1 
+[2020.05.09. 23:55:41 RES f1] Hand 9C 10H 
+[2020.05.09. 23:55:41 RES f2] Hand 9H 2D 
+[2020.05.09. 23:55:41 RES f1,f2] PlayerIndex 0 
+[2020.05.09. 23:55:41 RES f1] RequiredBet 0 40 200 
+[2020.05.09. 23:55:44 REQ f1] Check 
+[2020.05.09. 23:55:44 RES f1,f2] PlayerChecked 0 
+[2020.05.09. 23:55:44 RES f1,f2] PlayerIndex 1 
+[2020.05.09. 23:55:44 RES f2] RequiredBet 0 40 941 
+[2020.05.09. 23:55:46 REQ f2] Check 
+[2020.05.09. 23:55:46 RES f1,f2] PlayerChecked 1 
+[2020.05.09. 23:55:46 RES f1,f2] Flop QH QC AS 
+[2020.05.09. 23:55:48 RES f1,f2] PlayerIndex 0 
+[2020.05.09. 23:55:48 RES f1] RequiredBet 0 20 180 
+[2020.05.09. 23:55:52 REQ f1] Raise 40 
+[2020.05.09. 23:55:52 RES f1,f2] PlayerRaised 0 40 
+[2020.05.09. 23:55:52 RES f1,f2] PlayerIndex 1 
+[2020.05.09. 23:55:52 RES f2] RequiredBet 40 80 921 
+[2020.05.09. 23:55:56 REQ f2] Raise 118 
+[2020.05.09. 23:55:56 RES f1,f2] PlayerRaised 1 118 
+[2020.05.09. 23:55:56 RES f1,f2] PlayerIndex 0 
+[2020.05.09. 23:55:56 RES f1] RequiredBet 78 196 180 
+[2020.05.09. 23:56:00 REQ f1] Call 78 
+[2020.05.09. 23:56:00 RES f1,f2] PlayerCalled 0 78 
+[2020.05.09. 23:56:00 RES f1,f2] Turn AH 
+[2020.05.09. 23:56:01 RES f1,f2] PlayerIndex 0 
+[2020.05.09. 23:56:01 RES f1] RequiredBet 0 20 62 
+[2020.05.09. 23:56:04 REQ f1] Check 
+[2020.05.09. 23:56:04 RES f1,f2] PlayerChecked 0 
+[2020.05.09. 23:56:04 RES f1,f2] PlayerIndex 1 
+[2020.05.09. 23:56:04 RES f2] RequiredBet 0 20 803 
+[2020.05.09. 23:56:05 REQ f2] Check 
+[2020.05.09. 23:56:05 RES f1,f2] PlayerChecked 1 
+[2020.05.09. 23:56:05 RES f1,f2] River 4H 
+[2020.05.09. 23:56:05 RES f1,f2] PlayerIndex 0 
+[2020.05.09. 23:56:05 RES f1] RequiredBet 0 20 62 
+[2020.05.09. 23:56:06 REQ f1] Check 
+[2020.05.09. 23:56:06 RES f1,f2] PlayerChecked 0 
+[2020.05.09. 23:56:06 RES f1,f2] PlayerIndex 1 
+[2020.05.09. 23:56:06 RES f2] RequiredBet 0 20 803 
+[2020.05.09. 23:56:07 REQ f2] Check 
+[2020.05.09. 23:56:07 RES f1,f2] PlayerChecked 1 
+[2020.05.09. 23:56:07 RES f1,f2] CardsReveal 2 0 9C 10H 1 9H 2D 
+[2020.05.09. 23:56:07 RES f1,f2] Showdown 1 276 1 0 Two pair Q's and A's 
+[2020.05.09. 23:56:13 RES f1,f2] RoundFinished 
+[2020.05.09. 23:56:13 RES f1,f2] Blinds 0 0 1 0 
+[2020.05.09. 23:56:13 RES f1] Hand 6C 10C 
+[2020.05.09. 23:56:13 RES f2] Hand 7S JC 
+[2020.05.09. 23:56:13 RES f1,f2] PlayerIndex 1 
+[2020.05.09. 23:56:13 RES f2] RequiredBet 10 40 803 
+[2020.05.09. 23:56:22 REQ f2] AllIn 803 
+[2020.05.09. 23:56:22 RES f1,f2] PlayerAllIn 1 803 
+[2020.05.09. 23:56:22 RES f1,f2] PlayerIndex 0 
+[2020.05.09. 23:56:22 RES f1] RequiredBet 318 1586 338 
+[2020.05.09. 23:56:23 REQ f1] Call 318 
+[2020.05.09. 23:56:23 RES f1,f2] PlayerCalled 0 318 
+[2020.05.09. 23:56:23 RES f1,f2] Flop 4C KD 2S 
+[2020.05.09. 23:56:25 RES f1,f2] Turn 4D 
+[2020.05.09. 23:56:25 RES f1,f2] River KH 
+[2020.05.09. 23:56:26 RES f1,f2] CardsReveal 2 0 6C 10C 1 7S JC 
+[2020.05.09. 23:56:26 RES f1,f2] Showdown 2 465 1 1 Two pair 4's and K's 676 1 1 Two pair 4's and K's 
+[2020.05.09. 23:56:33 RES f1] LeaveTable LeaveTableNoMoney 
+[2020.05.09. 23:56:33 RES f2] PlayerLeft 0 
+[2020.05.09. 23:56:33 RES f2] RoundFinished 
+[2020.05.09. 23:56:33 REQ f1] ClientData f1 
+[2020.05.09. 23:56:33 RES f1] 175748 328 1000 
+[2020.05.09. 23:56:33 REQ f1] TableList 
+[2020.05.09. 23:56:33 RES f1] 9 On The Rise 20 0 10 False Local Tourney 100 0 10 False A Radical Table 500 0 10 False Poor Player Penthouse 1 0 10 False Las Vegas Baller 2000 0 10 False Stoltest 10 1 5 True Casual Playa Secret Room 5 0 10 False A Middle Class Table 50 0 10 False WSOP High Rollers 10000 0 10 False 
+[2020.05.09. 23:56:39 REQ f1] Logout 
+[2020.05.09. 23:56:41 REQ f2] LeaveTable 
+[2020.05.09. 23:56:41 RES f2] LeaveTable LeaveTableGranted 
+[2020.05.09. 23:56:41 REQ f2] ClientData f2 
+[2020.05.09. 23:56:41 RES f2] 118432 371 1000 
+[2020.05.09. 23:56:41 REQ f2] TableList 
+[2020.05.09. 23:56:41 RES f2] 9 On The Rise 20 0 10 False Local Tourney 100 0 10 False A Radical Table 500 0 10 False Poor Player Penthouse 1 0 10 False Las Vegas Baller 2000 0 10 False Stoltest 10 0 5 True Casual Playa Secret Room 5 0 10 False A Middle Class Table 50 0 10 False WSOP High Rollers 10000 0 10 False 
+[2020.05.09. 23:56:42 REQ f2] Logout 

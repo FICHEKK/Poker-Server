@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Threading;
 using Poker.EventArguments;
 using Poker.Players;
@@ -42,12 +43,6 @@ namespace Poker
         /// <summary>Maximum number of players this table can seat.</summary>
         public int MaxPlayers { get; }
 
-        /// <summary>True if table currently has 0 players.</summary>
-        public bool IsEmpty => PlayerCount == 0;
-
-        /// <summary>True if there are maximum number of players at the table.</summary>
-        public bool IsFull => PlayerCount == MaxPlayers;
-
         /// <summary>This table's dealer.</summary>
         public Dealer Dealer { get; }
 
@@ -82,8 +77,6 @@ namespace Poker
             }
         }
 
-        #region Button
-
         /// <summary> Increments the button position, skipping all the empty seats on the way. </summary>
         public void IncrementButtonIndex()
         {
@@ -112,10 +105,6 @@ namespace Poker
 
             return -1;
         }
-
-        #endregion
-
-        #region Player
 
         /// <summary> Adds the given player to the first empty seat, if there is any. </summary>
         /// <param name="player"> Player to be added to the table. </param>
@@ -160,8 +149,6 @@ namespace Poker
             return players;
         }
 
-        #endregion
-
         /// <summary> Finds and returns the index of the first free seat, if there is one. </summary>
         /// <returns> Index of the first free seat if found, -1 if there are no free seats. </returns>
         public int GetFirstFreeSeatIndex()
@@ -186,6 +173,15 @@ namespace Poker
             }
 
             return clients;
+        }
+
+        public IEnumerator<TablePlayer> GetEnumerator()
+        {
+            for (var i = 0; i < MaxPlayers; i++)
+            {
+                if(_players[i] == null) continue;
+                yield return _players[i];
+            }
         }
     }
 }

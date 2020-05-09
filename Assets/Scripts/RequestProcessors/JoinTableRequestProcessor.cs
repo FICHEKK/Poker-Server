@@ -30,7 +30,7 @@ namespace RequestProcessors
 
             var table = Casino.GetTable(_tableTitle);
 
-            if (table.IsFull)
+            if (table.PlayerCount == table.MaxPlayers)
             {
                 package.Append(ServerResponse.JoinTableTableFull);
                 package.Send();
@@ -78,13 +78,10 @@ namespace RequestProcessors
         private void AppendPlayerList(Table table, Client.Package package)
         {
             package.Append(table.PlayerCount);
-            
-            for (var index = 0; index < table.MaxPlayers; index++)
-            {
-                var player = table[index];
-                if(player == null) continue;
 
-                package.Append(index);
+            foreach (var player in table)
+            {
+                package.Append(player.Index);
                 package.Append(player.Username);
                 package.Append(player.Stack);
                 package.Append(player.Bet);

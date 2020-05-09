@@ -82,11 +82,8 @@ namespace Poker
 
         private void DealHandCards()
         {
-            for (int i = 0; i < Table.MaxPlayers; i++)
+            foreach (var player in Table)
             {
-                var player = Table[i];
-                if (player == null) continue;
-
                 Card handCard1 = Deck.GetNextCard();
                 Card handCard2 = Deck.GetNextCard();
 
@@ -251,21 +248,17 @@ namespace Poker
         
         private void KickBrokePlayers()
         {
-            for (int i = 0; i < Table.MaxPlayers; i++)
+            foreach (var player in Table)
             {
-                var player = Table[i];
-                if(player == null) continue;
-
-                if (player.Stack == 0)
-                {
-                    var package = new Client.Package(player.Client);
-                    package.Append(ServerResponse.LeaveTable);
-                    package.Append(ServerResponse.LeaveTableNoMoney);
-                    package.Send();
-                    
-                    Casino.RemoveTablePlayer(player);
-                    Casino.AddLobbyPlayer(new LobbyPlayer(player.Client, player.ChipCount));
-                }
+                if (player.Stack > 0) continue;
+                
+                var package = new Client.Package(player.Client);
+                package.Append(ServerResponse.LeaveTable);
+                package.Append(ServerResponse.LeaveTableNoMoney);
+                package.Send();
+                
+                Casino.RemoveTablePlayer(player);
+                Casino.AddLobbyPlayer(new LobbyPlayer(player.Client, player.ChipCount));
             }
         }
 

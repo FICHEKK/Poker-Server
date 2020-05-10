@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using Dao;
 using Poker.Cards;
@@ -20,6 +21,8 @@ namespace Poker
 
         /// <summary>The deck used by this dealer to deal cards.</summary>
         public Deck Deck { get; } = new Deck();
+
+        public TablePlayer[] OriginalPlayers { get; private set; }
 
         /// <summary> Timer used to time player's turn durations. </summary>
         private readonly Timer _decisionTimer = new Timer {AutoReset = false};
@@ -55,9 +58,9 @@ namespace Poker
             Deck.Shuffle();
             Table.IncrementButtonIndex();
 
-            int smallBlindIndex = Table.GetNextOccupiedSeatIndex(Table.DealerButtonIndex);
-            int bigBlindIndex = Table.GetNextOccupiedSeatIndex(smallBlindIndex);
-            int playerIndex = Table.GetNextOccupiedSeatIndex(bigBlindIndex);
+            var smallBlindIndex = Table.GetNextOccupiedSeatIndex(Table.DealerButtonIndex);
+            var bigBlindIndex = Table.GetNextOccupiedSeatIndex(smallBlindIndex);
+            var playerIndex = Table.GetNextOccupiedSeatIndex(bigBlindIndex);
 
             Round = new Round(Table.GetPlayerArray(), smallBlindIndex, bigBlindIndex, playerIndex, Table.SmallBlind);
             Round.RoundPhaseChanged += RoundPhaseChangedEventHandler;
@@ -84,8 +87,8 @@ namespace Poker
         {
             foreach (var player in Table)
             {
-                Card handCard1 = Deck.GetNextCard();
-                Card handCard2 = Deck.GetNextCard();
+                var handCard1 = Deck.GetNextCard();
+                var handCard2 = Deck.GetNextCard();
 
                 player.SetHand(handCard1, handCard2);
 
@@ -130,7 +133,7 @@ namespace Poker
 
             for (int i = sidePots.Count - 1; i >= 0; i--)
             {
-                var sidePotWinners = DetermineWinners(sidePots[i].Contenders, Round.CommunityCards, out var bestHandValue);
+                var sidePotWinners = DetermineWinners(sidePots[i].Contenders, Round.CommunityCards, out var bestHand);
                 var winAmount = sidePots[i].Value / sidePotWinners.Count;
                 
                 foreach (var player in sidePotWinners)
@@ -143,7 +146,7 @@ namespace Poker
                 package.Append(sidePots[i].Value);
                 package.Append(sidePotWinners.Count);
                 sidePotWinners.ForEach(winner => package.Append(winner.Index));
-                package.Append(bestHandValue);
+                package.Append(bestHand.ToStringPretty());
             }
             
             package.Send();
@@ -167,7 +170,7 @@ namespace Poker
             package.Send();
         }
 
-        private static List<TablePlayer> DetermineWinners(List<TablePlayer> players, List<Card> communityCards, out string bestHandValue)
+        private static List<TablePlayer> DetermineWinners(List<TablePlayer> players, List<Card> communityCards, out Hand bestHand)
         {
             if(players == null) throw new ArgumentNullException(nameof(players));
             if(communityCards == null) throw new ArgumentNullException(nameof(communityCards));
@@ -176,7 +179,7 @@ namespace Poker
             
             var winners = new List<TablePlayer>();
 
-            Hand bestHand = null;
+            bestHand = null;
 
             foreach (var player in players)
             {
@@ -190,7 +193,7 @@ namespace Poker
                     continue;
                 }
 
-                int result = bestHand.CompareTo(evaluator.BestHand);
+                var result = bestHand.CompareTo(evaluator.BestHand);
 
                 if (result < 0)
                 {
@@ -204,8 +207,6 @@ namespace Poker
                 }
             }
 
-            bestHandValue = bestHand.ToStringPretty();
-            
             return winners;
         }
 
@@ -239,6 +240,17 @@ namespace Poker
             Thread.Sleep(timeout);
             KickBrokePlayers();
 
+            if (Table.IsRanked && Table.PlayerCount == 1)
+            {
+                foreach (var player in Table)
+                {
+                    KickRanked(player);
+                }
+
+                OriginalPlayers = null;
+                return;
+            }
+
             var package = new Client.Package(Table.GetActiveClients());
             package.Append(ServerResponse.RoundFinished);
             package.Send();
@@ -251,15 +263,58 @@ namespace Poker
             foreach (var player in Table)
             {
                 if (player.Stack > 0) continue;
-                
-                var package = new Client.Package(player.Client);
-                package.Append(ServerResponse.LeaveTable);
-                package.Append(ServerResponse.LeaveTableNoMoney);
-                package.Send();
-                
+
+                if (Table.IsRanked)
+                {
+                    KickRanked(player);
+                }
+                else
+                {
+                    KickStandard(player);
+                }
+
                 Casino.RemoveTablePlayer(player);
                 Casino.AddLobbyPlayer(new LobbyPlayer(player.Client, player.ChipCount));
             }
+        }
+        
+        private void KickRanked(TablePlayer player)
+        {
+            int last = Table.PlayerCount - 1;
+
+            for (var i = 0; i < OriginalPlayers.Length; i++)
+            {
+                if (OriginalPlayers[i].Username == player.Username)
+                {
+                    var temp = OriginalPlayers[i];
+                    OriginalPlayers[i] = OriginalPlayers[last];
+                    OriginalPlayers[last] = temp;
+                    break;
+                }
+            }
+
+            var sortedRatings = OriginalPlayers.Select(p => DaoProvider.Dao.GetEloRating(p.Username)).ToList();
+
+            var placeFinished = Table.PlayerCount;
+            var oldRating = DaoProvider.Dao.GetEloRating(player.Username);
+            var newRating = EloSystem.CalculateNewRatingForPosition(last, sortedRatings);
+            DaoProvider.Dao.SetEloRating(player.Username, newRating);
+            
+            var package = new Client.Package(player.Client);
+            package.Append(ServerResponse.LeaveTable);
+            package.Append(ServerResponse.LeaveTableRanked);
+            package.Append(placeFinished);
+            package.Append(oldRating);
+            package.Append(newRating);
+            package.Send();
+        }
+
+        private void KickStandard(TablePlayer player)
+        {
+            var package = new Client.Package(player.Client);
+            package.Append(ServerResponse.LeaveTable);
+            package.Append(ServerResponse.LeaveTableNoMoney);
+            package.Send();
         }
 
         private void RoundPhaseChangedEventHandler(object sender, RoundPhaseChangedEventArgs e)
@@ -301,7 +356,18 @@ namespace Poker
             package.Append(e.Player.Stack);
             package.Send();
 
-            if (Table.PlayerCount == 2) StartNewRound();
+            if (Table.IsRanked)
+            {
+                if (OriginalPlayers == null && Table.PlayerCount == Table.MaxPlayers)
+                {
+                    OriginalPlayers = Table.GetPlayerArray();
+                    StartNewRound();
+                }
+            }
+            else
+            {
+                if (Table.PlayerCount == 2) StartNewRound();
+            }
         }
 
         private void PlayerLeftEventHandler(object sender, PlayerLeftEventArgs e)

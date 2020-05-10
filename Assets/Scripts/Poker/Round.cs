@@ -37,12 +37,12 @@ namespace Poker
         /// <summary>The phase that this round is currently in.</summary>
         public Phase CurrentPhase;
 
-        private readonly int _smallBlind;
         private int _playerCount;
-        private readonly TablePlayer[] _players;
         private int _betCounter;
-        private readonly int _smallBlindIndex;
         private int _raiseIncrement;
+        private readonly int _smallBlind;
+        private readonly int _smallBlindIndex;
+        private readonly TablePlayer[] _players;
 
         public event EventHandler<RoundPhaseChangedEventArgs> RoundPhaseChanged;
         public event EventHandler<CurrentPlayerChangedEventArgs> CurrentPlayerChanged;
@@ -216,9 +216,9 @@ namespace Poker
 
         private void SendBettingDataToCurrentPlayer()
         {
-            int requiredCall = Math.Min(HighestBet - _players[PlayerIndex].Bet, _players[PlayerIndex].Stack);
-            int minRaise = HighestBet + _raiseIncrement;
-            int maxRaise = _players[PlayerIndex].Stack + _players[PlayerIndex].Bet;
+            var requiredCall = Math.Min(HighestBet - _players[PlayerIndex].Bet, _players[PlayerIndex].Stack);
+            var minRaise = HighestBet + _raiseIncrement;
+            var maxRaise = _players[PlayerIndex].Stack + _players[PlayerIndex].Bet;
             CurrentPlayerChanged?.Invoke(this, new CurrentPlayerChangedEventArgs(PlayerIndex, requiredCall, minRaise, maxRaise));
         }
 
@@ -247,14 +247,18 @@ namespace Poker
 
         private void OnRoundPhaseChanged(RoundPhaseChangedEventArgs args)
         {
+            CollectBets();
+            RoundPhaseChanged?.Invoke(this, args);
+        }
+
+        private void CollectBets()
+        {
             foreach (var player in _players)
             {
                 if (player == null) continue;
                 Pot += player.Bet;
                 player.Bet = 0;
             }
-
-            RoundPhaseChanged?.Invoke(this, args);
         }
 
         //----------------------------------------------------------------

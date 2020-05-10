@@ -30,6 +30,13 @@ namespace RequestProcessors
 
             var table = Casino.GetTable(_tableTitle);
 
+            if (table.IsRanked && table.Dealer.OriginalPlayers != null)
+            {
+                package.Append(ServerResponse.JoinTableRankedMatchStarted);
+                package.Send();
+                return;
+            }
+
             if (table.PlayerCount == table.MaxPlayers)
             {
                 package.Append(ServerResponse.JoinTableTableFull);

@@ -2,6 +2,7 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading;
+using Poker.Dealers;
 using Poker.EventArguments;
 using Poker.Players;
 using RequestProcessors;
@@ -33,6 +34,9 @@ namespace Poker
         
         /// <summary>Indicates whether this table is ranked.</summary>
         public bool IsRanked { get; }
+        
+        /// <summary> Indicates whether this table cannot be joined. </summary>
+        public bool IsLocked { get; set; }
 
         /// <summary>Current dealer button index.</summary>
         public int DealerButtonIndex => _dealerButtonIndex;
@@ -61,8 +65,16 @@ namespace Poker
             SmallBlind = smallBlind;
             MaxPlayers = maxPlayers;
             IsRanked = isRanked;
-            Dealer = new Dealer(this);
             _players = new TablePlayer[MaxPlayers];
+
+            if (isRanked)
+            {
+                Dealer = new RankedDealer(this);
+            }
+            else
+            {
+                Dealer = new StandardDealer(this);
+            }
             
             new Thread(ConsumeClientRequests).Start();
         }

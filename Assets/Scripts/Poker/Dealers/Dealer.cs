@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using Dao;
 using Poker.Cards;
@@ -8,10 +7,10 @@ using Poker.EventArguments;
 using Poker.Players;
 using Timer = System.Timers.Timer;
 
-namespace Poker
+namespace Poker.Dealers
 {
     /// <summary>Models a poker table dealer.</summary>
-    public class Dealer
+    public abstract class Dealer
     {
         /// <summary>The table that this dealer is dealing on.</summary>
         public Table Table { get; }
@@ -22,17 +21,20 @@ namespace Poker
         /// <summary>The deck used by this dealer to deal cards.</summary>
         public Deck Deck { get; } = new Deck();
 
-        public TablePlayer[] OriginalPlayers { get; private set; }
-
         /// <summary> Timer used to time player's turn durations. </summary>
         private readonly Timer _decisionTimer = new Timer {AutoReset = false};
 
-        public Dealer(Table table)
+        protected Dealer(Table table)
         {
             Table = table ?? throw new ArgumentNullException(nameof(table));
             Table.PlayerJoined += PlayerJoinedEventHandler;
             Table.PlayerLeft += PlayerLeftEventHandler;
-            
+
+            InitializeTimer();
+        }
+
+        private void InitializeTimer()
+        {
             _decisionTimer.Interval = (TableConstant.PlayerTurnDuration + TableConstant.PlayerTurnOvertime) * 1000;
             _decisionTimer.Elapsed += (sender, e) =>
             {
@@ -48,12 +50,12 @@ namespace Poker
                 Round.PlayerFolded();
             };
         }
-        
+
         //----------------------------------------------------------------
         //                     Starting new round
         //----------------------------------------------------------------
 
-        private void StartNewRound()
+        protected void StartNewRound()
         {
             Deck.Shuffle();
             Table.IncrementButtonIndex();
@@ -239,23 +241,11 @@ namespace Poker
             
             Thread.Sleep(timeout);
             KickBrokePlayers();
-
-            if (Table.IsRanked && Table.PlayerCount == 1)
-            {
-                foreach (var player in Table)
-                {
-                    KickRanked(player);
-                }
-
-                OriginalPlayers = null;
-                return;
-            }
-
+            OnRoundFinished();
+            
             var package = new Client.Package(Table.GetActiveClients());
             package.Append(ServerResponse.RoundFinished);
             package.Send();
-
-            if (Table.PlayerCount >= 2) StartNewRound();
         }
         
         private void KickBrokePlayers()
@@ -263,58 +253,8 @@ namespace Poker
             foreach (var player in Table)
             {
                 if (player.Stack > 0) continue;
-
-                if (Table.IsRanked)
-                {
-                    KickRanked(player);
-                }
-                else
-                {
-                    KickStandard(player);
-                }
-
-                Casino.RemoveTablePlayer(player);
-                Casino.AddLobbyPlayer(new LobbyPlayer(player.Client, player.ChipCount));
+                Kick(player);
             }
-        }
-        
-        private void KickRanked(TablePlayer player)
-        {
-            int last = Table.PlayerCount - 1;
-
-            for (var i = 0; i < OriginalPlayers.Length; i++)
-            {
-                if (OriginalPlayers[i].Username == player.Username)
-                {
-                    var temp = OriginalPlayers[i];
-                    OriginalPlayers[i] = OriginalPlayers[last];
-                    OriginalPlayers[last] = temp;
-                    break;
-                }
-            }
-
-            var sortedRatings = OriginalPlayers.Select(p => DaoProvider.Dao.GetEloRating(p.Username)).ToList();
-
-            var placeFinished = Table.PlayerCount;
-            var oldRating = DaoProvider.Dao.GetEloRating(player.Username);
-            var newRating = EloSystem.CalculateNewRatingForPosition(last, sortedRatings);
-            DaoProvider.Dao.SetEloRating(player.Username, newRating);
-            
-            var package = new Client.Package(player.Client);
-            package.Append(ServerResponse.LeaveTable);
-            package.Append(ServerResponse.LeaveTableRanked);
-            package.Append(placeFinished);
-            package.Append(oldRating);
-            package.Append(newRating);
-            package.Send();
-        }
-
-        private void KickStandard(TablePlayer player)
-        {
-            var package = new Client.Package(player.Client);
-            package.Append(ServerResponse.LeaveTable);
-            package.Append(ServerResponse.LeaveTableNoMoney);
-            package.Send();
         }
 
         private void RoundPhaseChangedEventHandler(object sender, RoundPhaseChangedEventArgs e)
@@ -355,19 +295,8 @@ namespace Poker
             package.Append(e.Player.Username);
             package.Append(e.Player.Stack);
             package.Send();
-
-            if (Table.IsRanked)
-            {
-                if (OriginalPlayers == null && Table.PlayerCount == Table.MaxPlayers)
-                {
-                    OriginalPlayers = Table.GetPlayerArray();
-                    StartNewRound();
-                }
-            }
-            else
-            {
-                if (Table.PlayerCount == 2) StartNewRound();
-            }
+            
+            OnPlayerJoined();
         }
 
         private void PlayerLeftEventHandler(object sender, PlayerLeftEventArgs e)
@@ -384,5 +313,13 @@ namespace Poker
                 Round = null;
             }
         }
+        
+        //----------------------------------------------------------------
+        //                      Template methods
+        //----------------------------------------------------------------
+
+        protected abstract void Kick(TablePlayer player);
+        protected abstract void OnPlayerJoined();
+        protected abstract void OnRoundFinished();
     }
 }

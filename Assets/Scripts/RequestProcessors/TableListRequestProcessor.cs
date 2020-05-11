@@ -26,6 +26,7 @@ namespace RequestProcessors
                 package.Append(table.PlayerCount);
                 package.Append(table.MaxPlayers);
                 package.Append(table.IsRanked);
+                package.Append(table.IsLocked);
             }
             
             package.Send();

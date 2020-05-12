@@ -1,5 +1,4 @@
 ﻿using Poker;
-using Poker.Players;
 
 namespace RequestProcessors
 {

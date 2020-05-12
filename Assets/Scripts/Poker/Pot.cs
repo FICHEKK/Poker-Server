@@ -37,7 +37,38 @@ namespace Poker
                 players = players.Where(p => p.TotalBet > 0).ToArray();
             }
 
-            return sidePots;
+            return MergeAllRedundantSidePots(sidePots);
+        }
+
+        private static List<Pot> MergeAllRedundantSidePots(List<Pot> sidePots)
+        {
+            if (sidePots.Count <= 1) return sidePots;
+            
+            var mergedSidePots = new List<Pot>();
+            var start = 0;
+
+            while (start < sidePots.Count)
+            {
+                var count = sidePots[start].Contenders.Count;
+
+                var border = start + 1;
+                while (border < sidePots.Count)
+                {
+                    if(sidePots[border].Contenders.Count < count) break;
+                    border++;
+                }
+
+                var totalValue = 0;
+                for (var i = start; i < border; i++)
+                {
+                    totalValue += sidePots[i].Value;
+                }
+            
+                mergedSidePots.Add(new Pot(totalValue, sidePots[start].Contenders));
+                start = border;
+            }
+            
+            return mergedSidePots;
         }
     }
 }

@@ -22,11 +22,14 @@ namespace Poker
             var oldRating = DaoProvider.Dao.GetEloRating(player.Username);
             var newRating = EloSystem.CalculateNewRatingForPosition(position, sortedRatings);
             DaoProvider.Dao.SetEloRating(player.Username, newRating);
+
+            RemovePlayerFromTable(player, ServerResponse.LeaveTableRanked);
             
-            SendMatchResult(player.Client, placeFinished, oldRating, newRating);
-            
-            Casino.RemoveTablePlayer(player);
-            Casino.AddLobbyPlayer(new LobbyPlayer(player.Client, player.ChipCount));
+            new Client.Package(player.Client)
+                .Append(placeFinished)
+                .Append(oldRating)
+                .Append(newRating)
+                .Send();
         }
 
         private void TransferPlayerToPosition(TablePlayer player, int position)
@@ -42,17 +45,6 @@ namespace Poker
             }
         }
 
-        private static void SendMatchResult(Client client, int placeFinished, int oldRating, int newRating)
-        {
-            new Client.Package(client)
-                .Append(ServerResponse.LeaveTable)
-                .Append(ServerResponse.LeaveTableRanked)
-                .Append(placeFinished)
-                .Append(oldRating)
-                .Append(newRating)
-                .Send();
-        }
-        
         protected override void OnPlayerJoined()
         {
             if (!IsLocked && Table.PlayerCount == Table.MaxPlayers)
@@ -75,6 +67,18 @@ namespace Poker
 
             if (Table.PlayerCount >= 2)
                 StartNewRound();
+        }
+
+        public override void PlayerLeave(TablePlayer player)
+        {
+            if (!IsLocked)
+            {
+                RemovePlayerFromTable(player, ServerResponse.LeaveTableGranted);
+                return;
+            }
+
+            Kick(player);
+            Enqueue(() => Round?.PlayerLeft(player.Index));
         }
     }
 }

@@ -10,13 +10,7 @@ namespace Poker
 
         protected override void Kick(TablePlayer player)
         {
-            new Client.Package(player.Client)
-                .Append(ServerResponse.LeaveTable)
-                .Append(ServerResponse.LeaveTableNoMoney)
-                .Send();
-
-            Casino.RemoveTablePlayer(player);
-            Casino.AddLobbyPlayer(new LobbyPlayer(player.Client, player.ChipCount));
+            RemovePlayerFromTable(player, ServerResponse.LeaveTableNoMoney);
         }
         
         protected override void OnPlayerJoined()
@@ -29,6 +23,12 @@ namespace Poker
         {
             if (Table.PlayerCount >= 2) 
                 StartNewRound();
+        }
+        
+        public override void PlayerLeave(TablePlayer player)
+        {
+            RemovePlayerFromTable(player, ServerResponse.LeaveTableGranted);
+            Enqueue(() => Round?.PlayerLeft(player.Index));
         }
     }
 }

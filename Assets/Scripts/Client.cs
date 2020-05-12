@@ -93,7 +93,7 @@ public class Client
 
                         if (processor.CanWait)
                         {
-                            Casino.GetTablePlayer(Username).TableController.RequestProcessors.Add(processor);
+                            Casino.GetTablePlayer(Username).TableController.Enqueue(processor.ProcessRequest);
                         }
                         else
                         {
@@ -180,7 +180,7 @@ public class Client
 
                     if (response != null)
                     {
-                        recipient._writer.BaseStream.WriteByte((byte) response);
+                        recipient._writer.BaseStream.WriteByte((byte) response.Value);
                     }
                     else
                     {

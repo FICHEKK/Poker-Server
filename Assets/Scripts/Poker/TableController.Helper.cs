@@ -11,12 +11,26 @@ namespace Poker
         private void SendBroadcastPackage(params object[] items) =>
             new Client.Package(Table.GetActiveClients()).Append(items, item => item).Send();
 
+        protected void RemovePlayerFromTable(TablePlayer player, ServerResponse leaveReason)
+        {
+            new Client.Package(player.Client)
+                .Append(ServerResponse.LeaveTable)
+                .Append(leaveReason)
+                .Send();
+            
+            Casino.RemoveTablePlayer(player);
+            Casino.AddLobbyPlayer(new LobbyPlayer(player.Client, player.ChipCount));
+            Table.RemovePlayer(player);
+            
+            SendBroadcastPackage(ServerResponse.PlayerLeft, player.Index);
+        }
+
         private void BroadcastBlindsData(int smallBlindIndex, int bigBlindIndex)
         {
             new Client.Package(Table.GetActiveClients())
                 .Append(ServerResponse.Blinds)
-                .Append(_round.JustJoinedPlayerIndexes.Count)
-                .Append(_round.JustJoinedPlayerIndexes, index => index)
+                .Append(Round.JustJoinedPlayerIndexes.Count)
+                .Append(Round.JustJoinedPlayerIndexes, index => index)
                 .Append(Table.DealerButtonIndex)
                 .Append(smallBlindIndex)
                 .Append(bigBlindIndex)
@@ -49,7 +63,7 @@ namespace Poker
             {
                 var card = _deck.GetNextCard();
                 package.Append(card);
-                _round.AddCommunityCard(card);
+                Round.AddCommunityCard(card);
             }
             
             package.Send();
@@ -60,9 +74,9 @@ namespace Poker
         {
             var package = new Client.Package(Table.GetActiveClients())
                 .Append(ServerResponse.CardsReveal)
-                .Append(_round.ActivePlayers.Count);
+                .Append(Round.ActivePlayers.Count);
             
-            foreach (var player in _round.ActivePlayers)
+            foreach (var player in Round.ActivePlayers)
             {
                 package.Append(player.Index)
                        .Append(player.FirstHandCard)

@@ -14,11 +14,6 @@ namespace RequestProcessors
 
         public void ProcessRequest()
         {
-            // Execute the potentially blocking part of this request on the table thread.
-            var blockingRequestProcessor = new LeaveTableBlockingRequestProcessor();
-            blockingRequestProcessor.ReadPayloadData(_client);
-            Casino.GetTablePlayer(_client.Username).TableController.RequestProcessors.Add(blockingRequestProcessor);
-
             var player = Casino.GetTablePlayer(_client.Username);
             player.TableController.PlayerLeave(player);
         }

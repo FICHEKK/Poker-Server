@@ -1,10 +1,10 @@
-﻿using System.Collections.Concurrent;
+﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading;
 using Dao;
 using Poker.Cards;
 using Poker.Players;
-using RequestProcessors;
 using Timer = System.Timers.Timer;
 
 namespace Poker
@@ -15,11 +15,8 @@ namespace Poker
     /// </summary>
     public abstract partial class TableController
     {
-        /// <summary>A blocking queue used to store unprocessed client requests.</summary>
-        public BlockingCollection<IClientRequestProcessor> RequestProcessors { get; } = new BlockingCollection<IClientRequestProcessor>();
-
-        /// <summary>A dummy action that is used to indicate the end of the consuming.</summary>
-        private readonly IClientRequestProcessor _poisonPill = new PoisonPill();
+        /// <summary>A blocking queue used to store unprocessed actions.</summary>
+        private BlockingCollection<Action> BlockingQueue { get; } = new BlockingCollection<Action>();
 
         /// <summary>Table managed by this controller.</summary>
         protected readonly Table Table;
@@ -43,7 +40,7 @@ namespace Poker
         public int MaxPlayers => Table.MaxPlayers;
         
         /// <summary>The current state of the round (table).</summary>
-        private Round _round;
+        protected Round Round;
         
         /// <summary>The deck used by this controller to deal cards.</summary>
         private readonly Deck _deck = new Deck();
@@ -58,30 +55,32 @@ namespace Poker
             SmallBlind = smallBlind;
 
             InitializeTimer();
-            new Thread(ConsumeClientRequests).Start();
+            new Thread(ExecuteActions).Start();
         }
+        
+        private void ExecuteActions()
+        {
+            while (true)
+            {
+                var action = BlockingQueue.Take();
+                if(action == null) break;
+                action();
+            }
+        }
+        
+        public void Enqueue(Action action) => BlockingQueue.Add(action);
         
         private void InitializeTimer()
         {
             _decisionTimer.Interval = (TableConstant.PlayerTurnDuration + TableConstant.PlayerTurnOvertime) * 1000;
             _decisionTimer.Elapsed += (sender, e) =>
             {
-                if (_round == null) return;
-                if (_round.CurrentPhase == Round.Phase.OnePlayerLeft) return;
-                if (_round.CurrentPhase == Round.Phase.Showdown) return;
+                if (Round == null) return;
+                if (Round.CurrentPhase == Round.Phase.OnePlayerLeft) return;
+                if (Round.CurrentPhase == Round.Phase.Showdown) return;
                 
                 PlayerFold();
             };
-        }
-        
-        private void ConsumeClientRequests()
-        {
-            while (true)
-            {
-                var processor = RequestProcessors.Take();
-                if (processor == _poisonPill) return;
-                processor.ProcessRequest();
-            }
         }
 
         protected void StartNewRound()
@@ -93,22 +92,22 @@ namespace Poker
             var bigBlindIndex = Table.GetNextOccupiedSeatIndex(smallBlindIndex);
             var playerIndex = Table.GetNextOccupiedSeatIndex(bigBlindIndex);
 
-            _round = new Round(Table.GetPlayerArray(), smallBlindIndex, bigBlindIndex, playerIndex, SmallBlind);
-            _round.RoundPhaseChanged += RoundPhaseChangedEventHandler;
-            _round.CurrentPlayerChanged += CurrentPlayerChangedEventHandler;
+            Round = new Round(Table.GetPlayerArray(), smallBlindIndex, bigBlindIndex, playerIndex, SmallBlind);
+            Round.RoundPhaseChanged += RoundPhaseChangedEventHandler;
+            Round.CurrentPlayerChanged += CurrentPlayerChangedEventHandler;
             
             BroadcastBlindsData(smallBlindIndex, bigBlindIndex);
             DealHandCards();
-            _round.Start();
+            Round.Start();
         }
 
         private void ProcessOnePlayerLeft()
         {
-            var winner = _round.ActivePlayers[0];
-            winner.Stack += _round.Pot;
-            winner.ChipCount += _round.Pot;
+            var winner = Round.ActivePlayers[0];
+            winner.Stack += Round.Pot;
+            winner.ChipCount += Round.Pot;
             
-            SendBroadcastPackage(ServerResponse.Showdown, 1, _round.Pot, 1, winner.Index, string.Empty);
+            SendBroadcastPackage(ServerResponse.Showdown, 1, Round.Pot, 1, winner.Index, string.Empty);
             FinishRound(TableConstant.RoundFinishPauseDuration + 1000, new [] {winner});
         }
         
@@ -116,7 +115,7 @@ namespace Poker
         {
             RevealActivePlayersCards();
 
-            var sidePots = Pot.CalculateSidePots(_round.ParticipatingPlayers);
+            var sidePots = Pot.CalculateSidePots(Round.ParticipatingPlayers);
             var winningPlayers = new HashSet<TablePlayer>();
 
             var package = new Client.Package(Table.GetActiveClients())
@@ -125,7 +124,7 @@ namespace Poker
 
             for (var i = sidePots.Count - 1; i >= 0; i--)
             {
-                var sidePotWinners = DetermineWinners(sidePots[i].Contenders, _round.CommunityCards, out var bestHand);
+                var sidePotWinners = DetermineWinners(sidePots[i].Contenders, Round.CommunityCards, out var bestHand);
                 var winAmount = sidePots[i].Value / sidePotWinners.Count;
                 
                 foreach (var player in sidePotWinners)
@@ -149,9 +148,11 @@ namespace Poker
         private void FinishRound(int timeout, IEnumerable<TablePlayer> winningPlayers)
         {
             IncrementWinningPlayersWinCount(winningPlayers);
-            UpdateParticipatingPlayersChipCount(_round.ParticipatingPlayers);
+            UpdateParticipatingPlayersChipCount(Round.ParticipatingPlayers);
             Thread.Sleep(timeout);
             KickBrokePlayers();
+
+            Round = null;
             OnRoundFinished();
             
             SendBroadcastPackage(ServerResponse.RoundFinished);

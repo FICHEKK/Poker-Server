@@ -4,6 +4,8 @@ namespace Poker
 {
     public abstract partial class TableController
     {
+        public abstract void PlayerLeave(TablePlayer player);
+        
         public void PlayerJoin(Client client, int stack)
         {
             SendTableState(client);
@@ -29,7 +31,7 @@ namespace Poker
             
             AppendPlayerList(package);
 
-            if (_round == null)
+            if (Round == null)
             {
                 package.Append(0); // community card count
                 package.Append(-1); // player index
@@ -37,10 +39,10 @@ namespace Poker
             }
             else
             {
-                package.Append(_round.CommunityCards.Count);
-                package.Append(_round.CommunityCards, card => card);
-                package.Append(_round.CurrentPlayerIndex);
-                package.Append(_round.Pot);
+                package.Append(Round.CommunityCards.Count);
+                package.Append(Round.CommunityCards, card => card);
+                package.Append(Round.CurrentPlayerIndex);
+                package.Append(Round.Pot);
             }
             
             package.Send();
@@ -60,59 +62,35 @@ namespace Poker
             }
         }
 
-        // TODO override this in ranked controller
-        public virtual void PlayerLeave(TablePlayer player)
-        {
-            new Client.Package(player.Client)
-                .Append(ServerResponse.LeaveTable)
-                .Append(ServerResponse.LeaveTableGranted)
-                .Send();
-            
-            Casino.RemoveTablePlayer(player);
-            Table.RemovePlayer(player);
-            
-            Casino.AddLobbyPlayer(new LobbyPlayer(player.Client, player.ChipCount));
-            
-            SendBroadcastPackage(ServerResponse.PlayerLeft, player.Index);
-            
-
-
-            _round?.PlayerLeft(player.Index);
-
-            if (Table.PlayerCount == 1)
-            {
-                _round = null;
-            }
-        }
 
         public void PlayerCheck()
         {
-            SendBroadcastPackage(ServerResponse.PlayerChecked, _round.CurrentPlayerIndex);
-            _round.PlayerChecked();
+            SendBroadcastPackage(ServerResponse.PlayerChecked, Round.CurrentPlayerIndex);
+            Round.PlayerChecked();
         }
 
         public void PlayerCall(int callAmount)
         {
-            SendBroadcastPackage(ServerResponse.PlayerCalled, _round.CurrentPlayerIndex, callAmount);
-            _round.PlayerCalled(callAmount);
+            SendBroadcastPackage(ServerResponse.PlayerCalled, Round.CurrentPlayerIndex, callAmount);
+            Round.PlayerCalled(callAmount);
         }
 
         public void PlayerFold()
         {
-            SendBroadcastPackage(ServerResponse.PlayerFolded, _round.CurrentPlayerIndex);
-            _round.PlayerFolded();
+            SendBroadcastPackage(ServerResponse.PlayerFolded, Round.CurrentPlayerIndex);
+            Round.PlayerFolded();
         }
 
         public void PlayerRaise(int raisedToAmount)
         {
-            SendBroadcastPackage(ServerResponse.PlayerRaised, _round.CurrentPlayerIndex, raisedToAmount);
-            _round.PlayerRaised(raisedToAmount);
+            SendBroadcastPackage(ServerResponse.PlayerRaised, Round.CurrentPlayerIndex, raisedToAmount);
+            Round.PlayerRaised(raisedToAmount);
         }
 
         public void PlayerAllIn(int allInAmount)
         {
-            SendBroadcastPackage(ServerResponse.PlayerAllIn, _round.CurrentPlayerIndex, allInAmount);
-            _round.PlayerAllIn(allInAmount);
+            SendBroadcastPackage(ServerResponse.PlayerAllIn, Round.CurrentPlayerIndex, allInAmount);
+            Round.PlayerAllIn(allInAmount);
         }
 
         public void PlayerSendChatMessage(int index, string message)

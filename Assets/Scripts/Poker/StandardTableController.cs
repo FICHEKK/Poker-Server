@@ -10,11 +10,11 @@ namespace Poker
 
         protected override void Kick(TablePlayer player)
         {
-            var package = new Client.Package(player.Client);
-            package.Append(ServerResponse.LeaveTable);
-            package.Append(ServerResponse.LeaveTableNoMoney);
-            package.Send();
-            
+            new Client.Package(player.Client)
+                .Append(ServerResponse.LeaveTable)
+                .Append(ServerResponse.LeaveTableNoMoney)
+                .Send();
+
             Casino.RemoveTablePlayer(player);
             Casino.AddLobbyPlayer(new LobbyPlayer(player.Client, player.ChipCount));
         }

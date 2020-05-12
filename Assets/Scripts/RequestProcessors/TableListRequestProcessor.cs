@@ -15,18 +15,16 @@ namespace RequestProcessors
         public void ProcessRequest()
         {
             var package = new Client.Package(_client);
-            package.Append(Casino.TableCount);
+            package.Append(Casino.TableControllers.Count);
 
-            foreach (var tableName in Casino.TableNames)
+            foreach (var tableController in Casino.TableControllers.Values)
             {
-                var tableContext = Casino.GetTableController(tableName);
-
-                package.Append(tableName);
-                package.Append(tableContext.SmallBlind);
-                package.Append(tableContext.PlayerCount);
-                package.Append(tableContext.MaxPlayers);
-                package.Append(tableContext.IsRanked);
-                package.Append(tableContext.IsLocked);
+                package.Append(tableController.Title)
+                       .Append(tableController.SmallBlind)
+                       .Append(tableController.PlayerCount)
+                       .Append(tableController.MaxPlayers)
+                       .Append(tableController.IsRanked)
+                       .Append(tableController.IsLocked);
             }
             
             package.Send();

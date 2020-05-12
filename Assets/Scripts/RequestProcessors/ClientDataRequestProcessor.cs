@@ -16,11 +16,11 @@ namespace RequestProcessors
 
         public void ProcessRequest()
         {
-            var package = new Client.Package(_client);
-            package.Append(DaoProvider.Dao.GetChipCount(_requestedUsername));
-            package.Append(DaoProvider.Dao.GetWinCount(_requestedUsername));
-            package.Append(DaoProvider.Dao.GetEloRating(_requestedUsername));
-            package.Send();
+            new Client.Package(_client)
+                .Append(DaoProvider.Dao.GetChipCount(_requestedUsername))
+                .Append(DaoProvider.Dao.GetWinCount(_requestedUsername))
+                .Append(DaoProvider.Dao.GetEloRating(_requestedUsername))
+                .Send();
         }
     }
 }

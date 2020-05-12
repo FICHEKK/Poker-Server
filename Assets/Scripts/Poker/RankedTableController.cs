@@ -44,13 +44,13 @@ namespace Poker
 
         private static void SendMatchResult(Client client, int placeFinished, int oldRating, int newRating)
         {
-            var package = new Client.Package(client);
-            package.Append(ServerResponse.LeaveTable);
-            package.Append(ServerResponse.LeaveTableRanked);
-            package.Append(placeFinished);
-            package.Append(oldRating);
-            package.Append(newRating);
-            package.Send();
+            new Client.Package(client)
+                .Append(ServerResponse.LeaveTable)
+                .Append(ServerResponse.LeaveTableRanked)
+                .Append(placeFinished)
+                .Append(oldRating)
+                .Append(newRating)
+                .Send();
         }
         
         protected override void OnPlayerJoined()

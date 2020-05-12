@@ -16,9 +16,9 @@ namespace RequestProcessors
 
         public void ProcessRequest()
         {
-            var package = new Client.Package(_client);
-            package.Append(EvaluateProperResponse(_client.Username, _password));
-            package.Send();
+            new Client.Package(_client)
+                .Append(EvaluateProperResponse(_client.Username, _password))
+                .Send();
         }
 
         private static ServerResponse EvaluateProperResponse(string username, string password)

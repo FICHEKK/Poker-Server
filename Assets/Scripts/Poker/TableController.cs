@@ -110,14 +110,14 @@ namespace Poker
         
         private void BroadcastBlindsData(int smallBlindIndex, int bigBlindIndex)
         {
-            var package = new Client.Package(Table.GetActiveClients());
-            package.Append(ServerResponse.Blinds);
-            package.Append(_round.JustJoinedPlayerIndexes.Count);
-            _round.JustJoinedPlayerIndexes.ForEach(index => package.Append(index));
-            package.Append(Table.DealerButtonIndex);
-            package.Append(smallBlindIndex);
-            package.Append(bigBlindIndex);
-            package.Send();
+            new Client.Package(Table.GetActiveClients())
+                .Append(ServerResponse.Blinds)
+                .Append(_round.JustJoinedPlayerIndexes.Count)
+                .Append(_round.JustJoinedPlayerIndexes, index => index)
+                .Append(Table.DealerButtonIndex)
+                .Append(smallBlindIndex)
+                .Append(bigBlindIndex)
+                .Send();
         }
 
         private void DealHandCards()
@@ -129,11 +129,11 @@ namespace Poker
 
                 player.SetHand(handCard1, handCard2);
 
-                var package = new Client.Package(player.Client);
-                package.Append(ServerResponse.Hand);
-                package.Append(handCard1);
-                package.Append(handCard2);
-                package.Send();
+                new Client.Package(player.Client)
+                    .Append(ServerResponse.Hand)
+                    .Append(handCard1)
+                    .Append(handCard2)
+                    .Send();
             }
         }
         
@@ -197,12 +197,12 @@ namespace Poker
         {
             SendBroadcastPackage(ServerResponse.PlayerIndex, e.CurrentPlayerIndex);
 
-            var package = new Client.Package(Table[e.CurrentPlayerIndex].Client);
-            package.Append(ServerResponse.RequiredBet);
-            package.Append(e.RequiredCall);
-            package.Append(e.MinRaise);
-            package.Append(e.MaxRaise);
-            package.Send();
+            new Client.Package(Table[e.CurrentPlayerIndex].Client)
+                .Append(ServerResponse.RequiredBet)
+                .Append(e.RequiredCall)
+                .Append(e.MinRaise)
+                .Append(e.MaxRaise)
+                .Send();
 
             _decisionTimer.Stop();
             _decisionTimer.Start();
@@ -246,11 +246,11 @@ namespace Poker
             var sidePots = Pot.CalculateSidePots(_round.ParticipatingPlayers);
             var winningPlayers = new HashSet<TablePlayer>();
 
-            var package = new Client.Package(Table.GetActiveClients());
-            package.Append(ServerResponse.Showdown);
-            package.Append(sidePots.Count);
+            var package = new Client.Package(Table.GetActiveClients())
+                .Append(ServerResponse.Showdown)
+                .Append(sidePots.Count);
 
-            for (int i = sidePots.Count - 1; i >= 0; i--)
+            for (var i = sidePots.Count - 1; i >= 0; i--)
             {
                 var sidePotWinners = DetermineWinners(sidePots[i].Contenders, _round.CommunityCards, out var bestHand);
                 var winAmount = sidePots[i].Value / sidePotWinners.Count;
@@ -262,10 +262,10 @@ namespace Poker
                     winningPlayers.Add(player);
                 }
                 
-                package.Append(sidePots[i].Value);
-                package.Append(sidePotWinners.Count);
-                sidePotWinners.ForEach(winner => package.Append(winner.Index));
-                package.Append(bestHand.ToStringPretty());
+                package.Append(sidePots[i].Value)
+                       .Append(sidePotWinners.Count)
+                       .Append(sidePotWinners, winner => winner.Index)
+                       .Append(bestHand.ToStringPretty());
             }
             
             package.Send();
@@ -275,15 +275,15 @@ namespace Poker
         
         private void RevealActivePlayersCards()
         {
-            var package = new Client.Package(Table.GetActiveClients());
-            package.Append(ServerResponse.CardsReveal);
-            package.Append(_round.ActivePlayers.Count);
+            var package = new Client.Package(Table.GetActiveClients())
+                .Append(ServerResponse.CardsReveal)
+                .Append(_round.ActivePlayers.Count);
             
             foreach (var player in _round.ActivePlayers)
             {
-                package.Append(player.Index);
-                package.Append(player.FirstHandCard);
-                package.Append(player.SecondHandCard);
+                package.Append(player.Index)
+                       .Append(player.FirstHandCard)
+                       .Append(player.SecondHandCard);
             }
             
             package.Send();
@@ -334,12 +334,12 @@ namespace Poker
         
         private void SendTableState(Client client)
         {
-            var package = new Client.Package(client);
-            package.Append(ServerResponse.TableState);
+            var package = new Client.Package(client)
+                .Append(ServerResponse.TableState)
+                .Append(Table.DealerButtonIndex)
+                .Append(SmallBlind)
+                .Append(Table.MaxPlayers);
             
-            package.Append(Table.DealerButtonIndex);
-            package.Append(SmallBlind);
-            package.Append(Table.MaxPlayers);
             AppendPlayerList(package);
 
             if (_round == null)
@@ -351,7 +351,7 @@ namespace Poker
             else
             {
                 package.Append(_round.CommunityCards.Count);
-                _round.CommunityCards.ForEach(card => package.Append(card));
+                package.Append(_round.CommunityCards, card => card);
                 package.Append(_round.CurrentPlayerIndex);
                 package.Append(_round.Pot);
             }
@@ -365,21 +365,21 @@ namespace Poker
 
             foreach (var player in Table)
             {
-                package.Append(player.Index);
-                package.Append(player.Username);
-                package.Append(player.Stack);
-                package.Append(player.Bet);
-                package.Append(player.Folded);
+                package.Append(player.Index)
+                       .Append(player.Username)
+                       .Append(player.Stack)
+                       .Append(player.Bet)
+                       .Append(player.Folded);
             }
         }
 
         // TODO override this in ranked controller
         public virtual void PlayerLeave(TablePlayer player)
         {
-            var package = new Client.Package(player.Client);
-            package.Append(ServerResponse.LeaveTable);
-            package.Append(ServerResponse.LeaveTableGranted);
-            package.Send();
+            new Client.Package(player.Client)
+                .Append(ServerResponse.LeaveTable)
+                .Append(ServerResponse.LeaveTableGranted)
+                .Send();
             
             Casino.RemoveTablePlayer(player);
             Table.RemovePlayer(player);
@@ -432,18 +432,10 @@ namespace Poker
         {
             SendBroadcastPackage(ServerResponse.ChatMessage, index, message);
         }
-        
-        //===========================================================
-        //                    Package sending
-        //===========================================================
 
-        private void SendBroadcastPackage(params object[] data)
-        {
-            var package = new Client.Package(Table.GetActiveClients());
-            foreach (var piece in data) package.Append(piece);
-            package.Send();
-        }
-        
+        private void SendBroadcastPackage(params object[] items) =>
+            new Client.Package(Table.GetActiveClients()).Append(items, item => item).Send();
+
         //===========================================================
         //                      Template methods
         //===========================================================

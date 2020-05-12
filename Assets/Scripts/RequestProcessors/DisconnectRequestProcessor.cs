@@ -17,10 +17,10 @@ namespace RequestProcessors
         {
             if (_client.IsLoggedIn)
             {
-                LobbyPlayer lobbyPlayer = Casino.GetLobbyPlayer(_client.Username);
+                var lobbyPlayer = Casino.GetLobbyPlayer(_client.Username);
                 if (lobbyPlayer != null) Casino.RemoveLobbyPlayer(lobbyPlayer);
 
-                TablePlayer tablePlayer = Casino.GetTablePlayer(_client.Username);
+                var tablePlayer = Casino.GetTablePlayer(_client.Username);
                 if (tablePlayer != null) Casino.RemoveTablePlayer(tablePlayer);
             }
 

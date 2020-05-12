@@ -18,18 +18,16 @@ namespace RequestProcessors
 
         public void ProcessRequest()
         {
-            ServerResponse response = EvaluateProperResponse(_client.Username, _password);
+            var response = EvaluateProperResponse(_client.Username, _password);
 
             if (response == ServerResponse.LoginSuccess)
             {
-                int chipCount = DaoProvider.Dao.GetChipCount(_client.Username);
+                var chipCount = DaoProvider.Dao.GetChipCount(_client.Username);
                 Casino.AddLobbyPlayer(new LobbyPlayer(_client, chipCount));
                 _client.IsLoggedIn = true;
             }
 
-            var package = new Client.Package(_client);
-            package.Append(response);
-            package.Send();
+            new Client.Package(_client).Append(response).Send();
         }
 
         private static ServerResponse EvaluateProperResponse(string username, string password)

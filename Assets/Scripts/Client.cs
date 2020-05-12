@@ -153,8 +153,19 @@ public class Client
                 throw new ArgumentException("A recipient must be non-null.");
         }
 
-        /// <summary> Appends additional data to this package. </summary>
-        public void Append(object data) => _data.Add(data);
+        /// <summary> Appends additional data to this package and returns this package. </summary>
+        public Package Append(object data)
+        {
+            _data.Add(data);
+            return this;
+        }
+        
+        /// <summary>Maps and appends every item from the provided collection to this package and returns this package.</summary>
+        public Package Append<T, TResult>(IEnumerable<T> items, Func<T, TResult> mapper)
+        {
+            foreach (var item in items) _data.Add(mapper(item));
+            return this;
+        }
 
         /// <summary> Sends all of the previously appended data to the recipients. </summary>
         public void Send()

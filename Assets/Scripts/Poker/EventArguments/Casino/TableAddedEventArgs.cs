@@ -1,4 +1,5 @@
 ﻿using System;
+using Poker.TableControllers;
 
 namespace Poker.EventArguments.Casino
 {

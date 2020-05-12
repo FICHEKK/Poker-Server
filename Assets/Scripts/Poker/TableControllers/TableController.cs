@@ -7,7 +7,7 @@ using Poker.Cards;
 using Poker.Players;
 using Timer = System.Timers.Timer;
 
-namespace Poker
+namespace Poker.TableControllers
 {
     /// <summary>
     /// Controls and manages a single table. Also handles client's requests and
@@ -152,10 +152,10 @@ namespace Poker
             Thread.Sleep(timeout);
             KickBrokePlayers();
 
+            SendBroadcastPackage(ServerResponse.RoundFinished);
+            
             Round = null;
             OnRoundFinished();
-            
-            SendBroadcastPackage(ServerResponse.RoundFinished);
         }
 
         private static void IncrementWinningPlayersWinCount(IEnumerable<TablePlayer> winners)

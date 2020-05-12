@@ -2,6 +2,7 @@
 using System.Collections.Concurrent;
 using Poker.EventArguments.Casino;
 using Poker.Players;
+using Poker.TableControllers;
 
 namespace Poker
 {

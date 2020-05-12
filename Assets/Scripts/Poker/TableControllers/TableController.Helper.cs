@@ -4,12 +4,24 @@ using System.Threading;
 using Poker.Cards;
 using Poker.Players;
 
-namespace Poker
+namespace Poker.TableControllers
 {
     public abstract partial class TableController
     {
         private void SendBroadcastPackage(params object[] items) =>
             new Client.Package(Table.GetActiveClients()).Append(items, item => item).Send();
+        
+        protected void EnqueuePlayerLeave(TablePlayer player)
+        {
+            if (Round == null) return;
+            var identifierSnapshot = Round.Identifier;
+            
+            Enqueue(() =>
+            {
+                if (Round == null || Round.Identifier != identifierSnapshot) return;
+                Round.PlayerLeft(player.Index);
+            });
+        }
 
         protected void RemovePlayerFromTable(TablePlayer player, ServerResponse leaveReason)
         {

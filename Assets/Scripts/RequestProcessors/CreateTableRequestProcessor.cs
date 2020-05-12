@@ -1,4 +1,5 @@
 using Poker;
+using Poker.TableControllers;
 
 namespace RequestProcessors
 {

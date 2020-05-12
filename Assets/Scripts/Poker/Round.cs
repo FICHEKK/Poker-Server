@@ -37,6 +37,9 @@ namespace Poker
         /// <summary>The phase that this round is currently in.</summary>
         public Phase CurrentPhase;
 
+        /// <summary> Uniquely identifies this round. </summary>
+        public readonly Guid Identifier = Guid.NewGuid();
+
         private int _playerCount;
         private int _betCounter;
         private int _raiseIncrement;

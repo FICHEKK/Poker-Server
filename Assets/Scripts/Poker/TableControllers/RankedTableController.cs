@@ -2,7 +2,7 @@
 using Dao;
 using Poker.Players;
 
-namespace Poker
+namespace Poker.TableControllers
 {
     public class RankedTableController : TableController
     {
@@ -51,13 +51,14 @@ namespace Poker
             {
                 IsLocked = true;
                 _originalPlayers = Table.GetPlayerArray();
-                StartNewRound();
+
+                if (Round == null) StartNewRound();
             }
         }
         
         protected override void OnRoundFinished()
         {
-            if (Table.PlayerCount == 1)
+            if (Table.PlayerCount <= 1)
             {
                 foreach (var player in Table) Kick(player);
 
@@ -78,7 +79,7 @@ namespace Poker
             }
 
             Kick(player);
-            Enqueue(() => Round?.PlayerLeft(player.Index));
+            EnqueuePlayerLeave(player);
         }
     }
 }

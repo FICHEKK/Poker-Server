@@ -1,6 +1,7 @@
-﻿using Poker.Players;
+﻿using System;
+using Poker.Players;
 
-namespace Poker
+namespace Poker.TableControllers
 {
     public class StandardTableController : TableController
     {
@@ -15,7 +16,7 @@ namespace Poker
         
         protected override void OnPlayerJoined()
         {
-            if (Table.PlayerCount == 2)
+            if (Table.PlayerCount == 2 && Round == null)
                 StartNewRound();
         }
         
@@ -28,7 +29,7 @@ namespace Poker
         public override void PlayerLeave(TablePlayer player)
         {
             RemovePlayerFromTable(player, ServerResponse.LeaveTableGranted);
-            Enqueue(() => Round?.PlayerLeft(player.Index));
+            EnqueuePlayerLeave(player);
         }
     }
 }

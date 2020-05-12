@@ -1,6 +1,6 @@
 ﻿using Poker.EventArguments;
 
-namespace Poker
+namespace Poker.TableControllers
 {
     public abstract partial class TableController
     {

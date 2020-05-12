@@ -18,6 +18,9 @@ namespace Poker
         
         /// <summary>Internal collection of players that are currently on this table.</summary>
         private readonly TablePlayer[] _players;
+        
+        /// <summary> Used for placing new players on the random position. </summary>
+        private readonly Random _random = new Random();
 
         /// <summary> Constructs a new table with the given capacity. </summary>
         /// <param name="maxPlayers"> Maximum number of players (capacity). </param>
@@ -60,7 +63,7 @@ namespace Poker
         /// <param name="player"> Player to be added to the table. </param>
         public void AddPlayer(TablePlayer player)
         {
-            var index = GetFirstFreeSeatIndex();
+            var index = GetRandomFreeSeatIndex();
             if (index < 0) return;
 
             player.Index = index;
@@ -98,7 +101,7 @@ namespace Poker
 
         /// <summary> Finds and returns the index of the first free seat, if there is one. </summary>
         /// <returns> Index of the first free seat if found, -1 if there are no free seats. </returns>
-        public int GetFirstFreeSeatIndex()
+        private int GetFirstFreeSeatIndex()
         {
             for (int i = 0; i < MaxPlayers; i++)
             {
@@ -106,6 +109,20 @@ namespace Poker
             }
 
             return -1;
+        }
+
+        /// <summary> Finds and returns the index of the random free seat, if there is one. </summary>
+        /// <returns> Index of the random free seat if there are any, -1 if there are no free seats. </returns>
+        private int GetRandomFreeSeatIndex()
+        {
+            var freeSeatIndexes = new List<int>();
+            
+            for (int i = 0; i < MaxPlayers; i++)
+            {
+                if (_players[i] == null) freeSeatIndexes.Add(i);
+            }
+
+            return freeSeatIndexes.Count > 0 ? freeSeatIndexes[_random.Next(freeSeatIndexes.Count)] : -1;
         }
         
         /// <summary> Returns an array of all the currently active clients at the this table. </summary>

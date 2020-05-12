@@ -14,16 +14,6 @@ namespace RequestProcessors
             _raisedToAmount = int.Parse(_client.ReadLine());
         }
 
-        public void ProcessRequest()
-        {
-            var player = Casino.GetTablePlayer(_client.Username);
-            var package = new Client.Package(player.Table.GetActiveClients());
-            package.Append(ServerResponse.PlayerRaised);
-            package.Append(player.Index);
-            package.Append(_raisedToAmount);
-            package.Send();
-
-            player.Table.Dealer.Round.PlayerRaised(_raisedToAmount);
-        }
+        public void ProcessRequest() => Casino.GetTablePlayer(_client.Username).TableController.PlayerRaise(_raisedToAmount);
     }
 }

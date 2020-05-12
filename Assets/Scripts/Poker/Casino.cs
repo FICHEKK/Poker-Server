@@ -29,25 +29,16 @@ namespace Poker
         public static event EventHandler<TableRemovedEventArgs> TableRemoved;
 
         /// <summary>The number of active tables in this casino.</summary>
-        public static int TableCount => TableByTitle.Count;
-
-        /// <summary>Total number of players currently in the casino (in-lobby + on-table).</summary>
-        public static int PlayerCount => LobbyPlayerCount + TablePlayerCount;
-
-        /// <summary>Total number of players currently in the lobby.</summary>
-        public static int LobbyPlayerCount { get { lock (LobbyPlayersPadlock) return LobbyPlayers.Count; } }
-
-        /// <summary>Total number of players currently playing on all of the tables.</summary>
-        public static int TablePlayerCount { get { lock (TablePlayersPadlock) return TablePlayers.Count; } }
+        public static int TableCount => TableControllerByTitle.Count;
 
         /// <summary>A collection of all the active tables' names.</summary>
-        public static IEnumerable<string> TableNames => TableByTitle.Keys;
+        public static IEnumerable<string> TableNames => TableControllerByTitle.Keys;
 
         /// <summary>A collection of all the active tables.</summary>
-        public static IEnumerable<Table> Tables => TableByTitle.Values;
+        public static IEnumerable<TableController> TableControllers => TableControllerByTitle.Values;
 
-        /// <summary>A thread-safe dictionary that maps table's name to its corresponding table.</summary>
-        private static readonly ConcurrentDictionary<string, Table> TableByTitle = new ConcurrentDictionary<string, Table>();
+        /// <summary>A thread-safe dictionary that maps table's name to its corresponding table controller.</summary>
+        private static readonly ConcurrentDictionary<string, TableController> TableControllerByTitle = new ConcurrentDictionary<string, TableController>();
 
         /// <summary>Lock used by the lobby-players hash-set.</summary>
         private static readonly object LobbyPlayersPadlock = new object();
@@ -63,14 +54,14 @@ namespace Poker
 
         static Casino()
         {
-            AddTable(new Table("Poor Player Penthouse", 1, 10));
-            AddTable(new Table("Casual Playa Secret Room", 5, 10));
-            AddTable(new Table("On The Rise", 20, 10));
-            AddTable(new Table("A Middle Class Table", 50, 10));
-            AddTable(new Table("Local Tourney", 100, 10));
-            AddTable(new Table("A Radical Table", 500, 10));
-            AddTable(new Table("Las Vegas Baller", 2000, 10));
-            AddTable(new Table("WSOP High Rollers", 10000, 10));
+            AddTableController(new StandardTableController(new Table(10), "Poor Player Penthouse", 1));
+            AddTableController(new StandardTableController(new Table(10), "Casual Playa Secret Room", 5));
+            AddTableController(new StandardTableController(new Table(10), "On The Rise", 20));
+            AddTableController(new StandardTableController(new Table(10), "A Middle Class Table", 50));
+            AddTableController(new StandardTableController(new Table(10), "Local Tourney", 100));
+            AddTableController(new StandardTableController(new Table(10), "A Radical Table", 500));
+            AddTableController(new StandardTableController(new Table(10), "Las Vegas Baller", 2000));
+            AddTableController(new StandardTableController(new Table(10), "WSOP High Rollers", 10000));
         }
 
         //----------------------------------------------------------------
@@ -114,10 +105,9 @@ namespace Poker
             lock (TablePlayersPadlock)
             {
                 TablePlayers.Add(player);
-                player.Table.AddPlayer(player);
             }
 
-            TablePlayerAdded?.Invoke(null, new TablePlayerAddedEventArgs(player.Table, player.Username));
+            TablePlayerAdded?.Invoke(null, new TablePlayerAddedEventArgs(player.TableController, player.Username));
         }
 
         public static TablePlayer GetTablePlayer(string username)
@@ -133,35 +123,34 @@ namespace Poker
             lock (TablePlayersPadlock)
             {
                 TablePlayers.Remove(player);
-                player.Table.RemovePlayer(player);
             }
 
-            TablePlayerRemoved?.Invoke(null, new TablePlayerRemovedEventArgs(player.Table, player.Username));
+            TablePlayerRemoved?.Invoke(null, new TablePlayerRemovedEventArgs(player.TableController, player.Username));
         }
 
         //----------------------------------------------------------------
         //                      Table methods
         //----------------------------------------------------------------
 
-        public static void AddTable(Table table)
+        public static void AddTableController(TableController controller)
         {
-            TableByTitle.TryAdd(table.Title, table);
-            TableAdded?.Invoke(null, new TableAddedEventArgs(table));
+            TableControllerByTitle.TryAdd(controller.Title, controller);
+            TableAdded?.Invoke(null, new TableAddedEventArgs(controller));
         }
 
-        public static Table GetTable(string title)
+        public static TableController GetTableController(string title)
         {
-            return TableByTitle[title];
+            return TableControllerByTitle[title];
         }
 
         public static bool HasTableWithTitle(string title)
         {
-            return TableByTitle.ContainsKey(title);
+            return TableControllerByTitle.ContainsKey(title);
         }
 
-        public static void RemoveTable(string title)
+        public static void RemoveTableController(string title)
         {
-            TableByTitle.TryRemove(title, out _);
+            TableControllerByTitle.TryRemove(title, out _);
             TableRemoved?.Invoke(null, new TableRemovedEventArgs(title));
         }
 

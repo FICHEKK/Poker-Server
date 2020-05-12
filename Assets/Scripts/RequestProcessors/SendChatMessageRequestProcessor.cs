@@ -17,11 +17,7 @@ namespace RequestProcessors
         public void ProcessRequest()
         {
             var player = Casino.GetTablePlayer(_client.Username);
-            var package = new Client.Package(player.Table.GetActiveClients());
-            package.Append(ServerResponse.ChatMessage);
-            package.Append(player.Index);
-            package.Append(_message);
-            package.Send();
+            player.TableController.PlayerSendChatMessage(player.Index, _message);
         }
     }
 }

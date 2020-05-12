@@ -7,10 +7,10 @@ namespace Poker.Players
     public class TablePlayer : Player
     {
         /// <summary> Table position index of this player. </summary>
-        public int Index { get; }
+        public int Index { get; set; }
 
-        /// <summary> The seat that this player is currently on. </summary>
-        public Table Table { get; }
+        /// <summary> The table that this player is currently on. </summary>
+        public TableController TableController { get; }
 
         /// <summary> The amount of chips that this player currently has at the table. </summary>
         public int Stack { get; set; }
@@ -42,10 +42,9 @@ namespace Poker.Players
         /// <summary> Cards that this player is currently holding. </summary>
         private readonly Card[] _handCards = new Card[2];
 
-        public TablePlayer(Client client, int chipCount, Table table, int stack, int index) : base(client, chipCount)
+        public TablePlayer(Client client, int chipCount, TableController tableController, int stack) : base(client, chipCount)
         {
-            Table = table;
-            Index = index;
+            TableController = tableController;
             Stack = stack;
         }
 

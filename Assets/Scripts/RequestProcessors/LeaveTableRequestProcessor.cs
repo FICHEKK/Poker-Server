@@ -17,12 +17,10 @@ namespace RequestProcessors
             // Execute the potentially blocking part of this request on the table thread.
             var blockingRequestProcessor = new LeaveTableBlockingRequestProcessor();
             blockingRequestProcessor.ReadPayloadData(_client);
-            Casino.GetTablePlayer(_client.Username).Table.RequestProcessors.Add(blockingRequestProcessor);
+            Casino.GetTablePlayer(_client.Username).TableController.RequestProcessors.Add(blockingRequestProcessor);
 
-            var package = new Client.Package(_client);
-            package.Append(ServerResponse.LeaveTable);
-            package.Append(ServerResponse.LeaveTableGranted);
-            package.Send();
+            var player = Casino.GetTablePlayer(_client.Username);
+            player.TableController.PlayerLeave(player);
         }
     }
 }

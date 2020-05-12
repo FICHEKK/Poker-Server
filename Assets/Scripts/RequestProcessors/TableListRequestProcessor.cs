@@ -17,16 +17,16 @@ namespace RequestProcessors
             var package = new Client.Package(_client);
             package.Append(Casino.TableCount);
 
-            foreach (string tableName in Casino.TableNames)
+            foreach (var tableName in Casino.TableNames)
             {
-                var table = Casino.GetTable(tableName);
+                var tableContext = Casino.GetTableController(tableName);
 
                 package.Append(tableName);
-                package.Append(table.SmallBlind);
-                package.Append(table.PlayerCount);
-                package.Append(table.MaxPlayers);
-                package.Append(table.IsRanked);
-                package.Append(table.IsLocked);
+                package.Append(tableContext.SmallBlind);
+                package.Append(tableContext.PlayerCount);
+                package.Append(tableContext.MaxPlayers);
+                package.Append(tableContext.IsRanked);
+                package.Append(tableContext.IsLocked);
             }
             
             package.Send();

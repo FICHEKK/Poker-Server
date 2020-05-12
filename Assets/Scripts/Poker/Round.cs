@@ -17,7 +17,7 @@ namespace Poker
         public int Pot { get; private set; }
 
         /// <summary> Index of the currently focused player. </summary>
-        public int PlayerIndex { get; private set; }
+        public int CurrentPlayerIndex { get; private set; }
         
         /// <summary> List of all the indexes of players that need to pay for big blind since they just joined. </summary>
         public List<int> JustJoinedPlayerIndexes { get; } = new List<int>();
@@ -47,14 +47,14 @@ namespace Poker
         public event EventHandler<RoundPhaseChangedEventArgs> RoundPhaseChanged;
         public event EventHandler<CurrentPlayerChangedEventArgs> CurrentPlayerChanged;
         
-        public Round(TablePlayer[] players, int smallBlindIndex, int bigBlindIndex, int playerIndex, int smallBlind)
+        public Round(TablePlayer[] players, int smallBlindIndex, int bigBlindIndex, int currentPlayerIndex, int smallBlind)
         {
             _players = players ?? throw new ArgumentNullException(nameof(players));
             _smallBlind = smallBlind;
             _raiseIncrement = smallBlind * 2;
             
             _smallBlindIndex = smallBlindIndex;
-            PlayerIndex = playerIndex;
+            CurrentPlayerIndex = currentPlayerIndex;
 
             foreach (var player in players)
             {
@@ -98,13 +98,13 @@ namespace Poker
         public void PlayerCalled(int callAmount)
         {
             _betCounter++;
-            PlaceChips(PlayerIndex, callAmount);
+            PlaceChips(CurrentPlayerIndex, callAmount);
             UpdateCurrentPlayerIndex();
         }
 
         public void PlayerFolded()
         {
-            _players[PlayerIndex].Folded = true;
+            _players[CurrentPlayerIndex].Folded = true;
             _playerCount--;
 
             if (_playerCount == 1)
@@ -122,7 +122,7 @@ namespace Poker
         {
             _betCounter = 1;
             _raiseIncrement = raisedToAmount - HighestBet;
-            PlaceChips(PlayerIndex, raisedToAmount - _players[PlayerIndex].Bet);
+            PlaceChips(CurrentPlayerIndex, raisedToAmount - _players[CurrentPlayerIndex].Bet);
             UpdateCurrentPlayerIndex();
         }
 
@@ -147,7 +147,7 @@ namespace Poker
                 CurrentPhase = Phase.OnePlayerLeft;
                 OnRoundPhaseChanged(new RoundPhaseChangedEventArgs(CurrentPhase));
             }
-            else if(index == PlayerIndex)
+            else if(index == CurrentPlayerIndex)
             {
                 UpdateCurrentPlayerIndex();
             }
@@ -155,7 +155,7 @@ namespace Poker
 
         private void UpdateCurrentPlayerIndex()
         {
-            FindFirstValidIndexFrom(PlayerIndex + 1);
+            FindFirstValidIndexFrom(CurrentPlayerIndex + 1);
 
             if (_betCounter >= _playerCount)
             {
@@ -192,15 +192,15 @@ namespace Poker
 
         private void FindFirstValidIndexFrom(int startingIndex)
         {
-            PlayerIndex = startingIndex;
+            CurrentPlayerIndex = startingIndex;
             
             for (int i = 0; i < _players.Length - 1; i++)
             {
-                PlayerIndex %= _players.Length;
+                CurrentPlayerIndex %= _players.Length;
             
-                if (_players[PlayerIndex] != null && !_players[PlayerIndex].Folded)
+                if (_players[CurrentPlayerIndex] != null && !_players[CurrentPlayerIndex].Folded)
                 {
-                    if (_players[PlayerIndex].Stack == 0)
+                    if (_players[CurrentPlayerIndex].Stack == 0)
                     {
                         if(++_betCounter >= _playerCount) break;
                     }
@@ -210,16 +210,16 @@ namespace Poker
                     }
                 }
             
-                PlayerIndex++;
+                CurrentPlayerIndex++;
             }
         }
 
         private void SendBettingDataToCurrentPlayer()
         {
-            var requiredCall = Math.Min(HighestBet - _players[PlayerIndex].Bet, _players[PlayerIndex].Stack);
+            var requiredCall = Math.Min(HighestBet - _players[CurrentPlayerIndex].Bet, _players[CurrentPlayerIndex].Stack);
             var minRaise = HighestBet + _raiseIncrement;
-            var maxRaise = _players[PlayerIndex].Stack + _players[PlayerIndex].Bet;
-            CurrentPlayerChanged?.Invoke(this, new CurrentPlayerChangedEventArgs(PlayerIndex, requiredCall, minRaise, maxRaise));
+            var maxRaise = _players[CurrentPlayerIndex].Stack + _players[CurrentPlayerIndex].Bet;
+            CurrentPlayerChanged?.Invoke(this, new CurrentPlayerChangedEventArgs(CurrentPlayerIndex, requiredCall, minRaise, maxRaise));
         }
 
         private void PlaceChips(int index, int amount)

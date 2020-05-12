@@ -80,7 +80,7 @@ public class UserInterfaceManager : MonoBehaviour
         MainThreadExecutor.Instance.Enqueue(() =>
         {
             tablePlayerCountText.text = "On-Table: " + _tablePlayerCount;
-            AppendToConsole("Player '" + e.Username + "' joined table '" + e.Table.Title + "'.");
+            AppendToConsole("Player '" + e.Username + "' joined table '" + e.TableController.Title + "'.");
         });
     }
 
@@ -90,7 +90,7 @@ public class UserInterfaceManager : MonoBehaviour
         MainThreadExecutor.Instance.Enqueue(() =>
         {
             tablePlayerCountText.text = "On-Table: " + _tablePlayerCount;
-            AppendToConsole("Player '" + e.Username + "' left table '" + e.Table.Title + "'.");
+            AppendToConsole("Player '" + e.Username + "' left table '" + e.TableController.Title + "'.");
         });
     }
 
@@ -100,7 +100,7 @@ public class UserInterfaceManager : MonoBehaviour
         MainThreadExecutor.Instance.Enqueue(() =>
         {
             tableCountText.text = "Tables: " + _tableCount;
-            AppendToConsole("Table '" + e.Table.Title + "' has been added to the casino.");
+            AppendToConsole("Table '" + e.TableController.Title + "' has been added to the casino.");
         });
     }
 

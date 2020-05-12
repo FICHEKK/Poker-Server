@@ -1,102 +1,40 @@
 ﻿using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Threading;
-using Poker.Dealers;
-using Poker.EventArguments;
 using Poker.Players;
-using RequestProcessors;
 
 namespace Poker
 {
-    /// <summary>
-    /// Encapsulates data of a single poker table.
-    /// </summary>
+    /// <summary>Encapsulates data of a single poker table.</summary>
     public sealed class Table
     {
-        /// <summary>A blocking queue used to store unprocessed client requests.</summary>
-        public BlockingCollection<IClientRequestProcessor> RequestProcessors { get; } = new BlockingCollection<IClientRequestProcessor>();
-
-        /// <summary>A dummy action that is used to indicate the end of the consuming.</summary>
-        private readonly IClientRequestProcessor _poisonPill = new PoisonPill();
-        
-        /// <summary>Event that gets raised every time a player joins this table.</summary>
-        public event EventHandler<PlayerJoinedEventArgs> PlayerJoined;
-
-        /// <summary>Event that gets raised every time a player leaves this table.</summary>
-        public event EventHandler<PlayerLeftEventArgs> PlayerLeft;
-
-        /// <summary>This table's title (name).</summary>
-        public string Title { get; }
-
-        /// <summary>This table's small blind.</summary>
-        public int SmallBlind { get; }
-        
-        /// <summary>Indicates whether this table is ranked.</summary>
-        public bool IsRanked { get; }
-        
-        /// <summary> Indicates whether this table cannot be joined. </summary>
-        public bool IsLocked { get; set; }
-
         /// <summary>Current dealer button index.</summary>
-        public int DealerButtonIndex => _dealerButtonIndex;
+        public int DealerButtonIndex { get; private set; }
 
         /// <summary>Current number of players at the table.</summary>
-        public int PlayerCount => _playerCount;
+        public int PlayerCount { get; private set; }
 
         /// <summary>Maximum number of players this table can seat.</summary>
         public int MaxPlayers { get; }
-
-        /// <summary>This table's dealer.</summary>
-        public Dealer Dealer { get; }
-
+        
+        /// <summary>Internal collection of players that are currently on this table.</summary>
         private readonly TablePlayer[] _players;
-        private int _dealerButtonIndex;
-        private int _playerCount;
 
-        /// <summary> Constructs a new table with the given small blind and maximum number of players. </summary>
-        /// <param name="title"> This table's title (name). </param>
-        /// <param name="smallBlind"> The small blind. </param>
-        /// <param name="maxPlayers"> Maximum number of players. </param>
-        /// <param name="isRanked"> Indicates whether this table is ranked. </param>
-        public Table(string title, int smallBlind, int maxPlayers, bool isRanked = false)
+        /// <summary> Constructs a new table with the given capacity. </summary>
+        /// <param name="maxPlayers"> Maximum number of players (capacity). </param>
+        public Table(int maxPlayers)
         {
-            Title = title;
-            SmallBlind = smallBlind;
             MaxPlayers = maxPlayers;
-            IsRanked = isRanked;
             _players = new TablePlayer[MaxPlayers];
-
-            if (isRanked)
-            {
-                Dealer = new RankedDealer(this);
-            }
-            else
-            {
-                Dealer = new StandardDealer(this);
-            }
-            
-            new Thread(ConsumeClientRequests).Start();
-        }
-
-        private void ConsumeClientRequests()
-        {
-            while (true)
-            {
-                var processor = RequestProcessors.Take();
-                if (processor == _poisonPill) return;
-                processor.ProcessRequest();
-            }
         }
 
         /// <summary> Increments the button position, skipping all the empty seats on the way. </summary>
         public void IncrementButtonIndex()
         {
-            _dealerButtonIndex = GetNextOccupiedSeatIndex(_dealerButtonIndex);
+            DealerButtonIndex = GetNextOccupiedSeatIndex(DealerButtonIndex);
 
-            if (_dealerButtonIndex == -1)
+            if (DealerButtonIndex == -1)
             {
-                _dealerButtonIndex = 0;
+                DealerButtonIndex = 0;
             }
         }
 
@@ -122,18 +60,13 @@ namespace Poker
         /// <param name="player"> Player to be added to the table. </param>
         public void AddPlayer(TablePlayer player)
         {
-            int index = GetFirstFreeSeatIndex();
+            var index = GetFirstFreeSeatIndex();
             if (index < 0) return;
 
-            _players[index] = player ?? throw new ArgumentNullException(nameof(player));
-            _playerCount++;
-            
-            PlayerJoined?.Invoke(this, new PlayerJoinedEventArgs(player));
+            player.Index = index;
+            _players[index] = player;
+            PlayerCount++;
         }
-        
-        /// <summary>Returns the player at the specified index.</summary>
-        /// <param name="index">Index of the player.</param>
-        public TablePlayer this[int index] => _players[index];
 
         /// <summary> Removes the specified player from the table. </summary>
         /// <param name="player"> Player to be removed. </param>
@@ -145,13 +78,15 @@ namespace Poker
                 if (_players[i] != null && _players[i].Equals(player))
                 {
                     _players[i] = null;
-                    _playerCount--;
-
-                    PlayerLeft?.Invoke(this, new PlayerLeftEventArgs(i));
+                    PlayerCount--;
                     break;
                 }
             }
         }
+        
+        /// <summary>Returns the player at the specified index.</summary>
+        /// <param name="index">Index of the player.</param>
+        public TablePlayer this[int index] => _players[index];
 
         /// <summary> Returns the copy of the internal table array. </summary>
         public TablePlayer[] GetPlayerArray()
@@ -176,7 +111,7 @@ namespace Poker
         /// <summary> Returns an array of all the currently active clients at the this table. </summary>
         public Client[] GetActiveClients()
         {
-            var clients = new Client[_playerCount];
+            var clients = new Client[PlayerCount];
             
             for (int i = 0, insertIndex = 0; i < MaxPlayers; i++)
             {
@@ -187,6 +122,7 @@ namespace Poker
             return clients;
         }
 
+        /// <summary>Enumerator used to iterate this table's current players.</summary>
         public IEnumerator<TablePlayer> GetEnumerator()
         {
             for (var i = 0; i < MaxPlayers; i++)

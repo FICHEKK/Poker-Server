@@ -30,7 +30,15 @@ namespace RequestProcessors
             }
             else
             {
-                Casino.AddTable(new Table(_tableTitle, _smallBlind, _maxPlayers, _isRanked));
+                if (_isRanked)
+                {
+                    Casino.AddTableController(new RankedTableController(new Table(_maxPlayers), _tableTitle, _smallBlind));
+                }
+                else
+                {
+                    Casino.AddTableController(new StandardTableController(new Table(_maxPlayers), _tableTitle, _smallBlind));
+                }
+                
                 package.Append(ServerResponse.CreateTableSuccess);
             }
             

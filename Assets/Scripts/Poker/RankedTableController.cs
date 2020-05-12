@@ -2,13 +2,14 @@
 using Dao;
 using Poker.Players;
 
-namespace Poker.Dealers
+namespace Poker
 {
-    public class RankedDealer : Dealer
+    public class RankedTableController : TableController
     {
+        public override bool IsRanked => true;
         private TablePlayer[] _originalPlayers;
         
-        public RankedDealer(Table table) : base(table) { }
+        public RankedTableController(Table table, string title, int smallBlind) : base(table, title, smallBlind) { }
 
         protected override void Kick(TablePlayer player)
         {
@@ -54,9 +55,9 @@ namespace Poker.Dealers
         
         protected override void OnPlayerJoined()
         {
-            if (!Table.IsLocked && Table.PlayerCount == Table.MaxPlayers)
+            if (!IsLocked && Table.PlayerCount == Table.MaxPlayers)
             {
-                Table.IsLocked = true;
+                IsLocked = true;
                 _originalPlayers = Table.GetPlayerArray();
                 StartNewRound();
             }
@@ -68,7 +69,7 @@ namespace Poker.Dealers
             {
                 foreach (var player in Table) Kick(player);
 
-                Table.IsLocked = false;
+                IsLocked = false;
                 return;
             }
 

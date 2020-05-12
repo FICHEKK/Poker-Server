@@ -93,7 +93,7 @@ public class Client
 
                         if (processor.CanWait)
                         {
-                            Casino.GetTablePlayer(Username).Table.RequestProcessors.Add(processor);
+                            Casino.GetTablePlayer(Username).TableController.RequestProcessors.Add(processor);
                         }
                         else
                         {

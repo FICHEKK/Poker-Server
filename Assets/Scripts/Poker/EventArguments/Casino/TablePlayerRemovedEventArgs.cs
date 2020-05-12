@@ -4,12 +4,12 @@ namespace Poker.EventArguments.Casino
 {
     public class TablePlayerRemovedEventArgs : EventArgs
     {
-        public Table Table { get; }
+        public TableController TableController { get; }
         public string Username { get; }
 
-        public TablePlayerRemovedEventArgs(Table table, string username)
+        public TablePlayerRemovedEventArgs(TableController tableController, string username)
         {
-            Table = table;
+            TableController = tableController;
             Username = username;
         }
     }

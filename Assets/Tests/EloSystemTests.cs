@@ -1,4 +1,6 @@
-﻿using NUnit.Framework;
+﻿using System;
+using System.Collections.Generic;
+using NUnit.Framework;
 
 namespace Tests
 {
@@ -10,8 +12,8 @@ namespace Tests
         [TestCase(2000, 1000, 0.9968)]
         public void CalculateExpectedScore_Calculation_ReturnsCorrectValues(int ratingA, int ratingB, double validValue)
         {
-            double expectedScore = EloSystem.CalculateExpectedScore(ratingA, ratingB);
-            Assert.AreEqual(validValue, expectedScore, 0.001);
+            List<int> ints = new List<int> {1000, 1600, 500, 1200};
+            EloSystem.CalculateNewRatings(ints);
         }
     }
 }

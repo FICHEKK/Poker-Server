@@ -27,6 +27,13 @@ namespace Dao
         {
             _filePath = filePath ?? throw new ArgumentNullException(nameof(filePath));
 
+            var fileDirectory = Path.GetDirectoryName(filePath);
+
+            if (!Directory.Exists(fileDirectory))
+            {
+                Directory.CreateDirectory(fileDirectory);
+            }
+
             if (File.Exists(filePath))
             {
                 LoadClientDictionary(filePath);

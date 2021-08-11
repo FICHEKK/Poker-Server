@@ -12,6 +12,13 @@ namespace Logger
         {
             _filePath = filePath ?? throw new ArgumentNullException(nameof(filePath));
 
+            var fileDirectory = Path.GetDirectoryName(filePath);
+
+            if (!Directory.Exists(fileDirectory))
+            {
+                Directory.CreateDirectory(fileDirectory);
+            }
+
             if (!File.Exists(filePath))
             {
                 File.Create(filePath).Close();

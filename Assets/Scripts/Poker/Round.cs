@@ -117,7 +117,14 @@ namespace Poker
             }
             else
             {
-                UpdateCurrentPlayerIndex();
+                if (_players.Count(p => p != null && p.Stack > 0 && !p.Folded) >= 1)
+                {
+                    UpdateCurrentPlayerIndex();
+                }
+                else
+                {
+                    PerformAllPhases();
+                }
             }
         }
 
@@ -186,10 +193,15 @@ namespace Poker
             }
             else
             {
-                while (CurrentPhase != Phase.Showdown)
-                {
-                    OnRoundPhaseChanged(new RoundPhaseChangedEventArgs(++CurrentPhase));
-                }
+                PerformAllPhases();
+            }
+        }
+
+        private void PerformAllPhases()
+        {
+            while (CurrentPhase != Phase.Showdown)
+            {
+                OnRoundPhaseChanged(new RoundPhaseChangedEventArgs(++CurrentPhase));
             }
         }
 
@@ -203,7 +215,7 @@ namespace Poker
             
                 if (_players[CurrentPlayerIndex] != null && !_players[CurrentPlayerIndex].Folded)
                 {
-                    if (_players[CurrentPlayerIndex].Stack == 0)
+                    if (_players[CurrentPlayerIndex].Stack <= 0)
                     {
                         if(++_betCounter >= _playerCount) break;
                     }
@@ -229,6 +241,8 @@ namespace Poker
         {
             if (_players[index] == null)
                 throw new NullReferenceException("Cannot place chips for an empty seat.");
+
+            amount = Math.Min(amount, _players[index].Stack);
             
             _players[index].Stack -= amount;
             _players[index].ChipCount -= amount;
